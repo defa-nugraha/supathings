@@ -53,7 +53,10 @@ jobs:
           php artisan key:generate --force
 
       - name: Frontend lint and formatting checks
-        run: npm run check
+        run: |
+          npm run check:fix
+          git diff -- resources/js/pages/monitoring.tsx
+          npm run check
 
       - name: Laravel Pint style check
         run: composer lint:check

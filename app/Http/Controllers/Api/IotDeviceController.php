@@ -139,7 +139,12 @@ class IotDeviceController extends Controller
             'state' => ['required', Rule::in(['on', 'off'])],
             'mode' => ['sometimes', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void { $query->where('id', $data['device_id']); if (is_string($data['device_id'])) { $query->orWhere('mac_address', Str::upper($data['device_id'])); } })->firstOrFail();
+        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+            $query->where('id', $data['device_id']);
+            if (is_string($data['device_id'])) {
+                $query->orWhere('mac_address', Str::upper($data['device_id']));
+            }
+        })->firstOrFail();
         $command = ActuatorCommand::query()->create([
             'iot_device_id' => $device->id,
             'actuator' => $data['actuator'],

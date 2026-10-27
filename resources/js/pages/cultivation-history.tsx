@@ -1,6 +1,19 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
+
+function formatIndonesianDate(value: string): string {
+    const dateOnly = value.slice(0, 10);
+    const date = new Date(`${dateOnly}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
 type H = {
     id: number;
     harvested_at: string;
@@ -71,7 +84,7 @@ export default function CultivationHistory() {
                                                 className="border-t border-slate-100"
                                             >
                                                 <td className="py-3">
-                                                    {x.harvested_at}
+                                                    {formatIndonesianDate(x.harvested_at)}
                                                 </td>
                                                 <td>{x.batch?.name ?? '—'}</td>
                                                 <td>{x.flush_number}</td>

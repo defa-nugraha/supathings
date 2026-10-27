@@ -1,5 +1,14 @@
 import { Head } from '@inertiajs/react';
-import { AlertTriangle, CalendarDays, CheckCircle2, CircleAlert, ClipboardList, Plus, Sprout, Wheat } from 'lucide-react';
+import {
+    AlertTriangle,
+    CalendarDays,
+    CheckCircle2,
+    CircleAlert,
+    ClipboardList,
+    Plus,
+    Sprout,
+    Wheat,
+} from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 
 type Batch = {
@@ -40,7 +49,9 @@ function csrfHeaders(): HeadersInit {
     return {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+        'X-CSRF-TOKEN':
+            document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                ?.content ?? '',
     };
 }
 
@@ -54,83 +65,190 @@ export default function Cultivation() {
     const [error, setError] = useState('');
     const [showBatchForm, setShowBatchForm] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState('');
-    const [batchForm, setBatchForm] = useState({ name: '', strain: '', inoculated_at: today, baglog_count: '100', notes: '' });
-    const [harvestForm, setHarvestForm] = useState({ harvested_at: today, flush_number: '1', weight_kg: '', quality: 'good', sale_price_per_kg: '', notes: '' });
+    const [batchForm, setBatchForm] = useState({
+        name: '',
+        strain: '',
+        inoculated_at: today,
+        baglog_count: '100',
+        notes: '',
+    });
+    const [harvestForm, setHarvestForm] = useState({
+        harvested_at: today,
+        flush_number: '1',
+        weight_kg: '',
+        quality: 'good',
+        sale_price_per_kg: '',
+        notes: '',
+    });
 
     const refresh = useCallback(async () => {
         setLoading(true);
         try {
             const responses = await Promise.all([
-                fetch('/api/cultivation/batches', { headers: { Accept: 'application/json' } }),
-                fetch('/api/cultivation/harvests', { headers: { Accept: 'application/json' } }),
-                fetch('/api/cultivation/alerts', { headers: { Accept: 'application/json' } }),
+                fetch('/api/cultivation/batches', {
+                    headers: { Accept: 'application/json' },
+                }),
+                fetch('/api/cultivation/harvests', {
+                    headers: { Accept: 'application/json' },
+                }),
+                fetch('/api/cultivation/alerts', {
+                    headers: { Accept: 'application/json' },
+                }),
             ]);
             for (const response of responses) {
-                if (!response.ok) throw new Error('Data budidaya belum dapat dimuat. Coba muat ulang halaman.');
+                if (!response.ok)
+                    throw new Error(
+                        'Data budidaya belum dapat dimuat. Coba muat ulang halaman.',
+                    );
             }
-            const [batchPayload, harvestPayload, alertPayload] = await Promise.all(responses.map(response => response.json()));
+            const [batchPayload, harvestPayload, alertPayload] =
+                await Promise.all(responses.map((response) => response.json()));
             setBatches(batchPayload.data ?? []);
             setHarvests(harvestPayload.data ?? []);
             setAlerts(alertPayload.data ?? []);
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Terjadi kesalahan saat memuat data.');
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Terjadi kesalahan saat memuat data.',
+            );
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => { void refresh(); }, [refresh]);
+    useEffect(() => {
+        void refresh();
+    }, [refresh]);
 
     const createBatch = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        setBusy(true); setError(''); setNotice('');
+        setBusy(true);
+        setError('');
+        setNotice('');
         try {
             const response = await fetch('/api/cultivation/batches', {
-                method: 'POST', headers: csrfHeaders(),
-                body: JSON.stringify({ ...batchForm, baglog_count: Number(batchForm.baglog_count), strain: batchForm.strain || null, notes: batchForm.notes || null }),
+                method: 'POST',
+                headers: csrfHeaders(),
+                body: JSON.stringify({
+                    ...batchForm,
+                    baglog_count: Number(batchForm.baglog_count),
+                    strain: batchForm.strain || null,
+                    notes: batchForm.notes || null,
+                }),
             });
             const payload = await response.json();
-            if (!response.ok) throw new Error(payload.message ?? 'Batch gagal disimpan. Periksa kembali data.');
-            setBatchForm({ name: '', strain: '', inoculated_at: today, baglog_count: '100', notes: '' });
-            setShowBatchForm(false); setNotice('Batch budidaya berhasil ditambahkan.');
+            if (!response.ok)
+                throw new Error(
+                    payload.message ??
+                        'Batch gagal disimpan. Periksa kembali data.',
+                );
+            setBatchForm({
+                name: '',
+                strain: '',
+                inoculated_at: today,
+                baglog_count: '100',
+                notes: '',
+            });
+            setShowBatchForm(false);
+            setNotice('Batch budidaya berhasil ditambahkan.');
             await refresh();
-        } catch (cause) { setError(cause instanceof Error ? cause.message : 'Batch gagal disimpan.'); }
-        finally { setBusy(false); }
+        } catch (cause) {
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Batch gagal disimpan.',
+            );
+        } finally {
+            setBusy(false);
+        }
     };
 
     const updatePhase = async (batch: Batch, phase: string) => {
-        setError(''); setNotice('');
+        setError('');
+        setNotice('');
         try {
-            const response = await fetch('/api/cultivation/batches/' + batch.id, { method: 'PATCH', headers: csrfHeaders(), body: JSON.stringify({ phase }) });
-            if (!response.ok) throw new Error('Fase budidaya gagal diperbarui.');
-            setNotice('Fase budidaya diperbarui.'); await refresh();
-        } catch (cause) { setError(cause instanceof Error ? cause.message : 'Pembaruan gagal.'); }
+            const response = await fetch(
+                '/api/cultivation/batches/' + batch.id,
+                {
+                    method: 'PATCH',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify({ phase }),
+                },
+            );
+            if (!response.ok)
+                throw new Error('Fase budidaya gagal diperbarui.');
+            setNotice('Fase budidaya diperbarui.');
+            await refresh();
+        } catch (cause) {
+            setError(
+                cause instanceof Error ? cause.message : 'Pembaruan gagal.',
+            );
+        }
     };
 
     const createHarvest = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!selectedBatch) { setError('Pilih batch terlebih dahulu.'); return; }
-        setBusy(true); setError(''); setNotice('');
+        if (!selectedBatch) {
+            setError('Pilih batch terlebih dahulu.');
+            return;
+        }
+        setBusy(true);
+        setError('');
+        setNotice('');
         try {
             const body = {
                 ...harvestForm,
                 flush_number: Number(harvestForm.flush_number),
                 weight_kg: Number(harvestForm.weight_kg),
-                sale_price_per_kg: harvestForm.sale_price_per_kg ? Number(harvestForm.sale_price_per_kg) : null,
+                sale_price_per_kg: harvestForm.sale_price_per_kg
+                    ? Number(harvestForm.sale_price_per_kg)
+                    : null,
                 quality: harvestForm.quality || null,
                 notes: harvestForm.notes || null,
             };
-            const response = await fetch('/api/cultivation/batches/' + selectedBatch + '/harvests', { method: 'POST', headers: csrfHeaders(), body: JSON.stringify(body) });
+            const response = await fetch(
+                '/api/cultivation/batches/' + selectedBatch + '/harvests',
+                {
+                    method: 'POST',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify(body),
+                },
+            );
             const payload = await response.json();
-            if (!response.ok) throw new Error(payload.message ?? 'Catatan panen gagal disimpan.');
-            setHarvestForm({ harvested_at: today, flush_number: '1', weight_kg: '', quality: 'good', sale_price_per_kg: '', notes: '' });
-            setNotice('Catatan panen berhasil disimpan.'); await refresh();
-        } catch (cause) { setError(cause instanceof Error ? cause.message : 'Catatan panen gagal disimpan.'); }
-        finally { setBusy(false); }
+            if (!response.ok)
+                throw new Error(
+                    payload.message ?? 'Catatan panen gagal disimpan.',
+                );
+            setHarvestForm({
+                harvested_at: today,
+                flush_number: '1',
+                weight_kg: '',
+                quality: 'good',
+                sale_price_per_kg: '',
+                notes: '',
+            });
+            setNotice('Catatan panen berhasil disimpan.');
+            await refresh();
+        } catch (cause) {
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Catatan panen gagal disimpan.',
+            );
+        } finally {
+            setBusy(false);
+        }
     };
 
-    const totalKg = harvests.reduce((sum, item) => sum + Number(item.weight_kg || 0), 0);
-    const totalBaglogs = batches.reduce((sum, item) => sum + item.baglog_count, 0);
+    const totalKg = harvests.reduce(
+        (sum, item) => sum + Number(item.weight_kg || 0),
+        0,
+    );
+    const totalBaglogs = batches.reduce(
+        (sum, item) => sum + item.baglog_count,
+        0,
+    );
 
     return (
         <>
@@ -139,74 +257,599 @@ export default function Cultivation() {
                 <div className="mx-auto max-w-[1500px] space-y-7">
                     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
-                            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>SupaThings</span><span>/</span><span>Budidaya</span></div>
-                            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Budidaya jamur tiram</h1>
-                            <p className="mt-1 text-sm text-slate-500">Kelola umur baglog, fase budidaya, catatan panen, dan peringatan kumbung.</p>
+                            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
+                                <span>SupaThings</span>
+                                <span>/</span>
+                                <span>Budidaya</span>
+                            </div>
+                            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                                Budidaya jamur tiram
+                            </h1>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Kelola umur baglog, fase budidaya, catatan
+                                panen, dan peringatan kumbung.
+                            </p>
                         </div>
-                        <button onClick={() => setShowBatchForm(value => !value)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"><Plus className="size-4" /> Tambah batch</button>
+                        <button
+                            onClick={() => setShowBatchForm((value) => !value)}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                        >
+                            <Plus className="size-4" /> Tambah batch
+                        </button>
                     </header>
 
-                    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-                    {notice && <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</div>}
+                    {error && (
+                        <div
+                            role="alert"
+                            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+                        >
+                            {error}
+                        </div>
+                    )}
+                    {notice && (
+                        <div
+                            role="status"
+                            className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
+                        >
+                            {notice}
+                        </div>
+                    )}
 
                     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <SummaryCard icon={<Sprout className="size-5" />} label="Batch aktif" value={String(batches.filter(batch => batch.phase !== 'completed').length)} detail="kelompok budidaya" />
-                        <SummaryCard icon={<ClipboardList className="size-5" />} label="Total baglog" value={totalBaglogs.toLocaleString('id-ID')} detail="di semua batch" />
-                        <SummaryCard icon={<Wheat className="size-5" />} label="Total panen" value={totalKg.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' kg'} detail="berdasarkan catatan" />
-                        <SummaryCard icon={<CircleAlert className="size-5" />} label="Peringatan" value={String(alerts.length)} detail="kondisi yang perlu diperiksa" />
+                        <SummaryCard
+                            icon={<Sprout className="size-5" />}
+                            label="Batch aktif"
+                            value={String(
+                                batches.filter(
+                                    (batch) => batch.phase !== 'completed',
+                                ).length,
+                            )}
+                            detail="kelompok budidaya"
+                        />
+                        <SummaryCard
+                            icon={<ClipboardList className="size-5" />}
+                            label="Total baglog"
+                            value={totalBaglogs.toLocaleString('id-ID')}
+                            detail="di semua batch"
+                        />
+                        <SummaryCard
+                            icon={<Wheat className="size-5" />}
+                            label="Total panen"
+                            value={
+                                totalKg.toLocaleString('id-ID', {
+                                    maximumFractionDigits: 2,
+                                }) + ' kg'
+                            }
+                            detail="berdasarkan catatan"
+                        />
+                        <SummaryCard
+                            icon={<CircleAlert className="size-5" />}
+                            label="Peringatan"
+                            value={String(alerts.length)}
+                            detail="kondisi yang perlu diperiksa"
+                        />
                     </section>
 
-                    {showBatchForm && <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900">Batch budidaya baru</h2>
-                        <form onSubmit={createBatch} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <Field label="Nama batch"><input required maxLength={100} value={batchForm.name} onChange={event => setBatchForm({ ...batchForm, name: event.target.value })} placeholder="Contoh: Batch Oktober A" className={inputClass} /></Field>
-                            <Field label="Strain / jenis bibit"><input value={batchForm.strain} onChange={event => setBatchForm({ ...batchForm, strain: event.target.value })} placeholder="Opsional" className={inputClass} /></Field>
-                            <Field label="Tanggal inokulasi"><input type="date" required max={today} value={batchForm.inoculated_at} onChange={event => setBatchForm({ ...batchForm, inoculated_at: event.target.value })} className={inputClass} /></Field>
-                            <Field label="Jumlah baglog"><input type="number" required min="1" max="1000000" value={batchForm.baglog_count} onChange={event => setBatchForm({ ...batchForm, baglog_count: event.target.value })} className={inputClass} /></Field>
-                            <Field label="Catatan awal"><input value={batchForm.notes} onChange={event => setBatchForm({ ...batchForm, notes: event.target.value })} maxLength={5000} placeholder="Kondisi media, asal bibit, dll." className={inputClass} /></Field>
-                            <div className="flex items-end"><button disabled={busy} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">{busy ? 'Menyimpan…' : 'Simpan batch'}</button></div>
-                        </form>
-                    </section>}
+                    {showBatchForm && (
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900">
+                                Batch budidaya baru
+                            </h2>
+                            <form
+                                onSubmit={createBatch}
+                                className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                            >
+                                <Field label="Nama batch">
+                                    <input
+                                        required
+                                        maxLength={100}
+                                        value={batchForm.name}
+                                        onChange={(event) =>
+                                            setBatchForm({
+                                                ...batchForm,
+                                                name: event.target.value,
+                                            })
+                                        }
+                                        placeholder="Contoh: Batch Oktober A"
+                                        className={inputClass}
+                                    />
+                                </Field>
+                                <Field label="Strain / jenis bibit">
+                                    <input
+                                        value={batchForm.strain}
+                                        onChange={(event) =>
+                                            setBatchForm({
+                                                ...batchForm,
+                                                strain: event.target.value,
+                                            })
+                                        }
+                                        placeholder="Opsional"
+                                        className={inputClass}
+                                    />
+                                </Field>
+                                <Field label="Tanggal inokulasi">
+                                    <input
+                                        type="date"
+                                        required
+                                        max={today}
+                                        value={batchForm.inoculated_at}
+                                        onChange={(event) =>
+                                            setBatchForm({
+                                                ...batchForm,
+                                                inoculated_at:
+                                                    event.target.value,
+                                            })
+                                        }
+                                        className={inputClass}
+                                    />
+                                </Field>
+                                <Field label="Jumlah baglog">
+                                    <input
+                                        type="number"
+                                        required
+                                        min="1"
+                                        max="1000000"
+                                        value={batchForm.baglog_count}
+                                        onChange={(event) =>
+                                            setBatchForm({
+                                                ...batchForm,
+                                                baglog_count:
+                                                    event.target.value,
+                                            })
+                                        }
+                                        className={inputClass}
+                                    />
+                                </Field>
+                                <Field label="Catatan awal">
+                                    <input
+                                        value={batchForm.notes}
+                                        onChange={(event) =>
+                                            setBatchForm({
+                                                ...batchForm,
+                                                notes: event.target.value,
+                                            })
+                                        }
+                                        maxLength={5000}
+                                        placeholder="Kondisi media, asal bibit, dll."
+                                        className={inputClass}
+                                    />
+                                </Field>
+                                <div className="flex items-end">
+                                    <button
+                                        disabled={busy}
+                                        className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                                    >
+                                        {busy ? 'Menyimpan…' : 'Simpan batch'}
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+                    )}
 
                     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <div className="mb-4 flex items-center justify-between"><div><h2 className="text-lg font-semibold text-slate-900">Batch dan masa tanam</h2><p className="mt-1 text-sm text-slate-500">Umur dihitung dari tanggal inokulasi.</p></div><CalendarDays className="size-5 text-emerald-700" /></div>
-                            {loading ? <p className="py-8 text-center text-sm text-slate-500">Memuat data…</p> : batches.length === 0 ? <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">Belum ada batch. Tambahkan batch pertama untuk mulai mencatat masa tanam.</p> : <div className="space-y-3">{batches.map(batch => {
-                                const age = Math.max(0, Math.floor((Date.now() - new Date(batch.inoculated_at).getTime()) / 86400000));
-                                return <article key={batch.id} className="rounded-xl border border-slate-200 p-4">
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                        <div><h3 className="font-semibold text-slate-900">{batch.name}</h3><p className="mt-1 text-sm text-slate-500">{batch.strain || 'Strain belum dicatat'} · {batch.baglog_count.toLocaleString('id-ID')} baglog</p><p className="mt-1 text-sm text-slate-500">Inokulasi {new Date(batch.inoculated_at).toLocaleDateString('id-ID')} · umur {age} hari</p>{batch.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{batch.notes}</p>}</div>
-                                        <span className="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">{phases.find(phase => phase.value === batch.phase)?.label ?? batch.phase}</span>
-                                    </div>
-                                    <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-slate-600">Hasil tercatat: <strong>{Number(batch.total_harvest_kg ?? 0).toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg</strong></p><Field label="Perbarui fase"><select value={batch.phase} onChange={event => void updatePhase(batch, event.target.value)} className={inputClass}>{phases.map(phase => <option key={phase.value} value={phase.value}>{phase.label}</option>)}</select></Field></div>
-                                </article>;
-                            })}</div>}
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-slate-900">
+                                        Batch dan masa tanam
+                                    </h2>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Umur dihitung dari tanggal inokulasi.
+                                    </p>
+                                </div>
+                                <CalendarDays className="size-5 text-emerald-700" />
+                            </div>
+                            {loading ? (
+                                <p className="py-8 text-center text-sm text-slate-500">
+                                    Memuat data…
+                                </p>
+                            ) : batches.length === 0 ? (
+                                <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">
+                                    Belum ada batch. Tambahkan batch pertama
+                                    untuk mulai mencatat masa tanam.
+                                </p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {batches.map((batch) => {
+                                        const age = Math.max(
+                                            0,
+                                            Math.floor(
+                                                (Date.now() -
+                                                    new Date(
+                                                        batch.inoculated_at,
+                                                    ).getTime()) /
+                                                    86400000,
+                                            ),
+                                        );
+                                        return (
+                                            <article
+                                                key={batch.id}
+                                                className="rounded-xl border border-slate-200 p-4"
+                                            >
+                                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                    <div>
+                                                        <h3 className="font-semibold text-slate-900">
+                                                            {batch.name}
+                                                        </h3>
+                                                        <p className="mt-1 text-sm text-slate-500">
+                                                            {batch.strain ||
+                                                                'Strain belum dicatat'}{' '}
+                                                            ·{' '}
+                                                            {batch.baglog_count.toLocaleString(
+                                                                'id-ID',
+                                                            )}{' '}
+                                                            baglog
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-slate-500">
+                                                            Inokulasi{' '}
+                                                            {new Date(
+                                                                batch.inoculated_at,
+                                                            ).toLocaleDateString(
+                                                                'id-ID',
+                                                            )}{' '}
+                                                            · umur {age} hari
+                                                        </p>
+                                                        {batch.notes && (
+                                                            <p className="mt-2 text-sm whitespace-pre-wrap text-slate-600">
+                                                                {batch.notes}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <span className="w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                                                        {phases.find(
+                                                            (phase) =>
+                                                                phase.value ===
+                                                                batch.phase,
+                                                        )?.label ?? batch.phase}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <p className="text-sm text-slate-600">
+                                                        Hasil tercatat:{' '}
+                                                        <strong>
+                                                            {Number(
+                                                                batch.total_harvest_kg ??
+                                                                    0,
+                                                            ).toLocaleString(
+                                                                'id-ID',
+                                                                {
+                                                                    maximumFractionDigits: 2,
+                                                                },
+                                                            )}{' '}
+                                                            kg
+                                                        </strong>
+                                                    </p>
+                                                    <Field label="Perbarui fase">
+                                                        <select
+                                                            value={batch.phase}
+                                                            onChange={(event) =>
+                                                                void updatePhase(
+                                                                    batch,
+                                                                    event.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className={
+                                                                inputClass
+                                                            }
+                                                        >
+                                                            {phases.map(
+                                                                (phase) => (
+                                                                    <option
+                                                                        key={
+                                                                            phase.value
+                                                                        }
+                                                                        value={
+                                                                            phase.value
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            phase.label
+                                                                        }
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                        </select>
+                                                    </Field>
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </section>
 
                         <section className="space-y-6">
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <div className="mb-4 flex items-center gap-2"><Wheat className="size-5 text-emerald-700" /><div><h2 className="text-lg font-semibold text-slate-900">Catat panen</h2><p className="text-sm text-slate-500">Simpan hasil setiap gelombang panen.</p></div></div>
-                                <form onSubmit={createHarvest} className="space-y-3">
-                                    <Field label="Batch"><select required value={selectedBatch} onChange={event => setSelectedBatch(event.target.value)} className={inputClass}><option value="">Pilih batch</option>{batches.map(batch => <option key={batch.id} value={batch.id}>{batch.name}</option>)}</select></Field>
-                                    <div className="grid grid-cols-2 gap-3"><Field label="Tanggal panen"><input type="date" required max={today} value={harvestForm.harvested_at} onChange={event => setHarvestForm({ ...harvestForm, harvested_at: event.target.value })} className={inputClass} /></Field><Field label="Gelombang ke-"><input type="number" required min="1" max="20" value={harvestForm.flush_number} onChange={event => setHarvestForm({ ...harvestForm, flush_number: event.target.value })} className={inputClass} /></Field></div>
-                                    <div className="grid grid-cols-2 gap-3"><Field label="Berat (kg)"><input type="number" step="0.001" required min="0.001" value={harvestForm.weight_kg} onChange={event => setHarvestForm({ ...harvestForm, weight_kg: event.target.value })} placeholder="Contoh: 4.25" className={inputClass} /></Field><Field label="Kualitas"><select value={harvestForm.quality} onChange={event => setHarvestForm({ ...harvestForm, quality: event.target.value })} className={inputClass}><option value="premium">Premium</option><option value="good">Baik</option><option value="standard">Standar</option><option value="reject">Afkir</option></select></Field></div>
-                                    <Field label="Harga jual per kg (Rp)"><input type="number" min="0" value={harvestForm.sale_price_per_kg} onChange={event => setHarvestForm({ ...harvestForm, sale_price_per_kg: event.target.value })} placeholder="Opsional" className={inputClass} /></Field>
-                                    <Field label="Jurnal / catatan"><textarea rows={2} maxLength={5000} value={harvestForm.notes} onChange={event => setHarvestForm({ ...harvestForm, notes: event.target.value })} placeholder="Kondisi jamur, tindakan, atau catatan kualitas" className={inputClass} /></Field>
-                                    <button disabled={busy || batches.length === 0} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Menyimpan…' : 'Simpan catatan panen'}</button>
+                                <div className="mb-4 flex items-center gap-2">
+                                    <Wheat className="size-5 text-emerald-700" />
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-slate-900">
+                                            Catat panen
+                                        </h2>
+                                        <p className="text-sm text-slate-500">
+                                            Simpan hasil setiap gelombang panen.
+                                        </p>
+                                    </div>
+                                </div>
+                                <form
+                                    onSubmit={createHarvest}
+                                    className="space-y-3"
+                                >
+                                    <Field label="Batch">
+                                        <select
+                                            required
+                                            value={selectedBatch}
+                                            onChange={(event) =>
+                                                setSelectedBatch(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            className={inputClass}
+                                        >
+                                            <option value="">
+                                                Pilih batch
+                                            </option>
+                                            {batches.map((batch) => (
+                                                <option
+                                                    key={batch.id}
+                                                    value={batch.id}
+                                                >
+                                                    {batch.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </Field>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field label="Tanggal panen">
+                                            <input
+                                                type="date"
+                                                required
+                                                max={today}
+                                                value={harvestForm.harvested_at}
+                                                onChange={(event) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        harvested_at:
+                                                            event.target.value,
+                                                    })
+                                                }
+                                                className={inputClass}
+                                            />
+                                        </Field>
+                                        <Field label="Gelombang ke-">
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                max="20"
+                                                value={harvestForm.flush_number}
+                                                onChange={(event) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        flush_number:
+                                                            event.target.value,
+                                                    })
+                                                }
+                                                className={inputClass}
+                                            />
+                                        </Field>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <Field label="Berat (kg)">
+                                            <input
+                                                type="number"
+                                                step="0.001"
+                                                required
+                                                min="0.001"
+                                                value={harvestForm.weight_kg}
+                                                onChange={(event) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        weight_kg:
+                                                            event.target.value,
+                                                    })
+                                                }
+                                                placeholder="Contoh: 4.25"
+                                                className={inputClass}
+                                            />
+                                        </Field>
+                                        <Field label="Kualitas">
+                                            <select
+                                                value={harvestForm.quality}
+                                                onChange={(event) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        quality:
+                                                            event.target.value,
+                                                    })
+                                                }
+                                                className={inputClass}
+                                            >
+                                                <option value="premium">
+                                                    Premium
+                                                </option>
+                                                <option value="good">
+                                                    Baik
+                                                </option>
+                                                <option value="standard">
+                                                    Standar
+                                                </option>
+                                                <option value="reject">
+                                                    Afkir
+                                                </option>
+                                            </select>
+                                        </Field>
+                                    </div>
+                                    <Field label="Harga jual per kg (Rp)">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={
+                                                harvestForm.sale_price_per_kg
+                                            }
+                                            onChange={(event) =>
+                                                setHarvestForm({
+                                                    ...harvestForm,
+                                                    sale_price_per_kg:
+                                                        event.target.value,
+                                                })
+                                            }
+                                            placeholder="Opsional"
+                                            className={inputClass}
+                                        />
+                                    </Field>
+                                    <Field label="Jurnal / catatan">
+                                        <textarea
+                                            rows={2}
+                                            maxLength={5000}
+                                            value={harvestForm.notes}
+                                            onChange={(event) =>
+                                                setHarvestForm({
+                                                    ...harvestForm,
+                                                    notes: event.target.value,
+                                                })
+                                            }
+                                            placeholder="Kondisi jamur, tindakan, atau catatan kualitas"
+                                            className={inputClass}
+                                        />
+                                    </Field>
+                                    <button
+                                        disabled={busy || batches.length === 0}
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                                    >
+                                        {busy
+                                            ? 'Menyimpan…'
+                                            : 'Simpan catatan panen'}
+                                    </button>
                                 </form>
                             </div>
                         </section>
                     </div>
 
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2"><AlertTriangle className="size-5 text-amber-600" /><div><h2 className="text-lg font-semibold text-slate-900">Peringatan kumbung</h2><p className="text-sm text-slate-500">Berdasarkan heartbeat perangkat dan ambang sensor yang telah dikonfigurasi.</p></div></div>
-                        {alerts.length === 0 ? <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800"><CheckCircle2 className="size-5" />Tidak ada peringatan aktif dari data yang tersedia.</div> : <div className="space-y-2">{alerts.map(alert => <div key={alert.key} className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" /><div><p className="font-semibold text-amber-950">{alert.title}</p><p className="mt-1 text-sm text-amber-900">{alert.message}</p></div></div>)}</div>}
-                        <p className="mt-3 text-xs text-slate-500">Peringatan bergantung pada data sensor dan aturan yang tersedia. Nilai contoh atau data yang tidak terkirim tidak dianggap sebagai pengukuran aktual.</p>
+                        <div className="mb-4 flex items-center gap-2">
+                            <AlertTriangle className="size-5 text-amber-600" />
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    Peringatan kumbung
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    Berdasarkan heartbeat perangkat dan ambang
+                                    sensor yang telah dikonfigurasi.
+                                </p>
+                            </div>
+                        </div>
+                        {alerts.length === 0 ? (
+                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                                <CheckCircle2 className="size-5" />
+                                Tidak ada peringatan aktif dari data yang
+                                tersedia.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {alerts.map((alert) => (
+                                    <div
+                                        key={alert.key}
+                                        className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"
+                                    >
+                                        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" />
+                                        <div>
+                                            <p className="font-semibold text-amber-950">
+                                                {alert.title}
+                                            </p>
+                                            <p className="mt-1 text-sm text-amber-900">
+                                                {alert.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <p className="mt-3 text-xs text-slate-500">
+                            Peringatan bergantung pada data sensor dan aturan
+                            yang tersedia. Nilai contoh atau data yang tidak
+                            terkirim tidak dianggap sebagai pengukuran aktual.
+                        </p>
                     </section>
 
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2"><ClipboardList className="size-5 text-emerald-700" /><div><h2 className="text-lg font-semibold text-slate-900">Riwayat panen dan jurnal</h2><p className="text-sm text-slate-500">Catatan panen terakhir yang tersimpan.</p></div></div>
-                        {harvests.length === 0 ? <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">Belum ada catatan panen.</p> : <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="py-3 pr-4">Tanggal</th><th className="py-3 pr-4">Batch</th><th className="py-3 pr-4">Gelombang</th><th className="py-3 pr-4">Berat</th><th className="py-3 pr-4">Kualitas</th><th className="py-3 pr-4">Catatan</th></tr></thead><tbody>{harvests.map(item => <tr key={item.id} className="border-b border-slate-100 align-top"><td className="py-3 pr-4 whitespace-nowrap">{new Date(item.harvested_at).toLocaleDateString('id-ID')}</td><td className="py-3 pr-4">{item.batch?.name ?? 'Batch'}</td><td className="py-3 pr-4">{item.flush_number}</td><td className="py-3 pr-4 font-semibold">{Number(item.weight_kg).toLocaleString('id-ID', { maximumFractionDigits: 3 })} kg</td><td className="py-3 pr-4">{item.quality ?? '—'}</td><td className="py-3 pr-4 whitespace-pre-wrap">{item.notes || '—'}</td></tr>)}</tbody></table></div>}
+                        <div className="mb-4 flex items-center gap-2">
+                            <ClipboardList className="size-5 text-emerald-700" />
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    Riwayat panen dan jurnal
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    Catatan panen terakhir yang tersimpan.
+                                </p>
+                            </div>
+                        </div>
+                        {harvests.length === 0 ? (
+                            <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">
+                                Belum ada catatan panen.
+                            </p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[700px] text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b border-slate-200 text-xs tracking-wide text-slate-500 uppercase">
+                                            <th className="py-3 pr-4">
+                                                Tanggal
+                                            </th>
+                                            <th className="py-3 pr-4">Batch</th>
+                                            <th className="py-3 pr-4">
+                                                Gelombang
+                                            </th>
+                                            <th className="py-3 pr-4">Berat</th>
+                                            <th className="py-3 pr-4">
+                                                Kualitas
+                                            </th>
+                                            <th className="py-3 pr-4">
+                                                Catatan
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {harvests.map((item) => (
+                                            <tr
+                                                key={item.id}
+                                                className="border-b border-slate-100 align-top"
+                                            >
+                                                <td className="py-3 pr-4 whitespace-nowrap">
+                                                    {new Date(
+                                                        item.harvested_at,
+                                                    ).toLocaleDateString(
+                                                        'id-ID',
+                                                    )}
+                                                </td>
+                                                <td className="py-3 pr-4">
+                                                    {item.batch?.name ??
+                                                        'Batch'}
+                                                </td>
+                                                <td className="py-3 pr-4">
+                                                    {item.flush_number}
+                                                </td>
+                                                <td className="py-3 pr-4 font-semibold">
+                                                    {Number(
+                                                        item.weight_kg,
+                                                    ).toLocaleString('id-ID', {
+                                                        maximumFractionDigits: 3,
+                                                    })}{' '}
+                                                    kg
+                                                </td>
+                                                <td className="py-3 pr-4">
+                                                    {item.quality ?? '—'}
+                                                </td>
+                                                <td className="py-3 pr-4 whitespace-pre-wrap">
+                                                    {item.notes || '—'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </section>
                 </div>
             </div>
@@ -214,10 +857,45 @@ export default function Cultivation() {
     );
 }
 
-const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100';
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return <label className="block min-w-0 text-sm font-medium text-slate-700"><span className="mb-1.5 block">{label}</span>{children}</label>;
+const inputClass =
+    'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100';
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <label className="block min-w-0 text-sm font-medium text-slate-700">
+            <span className="mb-1.5 block">{label}</span>
+            {children}
+        </label>
+    );
 }
-function SummaryCard({ icon, label, value, detail }: { icon: React.ReactNode; label: string; value: string; detail: string }) {
-    return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><p className="text-sm font-medium text-slate-500">{label}</p><span className="rounded-xl bg-emerald-50 p-2 text-emerald-700">{icon}</span></div><p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{value}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></article>;
+function SummaryCard({
+    icon,
+    label,
+    value,
+    detail,
+}: {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    detail: string;
+}) {
+    return (
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-500">{label}</p>
+                <span className="rounded-xl bg-emerald-50 p-2 text-emerald-700">
+                    {icon}
+                </span>
+            </div>
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">
+                {value}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{detail}</p>
+        </article>
+    );
 }

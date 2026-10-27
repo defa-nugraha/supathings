@@ -256,10 +256,11 @@ export default function Monitoring() {
             .then((response) => (response.ok ? response.json() : null))
             .then((payload) => {
                 if (!Array.isArray(payload?.data)) return;
-                const devices = payload.data.filter(
-                    (item: { mac_address?: string; name?: string }) =>
-                        item.mac_address && item.name,
-                )
+                const devices = payload.data
+                    .filter(
+                        (item: { mac_address?: string; name?: string }) =>
+                            item.mac_address && item.name,
+                    )
                     .map((item: { mac_address: string; name: string }) => ({
                         id: item.mac_address,
                         name: item.name,

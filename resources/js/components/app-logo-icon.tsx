@@ -1,12 +1,9 @@
-import type { ImgHTMLAttributes } from 'react';
-
-export default function AppLogoIcon(props: ImgHTMLAttributes<HTMLImageElement>) {
+export default function AppLogoIcon() {
     return (
         <img
-            {...props}
             src="/brand/supathings-logo.jpg"
-            alt={props.alt ?? 'Supathings'}
-            className={props.className ?? 'size-9 object-contain'}
+            alt="Supathings"
+            className="size-9 object-contain"
         />
     );
 }

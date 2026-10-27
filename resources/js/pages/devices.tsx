@@ -277,9 +277,18 @@ export default function Devices() {
                                     <div className="mt-3 flex gap-2">
                                         <button
                                             onClick={() => {
-                                                void navigator.clipboard?.writeText(issuedToken)
-                                                    .then(() => setNotice('Token berhasil disalin ke clipboard.'))
-                                                    .catch(() => setNotice('Token gagal disalin. Silakan salin token secara manual.'));
+                                                void navigator.clipboard
+                                                    ?.writeText(issuedToken)
+                                                    .then(() =>
+                                                        setNotice(
+                                                            'Token berhasil disalin ke clipboard.',
+                                                        ),
+                                                    )
+                                                    .catch(() =>
+                                                        setNotice(
+                                                            'Token gagal disalin. Silakan salin token secara manual.',
+                                                        ),
+                                                    );
                                             }}
                                             className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
                                         >
@@ -530,10 +539,20 @@ export default function Devices() {
                 </div>
             </div>
             {pendingDelete && (
-                <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4" role="presentation">
-                    <section role="alertdialog" aria-modal="true" aria-labelledby="delete-device-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                <div
+                    className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4"
+                    role="presentation"
+                >
+                    <section
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-device-title"
+                        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                    >
                         <h2 id="delete-device-title" className="text-lg font-semibold text-slate-900">Hapus device dari daftar?</h2>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-600">Apakah Anda yakin ingin menghapus “{pendingDelete.name}” dari daftar perangkat pada tampilan ini?</p>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                            Apakah Anda yakin ingin menghapus “{pendingDelete.name}” dari daftar perangkat pada tampilan ini?
+                        </p>
                         <div className="mt-6 flex justify-end gap-2">
                             <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
                             <button onClick={() => {

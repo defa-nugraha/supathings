@@ -13,11 +13,9 @@ class StoreSensorReading implements ShouldQueue
     use Dispatchable, Queueable;
 
     /**
-     * @param array<string, mixed> $reading
+     * @param  array<string, mixed>  $reading
      */
-    public function __construct(public int $deviceId, public array $reading)
-    {
-    }
+    public function __construct(public int $deviceId, public array $reading) {}
 
     public function handle(): void
     {

@@ -9,7 +9,6 @@ use App\Models\ControlRule;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -69,10 +68,10 @@ class IotDeviceController extends Controller
     public function rules(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'device_id' => ['required', 'integer'],
+            'device_id' => ['required'],
             'rules' => ['required', 'array'],
         ]);
-        $device = IotDevice::query()->where('id', $data['device_id'])->where('user_id', $request->user()->id)->firstOrFail();
+        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void { $query->where('id', $data['device_id']); if (is_string($data['device_id'])) { $query->orWhere('mac_address', Str::upper($data['device_id'])); } })->firstOrFail();
         $map = [
             'temperature' => ['temperatureMin', 'temperatureMax'],
             'humidity' => ['humidityMin', 'humidityMax'],
@@ -100,12 +99,12 @@ class IotDeviceController extends Controller
     public function command(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'device_id' => ['required', 'integer'],
+            'device_id' => ['required'],
             'actuator' => ['required', Rule::in(['mist', 'water', 'blower'])],
             'state' => ['required', Rule::in(['on', 'off'])],
             'mode' => ['sometimes', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->whereKey($data['device_id'])->where('user_id', $request->user()->id)->firstOrFail();
+        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void { $query->where('id', $data['device_id']); if (is_string($data['device_id'])) { $query->orWhere('mac_address', Str::upper($data['device_id'])); } })->firstOrFail();
         $command = ActuatorCommand::query()->create([
             'iot_device_id' => $device->id,
             'actuator' => $data['actuator'],

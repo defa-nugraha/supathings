@@ -227,6 +227,8 @@ export default function Monitoring() {
     const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
     const [dragId, setDragId] = useState<string | null>(null);
     const [showAdd, setShowAdd] = useState(false);
+    const [editingLayout, setEditingLayout] = useState(false);
+    const [pendingDelete, setPendingDelete] = useState<Widget | null>(null);
     const [editing, setEditing] = useState<Widget | null>(null);
     const [thresholds, setThresholds] = useState({
         temperatureMin: '24',
@@ -515,6 +517,13 @@ export default function Monitoring() {
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                onClick={() => setEditingLayout((value) => !value)}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                <Settings2 className="size-4" />
+                                {editingLayout ? 'Selesai edit layout' : 'Edit layout'}
+                            </button>
                             <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                                 <span className="text-slate-500">Device</span>
                                 <select
@@ -548,13 +557,15 @@ export default function Monitoring() {
                                           : 'Offline / demo'}
                                 </span>
                             </div>
-                            <button
-                                onClick={() => setShowAdd(true)}
-                                className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
-                            >
-                                <Plus className="size-4" />
-                                Tambah card
-                            </button>
+                            {editingLayout && (
+                                <button
+                                    onClick={() => setShowAdd(true)}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                                >
+                                    <Plus className="size-4" />
+                                    Tambah card
+                                </button>
+                            )}
                         </div>
                     </div>
                     {notice && (
@@ -612,19 +623,50 @@ export default function Monitoring() {
                             </button>
                         </div>
                     </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800">
+                                    Mode kontrol
+                                </p>
+                                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
+                                    Mode manual memberi kendali langsung. Dalam
+                                    mode otomatis, server mengevaluasi ambang
+                                    batas yang tersimpan. Pastikan aktuator
+                                    memiliki batas waktu aman saat koneksi
+                                    terputus.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white p-1">
+                            <button
+                                onClick={() => void saveMode('manual')}
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                Manual
+                            </button>
+                            <button
+                                onClick={() => void saveMode('automatic')}
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${!manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                                Otomatis
+                            </button>
+                        </div>
+                    </div>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                         {widgets.map((widget) => (
                             <section
                                 key={widget.id}
-                                draggable
-                                onDragStart={() => setDragId(widget.id)}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={() => moveWidget(widget.id)}
+                                draggable={editingLayout}
+                                onDragStart={() => editingLayout && setDragId(widget.id)}
+                                onDragOver={(e) => editingLayout && e.preventDefault()}
+                                onDrop={() => editingLayout && moveWidget(widget.id)}
                                 className="group min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.025)] transition hover:border-slate-300 hover:shadow-sm"
                             >
                                 <header className="mb-4 flex items-start justify-between gap-2">
                                     <div className="flex min-w-0 items-center gap-2">
-                                        <GripVertical className="size-4 shrink-0 cursor-grab text-slate-300 opacity-0 group-hover:opacity-100" />
+                                        {editingLayout && <GripVertical className="size-4 shrink-0 cursor-grab text-slate-300" />}
                                         <div className="min-w-0">
                                             <h2 className="truncate font-semibold text-slate-800">
                                                 {widget.title}
@@ -642,29 +684,24 @@ export default function Monitoring() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex shrink-0 items-center gap-1">
-                                        <button
-                                            title="Pengaturan card"
-                                            onClick={() => setEditing(widget)}
-                                            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                                        >
-                                            <Settings2 className="size-4" />
-                                        </button>
-                                        <button
-                                            title="Hapus card"
-                                            onClick={() =>
-                                                setWidgets((prev) =>
-                                                    prev.filter(
-                                                        (w) =>
-                                                            w.id !== widget.id,
-                                                    ),
-                                                )
-                                            }
-                                            className="rounded-lg p-2 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
-                                        >
-                                            <Trash2 className="size-4" />
-                                        </button>
-                                    </div>
+                                    {editingLayout && (
+                                        <div className="flex shrink-0 items-center gap-1">
+                                            <button
+                                                title="Pengaturan card"
+                                                onClick={() => setEditing(widget)}
+                                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                            >
+                                                <Settings2 className="size-4" />
+                                            </button>
+                                            <button
+                                                title="Hapus card"
+                                                onClick={() => setPendingDelete(widget)}
+                                                className="rounded-lg p-2 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </header>
                                 {(widget.kind === 'temperature' ||
                                     widget.kind === 'humidity' ||
@@ -891,39 +928,25 @@ export default function Monitoring() {
                             </section>
                         ))}
                     </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-                        <div className="flex items-start gap-3">
-                            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
-                            <div>
-                                <p className="text-sm font-semibold text-slate-800">
-                                    Mode kontrol
-                                </p>
-                                <p className="mt-0.5 text-xs leading-relaxed text-slate-600">
-                                    Mode manual memberi kendali langsung. Dalam
-                                    mode otomatis, server mengevaluasi ambang
-                                    batas yang tersimpan. Pastikan aktuator
-                                    memiliki batas waktu aman saat koneksi
-                                    terputus.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white p-1">
-                            <button
-                                onClick={() => void saveMode('manual')}
-                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
-                            >
-                                Manual
-                            </button>
-                            <button
-                                onClick={() => void saveMode('automatic')}
-                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${!manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
-                            >
-                                Otomatis
-                            </button>
-                        </div>
-                    </div>
+
                 </div>
             </div>
+            {pendingDelete && (
+                <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4" role="presentation">
+                    <section role="alertdialog" aria-modal="true" aria-labelledby="delete-widget-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <h2 id="delete-widget-title" className="text-lg font-semibold text-slate-900">Hapus card?</h2>
+                        <p className="mt-2 text-sm text-slate-600">Apakah Anda yakin ingin menghapus card “{pendingDelete.title}” dari layout perangkat ini?</p>
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
+                            <button onClick={() => {
+                                setWidgets((prev) => prev.filter((widget) => widget.id !== pendingDelete.id));
+                                setPendingDelete(null);
+                                setNotice('Card berhasil dihapus dari layout.');
+                            }} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Ya, hapus card</button>
+                        </div>
+                    </section>
+                </div>
+            )}
             {showAdd && (
                 <div
                     className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
@@ -1147,3 +1170,7 @@ export default function Monitoring() {
         </>
     );
 }
+
+Monitoring.layout = {
+    breadcrumbs: [{ title: 'Monitoring & kontrol', href: '/monitoring' }],
+};

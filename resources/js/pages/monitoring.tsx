@@ -256,11 +256,10 @@ export default function Monitoring() {
             .then((response) => (response.ok ? response.json() : null))
             .then((payload) => {
                 if (!Array.isArray(payload?.data)) return;
-                const devices = payload.data
-                        .filter(
-                        (item: { mac_address?: string; name?: string }) =>
-                            item.mac_address && item.name,
-                    )
+                const devices = payload.data.filter(
+                    (item: { mac_address?: string; name?: string }) =>
+                        item.mac_address && item.name,
+                )
                     .map((item: { mac_address: string; name: string }) => ({
                         id: item.mac_address,
                         name: item.name,
@@ -541,7 +540,11 @@ export default function Monitoring() {
             }
             setNotice('Pengaturan ambang batas berhasil disimpan.');
         } catch (error) {
-            setNotice(error instanceof Error ? error.message : 'Pengaturan ambang batas gagal disimpan.');
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Pengaturan ambang batas gagal disimpan.',
+            );
         }
     };
     const saveWidget = () => {
@@ -638,8 +641,8 @@ export default function Monitoring() {
                                     value={deviceId}
                                     onChange={(event) => {
                                         const selectedDevice = availableDevices.find(
-                        (item) => item.id === event.target.value,
-                    );
+                                            (item) => item.id === event.target.value,
+                                        );
                                         if (!selectedDevice) return;
                                         setDevice(selectedDevice.name);
                                         setDeviceId(selectedDevice.id);
@@ -773,8 +776,12 @@ export default function Monitoring() {
                             <section
                                 key={widget.id}
                                 draggable={editingLayout}
-                                onDragStart={() => editingLayout && setDragId(widget.id)}
-                                onDragOver={(e) => editingLayout && e.preventDefault()}
+                                onDragStart={() =>
+                                    editingLayout && setDragId(widget.id)
+                                }
+                                onDragOver={(event) =>
+                                    editingLayout && event.preventDefault()
+                                }
                                 onDrop={() => editingLayout && moveWidget(widget.id)}
                                 className="group min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.025)] transition hover:border-slate-300 hover:shadow-sm"
                             >

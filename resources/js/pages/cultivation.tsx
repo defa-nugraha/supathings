@@ -10,7 +10,13 @@ import {
     Wheat,
 } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 type Batch = {
     id: number;
@@ -269,7 +275,8 @@ export default function Cultivation() {
                                 Budidaya jamur tiram
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
-                                Kelola umur baglog, fase budidaya, panen, dan kondisi kumbung.
+                                Kelola umur baglog, fase budidaya, panen, dan
+                                kondisi kumbung.
                             </p>
                         </div>
                         <button
@@ -378,9 +385,19 @@ export default function Cultivation() {
                         />
                     </section>
 
-                    <Dialog open={showBatchForm} onOpenChange={setShowBatchForm}>
-<DialogContent className="sm:max-w-3xl"><DialogHeader><DialogTitle>Batch budidaya baru</DialogTitle><DialogDescription>Masukkan informasi awal kelompok baglog yang akan dipantau.</DialogDescription></DialogHeader>
-<form
+                    <Dialog
+                        open={showBatchForm}
+                        onOpenChange={setShowBatchForm}
+                    >
+                        <DialogContent className="sm:max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle>Batch budidaya baru</DialogTitle>
+                                <DialogDescription>
+                                    Masukkan informasi awal kelompok baglog yang
+                                    akan dipantau.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form
                                 onSubmit={createBatch}
                                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                             >
@@ -604,8 +621,38 @@ export default function Cultivation() {
                             )}
                         </section>
 
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900">Panen</h2><p className="mt-1 text-sm text-slate-500">Catat berat dan kualitas panen melalui formulir.</p></div><button type="button" onClick={() => setShowHarvestForm(true)} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"><Plus className="size-4"/> Catat panen</button></div></section><Dialog open={showHarvestForm} onOpenChange={setShowHarvestForm}>
-<DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Catat panen</DialogTitle><DialogDescription>Catat hasil panen pada salah satu batch budidaya.</DialogDescription></DialogHeader>
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-slate-900">
+                                        Panen
+                                    </h2>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Catat berat dan kualitas panen melalui
+                                        formulir.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowHarvestForm(true)}
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                                >
+                                    <Plus className="size-4" /> Catat panen
+                                </button>
+                            </div>
+                        </section>
+                        <Dialog
+                            open={showHarvestForm}
+                            onOpenChange={setShowHarvestForm}
+                        >
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Catat panen</DialogTitle>
+                                    <DialogDescription>
+                                        Catat hasil panen pada salah satu batch
+                                        budidaya.
+                                    </DialogDescription>
+                                </DialogHeader>
                                 <form
                                     onSubmit={createHarvest}
                                     className="space-y-3"
@@ -757,13 +804,9 @@ export default function Cultivation() {
                                             : 'Simpan catatan panen'}
                                     </button>
                                 </form>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogContent>
+                        </Dialog>
                     </div>
-
-                    
-
-                    
                 </div>
             </div>
         </>

@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { Activity, ChevronDown, Cpu, History, LayoutDashboard, NotebookPen, Sprout } from 'lucide-react';
+import {
+    Activity,
+    ChevronDown,
+    Cpu,
+    History,
+    LayoutDashboard,
+    NotebookPen,
+    Sprout,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -11,7 +19,11 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 
 const mainNavItems = [
@@ -55,8 +67,75 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     ))}
-                    <Collapsible defaultOpen={isCurrentUrl('/cultivation') || isCurrentUrl('/cultivation/history') || isCurrentUrl('/cultivation/journal')} className="group/cultivation">
-                        <SidebarMenuItem><CollapsibleTrigger asChild><SidebarMenuButton isActive={isCurrentUrl('/cultivation') || isCurrentUrl('/cultivation/history') || isCurrentUrl('/cultivation/journal')} tooltip={{ children: 'Budidaya jamur' }} className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"><Sprout className="size-[18px]"/><span>Budidaya jamur</span><ChevronDown className="ml-auto size-4"/></SidebarMenuButton></CollapsibleTrigger><CollapsibleContent><div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3"><SidebarMenuButton asChild isActive={isCurrentUrl('/cultivation')} className="h-9 rounded-lg text-sm"><Link href="/cultivation" prefetch><Sprout className="size-4"/><span>Ringkasan</span></Link></SidebarMenuButton><SidebarMenuButton asChild isActive={isCurrentUrl('/cultivation/history')} className="h-9 rounded-lg text-sm"><Link href="/cultivation/history" prefetch><History className="size-4"/><span>Riwayat panen</span></Link></SidebarMenuButton><SidebarMenuButton asChild isActive={isCurrentUrl('/cultivation/journal')} className="h-9 rounded-lg text-sm"><Link href="/cultivation/journal" prefetch><NotebookPen className="size-4"/><span>Jurnal budidaya</span></Link></SidebarMenuButton></div></CollapsibleContent></SidebarMenuItem>
+                    <Collapsible
+                        defaultOpen={
+                            isCurrentUrl('/cultivation') ||
+                            isCurrentUrl('/cultivation/history') ||
+                            isCurrentUrl('/cultivation/journal')
+                        }
+                        className="group/cultivation"
+                    >
+                        <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                                <SidebarMenuButton
+                                    isActive={
+                                        isCurrentUrl('/cultivation') ||
+                                        isCurrentUrl('/cultivation/history') ||
+                                        isCurrentUrl('/cultivation/journal')
+                                    }
+                                    tooltip={{ children: 'Budidaya jamur' }}
+                                    className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
+                                >
+                                    <Sprout className="size-[18px]" />
+                                    <span>Budidaya jamur</span>
+                                    <ChevronDown className="ml-auto size-4" />
+                                </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                                <div className="mt-1 ml-4 space-y-1 border-l border-slate-200 pl-3">
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isCurrentUrl('/cultivation')}
+                                        className="h-9 rounded-lg text-sm"
+                                    >
+                                        <Link href="/cultivation" prefetch>
+                                            <Sprout className="size-4" />
+                                            <span>Ringkasan</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isCurrentUrl(
+                                            '/cultivation/history',
+                                        )}
+                                        className="h-9 rounded-lg text-sm"
+                                    >
+                                        <Link
+                                            href="/cultivation/history"
+                                            prefetch
+                                        >
+                                            <History className="size-4" />
+                                            <span>Riwayat panen</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isCurrentUrl(
+                                            '/cultivation/journal',
+                                        )}
+                                        className="h-9 rounded-lg text-sm"
+                                    >
+                                        <Link
+                                            href="/cultivation/journal"
+                                            prefetch
+                                        >
+                                            <NotebookPen className="size-4" />
+                                            <span>Jurnal budidaya</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </div>
+                            </CollapsibleContent>
+                        </SidebarMenuItem>
                     </Collapsible>
                 </SidebarMenu>
             </SidebarContent>

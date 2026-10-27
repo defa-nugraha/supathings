@@ -257,7 +257,7 @@ export default function Monitoring() {
             .then((payload) => {
                 if (!Array.isArray(payload?.data)) return;
                 const devices = payload.data
-                    .filter(
+                        .filter(
                         (item: { mac_address?: string; name?: string }) =>
                             item.mac_address && item.name,
                     )
@@ -443,15 +443,32 @@ export default function Monitoring() {
                     mode: 'manual',
                 }),
             });
-            if (!response.ok) throw new Error('Server gagal menerima perintah aktuator.');
+            if (!response.ok) {
+                throw new Error('Server gagal menerima perintah aktuator.');
+            }
             setActuators((prev) => {
                 const next = { ...prev, [key]: enabled };
-                window.localStorage.setItem(`supathings:${deviceId}:actuators`, JSON.stringify(next));
+                window.localStorage.setItem(
+                    `supathings:${deviceId}:actuators`,
+                    JSON.stringify(next),
+                );
                 return next;
             });
-            setNotice(`Perintah ${key === 'mist' ? 'pompa mist' : key === 'water' ? 'pompa water' : 'blower'} ${enabled ? 'ON' : 'OFF'} berhasil dikirim.`);
+            const actuatorLabel =
+                key === 'mist'
+                    ? 'pompa mist'
+                    : key === 'water'
+                      ? 'pompa water'
+                      : 'blower';
+            setNotice(
+                `Perintah ${actuatorLabel} ${enabled ? 'ON' : 'OFF'} berhasil dikirim.`,
+            );
         } catch (error) {
-            setNotice(error instanceof Error ? error.message : 'Perintah aktuator gagal dikirim.');
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Perintah aktuator gagal dikirim.',
+            );
         }
     };
     const saveMode = async (mode: 'manual' | 'automatic') => {
@@ -620,7 +637,9 @@ export default function Monitoring() {
                                 <select
                                     value={deviceId}
                                     onChange={(event) => {
-                                        const selectedDevice = availableDevices.find((item) => item.id === event.target.value);
+                                        const selectedDevice = availableDevices.find(
+                        (item) => item.id === event.target.value,
+                    );
                                         if (!selectedDevice) return;
                                         setDevice(selectedDevice.name);
                                         setDeviceId(selectedDevice.id);

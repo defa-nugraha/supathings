@@ -17,6 +17,7 @@ export default function Devices() {
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>('offline');
 
     useEffect(() => {
+        void fetch('/api/devices', { headers: { Accept: 'application/json' } }).then(response => response.ok ? response.json() : null).then(payload => { if (Array.isArray(payload?.data)) setDevices(payload.data.map((d: { mac_address: string; name: string; status: string; last_seen_at?: string | null; metadata?: { sensors?: string[] } }) => ({ id: d.mac_address, name: d.name, status: d.status === 'online' ? 'online' : 'offline', lastSeen: d.last_seen_at ? new Date(d.last_seen_at).toLocaleString('id-ID') : 'Belum pernah terhubung', sensors: d.metadata?.sensors ?? ['DHT22', 'LDR'] }))); }).catch(() => undefined);
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) return;
         try {

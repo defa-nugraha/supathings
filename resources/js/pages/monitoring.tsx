@@ -35,6 +35,7 @@ type Widget = {
     min?: number;
     max?: number;
 };
+type DeviceOption = { id: string; name: string };
 type Reading = {
     temperature: number;
     humidity: number;
@@ -212,6 +213,9 @@ function TrendChart({ readings }: { readings: Reading[] }) {
 export default function Monitoring() {
     const [device, setDevice] = useState('Kumbung Utama');
     const [deviceId, setDeviceId] = useState('AA:BB:CC:DD:EE:FF');
+    const [availableDevices, setAvailableDevices] = useState<DeviceOption[]>([
+        { id: 'AA:BB:CC:DD:EE:FF', name: 'Kumbung Utama' },
+    ]);
     const [reading, setReading] = useState(initialReading);
     const [readings, setReadings] = useState<Reading[]>(
         Array.from({ length: 12 }, (_, i) => ({
@@ -246,6 +250,28 @@ export default function Monitoring() {
     const [manualMode, setManualMode] = useState(true);
     const [notice, setNotice] = useState('');
     const socket = useRef<WebSocket | null>(null);
+
+    useEffect(() => {
+        void fetch('/api/devices', { headers: { Accept: 'application/json' } })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((payload) => {
+                if (!Array.isArray(payload?.data)) return;
+                const devices = payload.data
+                    .filter((item: { mac_address?: string; name?: string }) => item.mac_address && item.name)
+                    .map((item: { mac_address: string; name: string }) => ({
+                        id: item.mac_address,
+                        name: item.name,
+                    }));
+                if (devices.length > 0) {
+                    setAvailableDevices(devices);
+                    if (!devices.some((item) => item.id === deviceId)) {
+                        setDeviceId(devices[0].id);
+                        setDevice(devices[0].name);
+                    }
+                }
+            })
+            .catch(() => undefined);
+    }, []);
 
     useEffect(() => {
         const url = import.meta.env.VITE_WS_URL as string | undefined;
@@ -352,16 +378,17 @@ export default function Monitoring() {
         const count = widgets.filter((w) => w.kind === kind).length + 1;
         const title =
             kinds.find((item) => item.kind === kind)?.label ?? 'Widget';
-        setWidgets((prev) => [
-            ...prev,
-            {
+        setWidgets((prev) => {
+            const next = [...prev, {
                 id: `${kind}-${Date.now()}`,
                 kind,
                 title: count > 1 ? `${title} ${count}` : title,
                 min: 0,
                 max: kind === 'temperature' ? 50 : 100,
-            },
-        ]);
+            }];
+            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+            return next;
+        });
         setShowAdd(false);
         setNotice('Card berhasil ditambahkan ke layout.');
     };
@@ -374,6 +401,7 @@ export default function Monitoring() {
             if (from < 0 || to < 0) return prev;
             const [moved] = next.splice(from, 1);
             next.splice(to, 0, moved);
+            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
             return next;
         });
         setDragId(null);
@@ -413,7 +441,11 @@ export default function Monitoring() {
                 }),
             });
             if (!response.ok) throw new Error('Server gagal menerima perintah aktuator.');
-            setActuators((prev) => ({ ...prev, [key]: enabled }));
+            setActuators((prev) => {
+                const next = { ...prev, [key]: enabled };
+                window.localStorage.setItem(`supathings:${deviceId}:actuators`, JSON.stringify(next));
+                return next;
+            });
             setNotice(`Perintah ${key === 'mist' ? 'pompa mist' : key === 'water' ? 'pompa water' : 'blower'} ${enabled ? 'ON' : 'OFF'} berhasil dikirim.`);
         } catch (error) {
             setNotice(error instanceof Error ? error.message : 'Perintah aktuator gagal dikirim.');
@@ -494,10 +526,11 @@ export default function Monitoring() {
     };
     const saveWidget = () => {
         if (!editing) return;
-        setWidgets((prev) =>
-            prev.map((w) => (w.id === editing.id ? editing : w)),
-        );
-        window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(widgets.map((widget) => widget.id === editing.id ? editing : widget)));
+        setWidgets((prev) => {
+            const next = prev.map((widget) => widget.id === editing.id ? editing : widget);
+            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+            return next;
+        });
         setEditing(null);
         setNotice('Pengaturan card berhasil disimpan.');
     };
@@ -507,11 +540,13 @@ export default function Monitoring() {
             const savedThresholds = window.localStorage.getItem(`supathings:${deviceId}:thresholds`);
             const savedMode = window.localStorage.getItem(`supathings:${deviceId}:mode`);
             const savedWidgets = window.localStorage.getItem(`supathings:${deviceId}:widgets`);
+            const savedActuators = window.localStorage.getItem(`supathings:${deviceId}:actuators`);
             setThresholds(savedThresholds ? JSON.parse(savedThresholds) as typeof thresholds : {
                 temperatureMin: '24', temperatureMax: '30', humidityMin: '80',
                 humidityMax: '95', lightMin: '20', lightMax: '70',
             });
             setManualMode(savedMode !== 'automatic');
+            setActuators(savedActuators ? JSON.parse(savedActuators) as typeof actuators : { mist: false, water: false, blower: false });
             if (savedWidgets) {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
                 if (widgetIds.length > 0) setWidgets(widgetIds);
@@ -555,21 +590,20 @@ export default function Monitoring() {
                             <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                                 <span className="text-slate-500">Device</span>
                                 <select
-                                    value={device}
-                                    onChange={(e) => {
-                                        setDevice(e.target.value);
-                                        setDeviceId(
-                                            e.target.value === 'Kumbung Utama'
-                                                ? 'AA:BB:CC:DD:EE:FF'
-                                                : e.target.value,
-                                        );
+                                    value={deviceId}
+                                    onChange={(event) => {
+                                        const selectedDevice = availableDevices.find((item) => item.id === event.target.value);
+                                        if (!selectedDevice) return;
+                                        setDevice(selectedDevice.name);
+                                        setDeviceId(selectedDevice.id);
                                     }}
-                                    className="max-w-44 bg-transparent font-medium text-slate-800 outline-none"
+                                    className="max-w-56 bg-transparent font-medium text-slate-800 outline-none"
                                 >
-                                    <option>Kumbung Utama</option>
-                                    <option value="AA:BB:CC:DD:EE:FF">
-                                        ESP32 • AA:BB:CC:DD:EE:FF
-                                    </option>
+                                    {availableDevices.map((item) => (
+                                        <option key={item.id} value={item.id}>
+                                            {item.name} · {item.id}
+                                        </option>
+                                    ))}
                                 </select>
                                 <ChevronDown className="size-4 text-slate-400" />
                             </label>
@@ -972,7 +1006,11 @@ export default function Monitoring() {
                         <div className="mt-6 flex justify-end gap-2">
                             <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
                             <button onClick={() => {
-                                setWidgets((prev) => prev.filter((widget) => widget.id !== pendingDelete.id));
+                                setWidgets((prev) => {
+                                    const next = prev.filter((widget) => widget.id !== pendingDelete.id);
+                                    window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+                                    return next;
+                                });
                                 setPendingDelete(null);
                                 setNotice('Card berhasil dihapus dari layout.');
                             }} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Ya, hapus card</button>

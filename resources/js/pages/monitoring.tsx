@@ -271,7 +271,7 @@ export default function Monitoring() {
                 }
             })
             .catch(() => undefined);
-    }, []);
+    }, [deviceId]);
 
     useEffect(() => {
         const url = import.meta.env.VITE_WS_URL as string | undefined;

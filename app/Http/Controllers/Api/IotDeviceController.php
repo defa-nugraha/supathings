@@ -22,7 +22,9 @@ class IotDeviceController extends Controller
 
     public function readings(Request $request, string $device): JsonResponse
     {
-        $iotDevice = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($device): void { $query->where('id', $device)->orWhere('mac_address', Str::upper($device)); })->firstOrFail();
+        $iotDevice = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($device): void {
+            $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+        })->firstOrFail();
 
         return response()->json([
             'data' => $iotDevice->readings()->latest('measured_at')->limit(500)->get(),
@@ -82,7 +84,12 @@ class IotDeviceController extends Controller
             'device_id' => ['required'],
             'rules' => ['required', 'array'],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void { $query->where('id', $data['device_id']); if (is_string($data['device_id'])) { $query->orWhere('mac_address', Str::upper($data['device_id'])); } })->firstOrFail();
+        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+            $query->where('id', $data['device_id']);
+            if (is_string($data['device_id'])) {
+                $query->orWhere('mac_address', Str::upper($data['device_id']));
+            }
+        })->firstOrFail();
         $map = [
             'temperature' => ['temperatureMin', 'temperatureMax'],
             'humidity' => ['humidityMin', 'humidityMax'],
@@ -153,6 +160,7 @@ class IotDeviceController extends Controller
         }
 
         $hash = hash('sha256', $token);
+
         return IotDevice::query()->where('device_token_hash', $hash)->first();
     }
 }

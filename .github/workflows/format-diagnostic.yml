@@ -1,0 +1,24 @@
+name: Temporary formatter diagnostics
+
+on:
+  push:
+    branches:
+      - feat/mushroom-cultivation-mvp
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format changed page and print patch
+        run: |
+          npm run check:fix
+          git diff -- resources/js/pages/cultivation.tsx

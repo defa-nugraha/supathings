@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\ActuatorCommand;
-use App\Models\ControlRule;
 use App\Models\IotDevice;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -24,7 +23,7 @@ class EvaluateControlRules implements ShouldQueue
     {
         $device = IotDevice::query()->with('controlRules')->find($this->deviceId);
 
-        if (! $device || $device->control_mode !== 'automatic') {
+        if (!$device || $device->control_mode !== 'automatic') {
             return;
         }
 
@@ -37,7 +36,7 @@ class EvaluateControlRules implements ShouldQueue
         if ($temperature !== null && $temperatureRule?->enabled) {
             if ($temperature > $temperatureRule->maximum) {
                 $desired['blower'] = 'on';
-            } elseif ($temperature <= $temperatureRule->maximum - 1.0) {
+            } elseif ($temperature <= $temperatureRule->maximum -1.0) {
                 $desired['blower'] = 'off';
             }
         }

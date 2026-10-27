@@ -571,17 +571,38 @@ export default function Devices() {
                         aria-labelledby="delete-device-title"
                         className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
                     >
-                        <h2 id="delete-device-title" className="text-lg font-semibold text-slate-900">Hapus device dari daftar?</h2>
+                        <h2
+                            id="delete-device-title"
+                            className="text-lg font-semibold text-slate-900"
+                        >
+                            Hapus device dari daftar?
+                        </h2>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
                             Apakah Anda yakin ingin menghapus “{pendingDelete.name}” dari daftar perangkat pada tampilan ini?
                         </p>
                         <div className="mt-6 flex justify-end gap-2">
-                            <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
-                            <button onClick={() => {
-                                setDevices((prev) => prev.filter((item) => item.id !== pendingDelete.id));
-                                setPendingDelete(null);
-                                setNotice('Device berhasil dihapus dari daftar tampilan. Data server tidak dihapus.');
-                            }} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Ya, hapus</button>
+                            <button
+                                onClick={() => setPendingDelete(null)}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setDevices((prev) =>
+                                        prev.filter(
+                                            (item) => item.id !== pendingDelete.id,
+                                        ),
+                                    );
+                                    setPendingDelete(null);
+                                    setNotice(
+                                        'Device berhasil dihapus dari daftar tampilan. Data server tidak dihapus.',
+                                    );
+                                }}
+                                className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
+                            >
+                                Ya, hapus
+                            </button>
                         </div>
                     </section>
                 </div>

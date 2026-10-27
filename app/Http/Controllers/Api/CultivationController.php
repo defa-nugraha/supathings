@@ -107,7 +107,7 @@ class CultivationController extends Controller
 
         $alerts = [];
         foreach ($devices as $device) {
-            if (! $device->last_seen_at || $device->last_seen_at->lt(now()->subMinutes(5))) {
+            if (! $device->last_seen_at || strtotime($device->last_seen_at) < now()->subMinutes(5)->timestamp) {
                 $alerts[] = [
                     'key' => 'offline-'.$device->id,
                     'severity' => 'warning',

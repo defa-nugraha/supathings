@@ -57,7 +57,7 @@ class IotDeviceController extends Controller
     public function telemetry(Request $request): JsonResponse
     {
         $device = $this->deviceFromToken($request);
-        if (! $device) {
+        if (!$device) {
             return response()->json(['message' => 'Device token tidak valid.'], 401);
         }
 
@@ -97,7 +97,7 @@ class IotDeviceController extends Controller
         ];
 
         foreach ($map as $parameter => [$minKey, $maxKey]) {
-            if (! isset($data['rules'][$minKey], $data['rules'][$maxKey])) {
+            if (!isset($data['rules'][$minKey], $data['rules'][$maxKey])) {
                 continue;
             }
             $minimum = filter_var($data['rules'][$minKey], FILTER_VALIDATE_FLOAT);
@@ -155,7 +155,7 @@ class IotDeviceController extends Controller
     private function deviceFromToken(Request $request): ?IotDevice
     {
         $token = $request->bearerToken();
-        if (! $token) {
+        if (!$token) {
             return null;
         }
 

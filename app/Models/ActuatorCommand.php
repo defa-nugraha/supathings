@@ -14,6 +14,7 @@ class ActuatorCommand extends Model
         return ['acknowledged_at' => 'datetime', 'metadata' => 'array'];
     }
 
+    /** @return BelongsTo<IotDevice, $this> */
     public function device(): BelongsTo
     {
         return $this->belongsTo(IotDevice::class, 'iot_device_id');

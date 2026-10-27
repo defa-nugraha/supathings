@@ -14,6 +14,7 @@ class SensorReading extends Model
         return ['temperature' => 'float', 'humidity' => 'float', 'light_percent' => 'float', 'payload' => 'array', 'measured_at' => 'datetime'];
     }
 
+    /** @return BelongsTo<IotDevice, $this> */
     public function device(): BelongsTo
     {
         return $this->belongsTo(IotDevice::class, 'iot_device_id');

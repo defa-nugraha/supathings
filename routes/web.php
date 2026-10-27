@@ -14,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('api/iot')->name('iot.')->group(function () {
         Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
-        Route::delete('devices/{device}', [DeviceController::class, 'destroy'])->name('devices.destroy');
+        Route::delete('devices/{device}', [DeviceController::class, 'destroy'])->name('devices.destroy');\n        Route::post('devices/{device}/commands', [ActuatorCommandController::class, 'store'])->name('commands.store');
         Route::get('devices/{device}/readings', [SensorReadingController::class, 'index'])->name('readings.index');
         Route::get('devices/{device}/thresholds', [ThresholdController::class, 'show'])->name('thresholds.show');
         Route::put('devices/{device}/thresholds', [ThresholdController::class, 'update'])->name('thresholds.update');

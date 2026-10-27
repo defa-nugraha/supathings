@@ -277,9 +277,9 @@ export default function Devices() {
                                     <div className="mt-3 flex gap-2">
                                         <button
                                             onClick={() => {
-                                                void navigator.clipboard?.writeText(
-                                                    issuedToken,
-                                                );
+                                                void navigator.clipboard?.writeText(issuedToken)
+                                                    .then(() => setNotice('Token berhasil disalin ke clipboard.'))
+                                                    .catch(() => setNotice('Token gagal disalin. Silakan salin token secara manual.'));
                                             }}
                                             className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
                                         >

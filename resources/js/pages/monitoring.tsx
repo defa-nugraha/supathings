@@ -377,18 +377,24 @@ export default function Monitoring() {
     }, [deviceId]);
 
     const addWidget = (kind: WidgetKind) => {
-        const count = widgets.filter((w) => w.kind === kind).length + 1;
+        const count = widgets.filter((widget) => widget.kind === kind).length + 1;
         const title =
             kinds.find((item) => item.kind === kind)?.label ?? 'Widget';
         setWidgets((prev) => {
-            const next = [...prev, {
-                id: `${kind}-${Date.now()}`,
-                kind,
-                title: count > 1 ? `${title} ${count}` : title,
-                min: 0,
-                max: kind === 'temperature' ? 50 : 100,
-            }];
-            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+            const next = [
+                ...prev,
+                {
+                    id: `${kind}-${Date.now()}`,
+                    kind,
+                    title: count > 1 ? `${title} ${count}` : title,
+                    min: 0,
+                    max: kind === 'temperature' ? 50 : 100,
+                },
+            ];
+            window.localStorage.setItem(
+                `supathings:${deviceId}:widgets`,
+                JSON.stringify(next),
+            );
             return next;
         });
         setShowAdd(false);
@@ -403,7 +409,10 @@ export default function Monitoring() {
             if (from < 0 || to < 0) return prev;
             const [moved] = next.splice(from, 1);
             next.splice(to, 0, moved);
-            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+            window.localStorage.setItem(
+                `supathings:${deviceId}:widgets`,
+                JSON.stringify(next),
+            );
             return next;
         });
         setDragId(null);
@@ -1053,21 +1062,54 @@ export default function Monitoring() {
                 </div>
             </div>
             {pendingDelete && (
-                <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4" role="presentation">
-                    <section role="alertdialog" aria-modal="true" aria-labelledby="delete-widget-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-                        <h2 id="delete-widget-title" className="text-lg font-semibold text-slate-900">Hapus card?</h2>
-                        <p className="mt-2 text-sm text-slate-600">Apakah Anda yakin ingin menghapus card “{pendingDelete.title}” dari layout perangkat ini?</p>
+                <div
+                    className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4"
+                    role="presentation"
+                >
+                    <section
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-labelledby="delete-widget-title"
+                        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                    >
+                        <h2
+                            id="delete-widget-title"
+                            className="text-lg font-semibold text-slate-900"
+                        >
+                            Hapus card?
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-600">
+                            Apakah Anda yakin ingin menghapus card “{pendingDelete.title}” dari layout perangkat ini?
+                        </p>
                         <div className="mt-6 flex justify-end gap-2">
-                            <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
-                            <button onClick={() => {
-                                setWidgets((prev) => {
-                                    const next = prev.filter((widget) => widget.id !== pendingDelete.id);
-                                    window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
-                                    return next;
-                                });
-                                setPendingDelete(null);
-                                setNotice('Card berhasil dihapus dari layout.');
-                            }} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Ya, hapus card</button>
+                            <button
+                                onClick={() => setPendingDelete(null)}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setWidgets((prev) => {
+                                        const next = prev.filter(
+                                            (widget) =>
+                                                widget.id !== pendingDelete.id,
+                                        );
+                                        window.localStorage.setItem(
+                                            `supathings:${deviceId}:widgets`,
+                                            JSON.stringify(next),
+                                        );
+                                        return next;
+                                    });
+                                    setPendingDelete(null);
+                                    setNotice(
+                                        'Card berhasil dihapus dari layout.',
+                                    );
+                                }}
+                                className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
+                            >
+                                Ya, hapus card
+                            </button>
                         </div>
                     </section>
                 </div>

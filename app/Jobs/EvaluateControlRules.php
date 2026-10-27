@@ -23,7 +23,7 @@ class EvaluateControlRules implements ShouldQueue
     {
         $device = IotDevice::query()->with('controlRules')->find($this->deviceId);
 
-        if (!$device || $device->control_mode !== 'automatic') {
+        if (! $device || $device->control_mode !== 'automatic') {
             return;
         }
 

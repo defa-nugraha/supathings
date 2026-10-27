@@ -246,6 +246,7 @@ export default function Monitoring() {
     const socket = useRef<WebSocket | null>(null);
 
     useEffect(() => {
+        const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (deviceId) {
             void fetch(
                 `/api/devices/${encodeURIComponent(deviceId)}/readings`,

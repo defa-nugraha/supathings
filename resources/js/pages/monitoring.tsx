@@ -378,7 +378,8 @@ export default function Monitoring() {
     }, [deviceId]);
 
     const addWidget = (kind: WidgetKind) => {
-        const count = widgets.filter((widget) => widget.kind === kind).length + 1;
+        const count =
+            widgets.filter((widget) => widget.kind === kind).length + 1;
         const title =
             kinds.find((item) => item.kind === kind)?.label ?? 'Widget';
         setWidgets((prev) => {
@@ -538,7 +539,10 @@ export default function Monitoring() {
             if (!response.ok) {
                 throw new Error('Server gagal menyimpan ambang batas.');
             }
-            window.localStorage.setItem(`supathings:${deviceId}:thresholds`, JSON.stringify(thresholds));
+            window.localStorage.setItem(
+                `supathings:${deviceId}:thresholds`,
+                JSON.stringify(thresholds),
+            );
             if (socket.current?.readyState === WebSocket.OPEN) {
                 socket.current.send(
                     JSON.stringify({
@@ -654,9 +658,12 @@ export default function Monitoring() {
                                 <select
                                     value={deviceId}
                                     onChange={(event) => {
-                                        const selectedDevice = availableDevices.find(
-                                            (item) => item.id === event.target.value,
-                                        );
+                                        const selectedDevice =
+                                            availableDevices.find(
+                                                (item) =>
+                                                    item.id ===
+                                                    event.target.value,
+                                            );
                                         if (!selectedDevice) return;
                                         setDevice(selectedDevice.name);
                                         setDeviceId(selectedDevice.id);
@@ -818,12 +825,16 @@ export default function Monitoring() {
                                 onDragOver={(event) =>
                                     editingLayout && event.preventDefault()
                                 }
-                                onDrop={() => editingLayout && moveWidget(widget.id)}
+                                onDrop={() =>
+                                    editingLayout && moveWidget(widget.id)
+                                }
                                 className="group min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.025)] transition hover:border-slate-300 hover:shadow-sm"
                             >
                                 <header className="mb-4 flex items-start justify-between gap-2">
                                     <div className="flex min-w-0 items-center gap-2">
-                                        {editingLayout && <GripVertical className="size-4 shrink-0 cursor-grab text-slate-300" />}
+                                        {editingLayout && (
+                                            <GripVertical className="size-4 shrink-0 cursor-grab text-slate-300" />
+                                        )}
                                         <div className="min-w-0">
                                             <h2 className="truncate font-semibold text-slate-800">
                                                 {widget.title}
@@ -845,14 +856,18 @@ export default function Monitoring() {
                                         <div className="flex shrink-0 items-center gap-1">
                                             <button
                                                 title="Pengaturan card"
-                                                onClick={() => setEditing(widget)}
+                                                onClick={() =>
+                                                    setEditing(widget)
+                                                }
                                                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                                             >
                                                 <Settings2 className="size-4" />
                                             </button>
                                             <button
                                                 title="Hapus card"
-                                                onClick={() => setPendingDelete(widget)}
+                                                onClick={() =>
+                                                    setPendingDelete(widget)
+                                                }
                                                 className="rounded-lg p-2 text-slate-300 hover:bg-rose-50 hover:text-rose-600"
                                             >
                                                 <Trash2 className="size-4" />
@@ -1085,7 +1100,6 @@ export default function Monitoring() {
                             </section>
                         ))}
                     </div>
-
                 </div>
             </div>
             {pendingDelete && (

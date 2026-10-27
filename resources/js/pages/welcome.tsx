@@ -1,28 +1,239 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Activity, ArrowRight, Cpu, Droplets, Gauge, Lightbulb, ShieldCheck, Wind } from 'lucide-react';
+import {
+    Activity,
+    ArrowRight,
+    Cpu,
+    Droplets,
+    Gauge,
+    Lightbulb,
+    ShieldCheck,
+    Wind,
+} from 'lucide-react';
 import { dashboard, login, register } from '@/routes';
 
 export default function Welcome() {
     const { auth } = usePage().props;
-    return <>
-        <Head title="Supathings — Smart Mushroom House" />
-        <div className="min-h-screen overflow-hidden bg-[#f7f9fc] text-slate-900">
-            <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
-                <img src="/brand/supathings-logo.jpg" alt="Supathings" className="h-14 w-40 object-contain object-left" />
-                <nav className="flex items-center gap-2">{auth.user ? <Link href={dashboard()} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800">Buka dashboard <ArrowRight className="size-4" /></Link> : <><Link href={login()} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white">Masuk</Link><Link href={register()} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800">Mulai sekarang</Link></>}</nav>
-            </header>
-            <main className="mx-auto max-w-7xl px-5 pb-16 pt-8 md:px-8 md:pt-16">
-                <section className="grid items-center gap-12 lg:grid-cols-[1.1fr_.9fr]">
-                    <div><div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"><span className="size-2 rounded-full bg-emerald-500" />IoT untuk kumbung jamur</div><h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-[1.12] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">Kumbung lebih terkontrol, <span className="text-blue-700">dari mana saja.</span></h1><p className="mt-5 max-w-xl text-base leading-7 text-slate-500 md:text-lg">Pantau suhu, kelembapan, dan cahaya secara realtime. Atur pompa dan blower, lalu sesuaikan ambang batas sesuai kebutuhan budidaya Anda.</p><div className="mt-8 flex flex-wrap gap-3"><Link href={auth.user ? dashboard() : register()} className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/15 transition hover:-translate-y-0.5 hover:bg-blue-800">Mulai kelola kumbung <ArrowRight className="size-4" /></Link><Link href={login()} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">Masuk ke aplikasi</Link></div><div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500"><span className="flex items-center gap-2"><ShieldCheck className="size-4 text-emerald-600" />Pengaturan per perangkat</span><span className="flex items-center gap-2"><Activity className="size-4 text-blue-600" />Monitoring realtime</span></div></div>
-                    <div className="relative"><div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-100 via-white to-emerald-100 blur-2xl" /><div className="relative rounded-[2rem] border border-white bg-white p-5 shadow-[0_24px_80px_rgba(30,64,175,0.12)] sm:p-7"><div className="flex items-center justify-between border-b border-slate-100 pb-5"><div><p className="text-xs text-slate-400">SUPATHINGS / PREVIEW</p><h2 className="mt-1 text-lg font-semibold">Kumbung Utama</h2></div><span className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"><span className="size-1.5 rounded-full bg-emerald-500" />Monitoring</span></div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl bg-blue-50/80 p-4"><div className="flex items-center justify-between text-blue-700"><ThermometerIcon /><span className="text-xs">Suhu</span></div><p className="mt-4 text-3xl font-semibold text-slate-900">27.4<span className="ml-1 text-sm font-medium text-slate-500">°C</span></p><p className="mt-1 text-xs text-emerald-700">Dalam rentang</p></div><div className="rounded-2xl bg-emerald-50/80 p-4"><div className="flex items-center justify-between text-emerald-700"><Droplets className="size-5" /><span className="text-xs">Kelembapan</span></div><p className="mt-4 text-3xl font-semibold text-slate-900">86<span className="ml-1 text-sm font-medium text-slate-500">%</span></p><p className="mt-1 text-xs text-emerald-700">Optimal</p></div></div><div className="mt-3 rounded-2xl border border-slate-100 p-4"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Kontrol aktuator</p><p className="mt-1 text-xs text-slate-400">Pompa mist · Pompa water · Blower</p></div><div className="flex -space-x-2"><span className="grid size-9 place-items-center rounded-full border-2 border-white bg-blue-50 text-blue-700"><Droplets className="size-4" /></span><span className="grid size-9 place-items-center rounded-full border-2 border-white bg-emerald-50 text-emerald-700"><Wind className="size-4" /></span><span className="grid size-9 place-items-center rounded-full border-2 border-white bg-slate-100 text-slate-500"><Cpu className="size-4" /></span></div></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-[72%] rounded-full bg-gradient-to-r from-blue-600 to-emerald-500" /></div></div><div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500"><Gauge className="size-4 text-blue-600" />Widget dashboard dapat diatur sesuai kebutuhan</div></div></div>
-                </section>
-                <section className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[{ title: 'Monitoring realtime', detail: 'Baca sensor melalui koneksi WebSocket.', Icon: Activity }, { title: 'Kontrol perangkat', detail: 'Atur pompa mist, water, dan blower.', Icon: Wind }, { title: 'Ambang batas', detail: 'Simpan aturan suhu, kelembapan, dan cahaya.', Icon: Gauge }, { title: 'Dashboard fleksibel', detail: 'Pilih widget dan susun ulang dengan drag-and-drop.', Icon: Lightbulb }].map(feature => <article key={feature.title} className="rounded-2xl border border-slate-200 bg-white p-5"><div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><feature.Icon className="size-5" /></div><h3 className="mt-4 font-semibold">{feature.title}</h3><p className="mt-2 text-sm leading-6 text-slate-500">{feature.detail}</p></article>)}</section>
-                <footer className="mt-16 border-t border-slate-200 pt-6 text-center text-xs text-slate-400">Supathings · Smart monitoring and control for mushroom cultivation</footer>
-            </main>
-        </div>
-    </>;
+    return (
+        <>
+            <Head title="Supathings — Smart Mushroom House" />
+            <div className="min-h-screen overflow-hidden bg-[#f7f9fc] text-slate-900">
+                <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
+                    <img
+                        src="/brand/supathings-logo.jpg"
+                        alt="Supathings"
+                        className="h-14 w-40 object-contain object-left"
+                    />
+                    <nav className="flex items-center gap-2">
+                        {auth.user ? (
+                            <Link
+                                href={dashboard()}
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                            >
+                                Buka dashboard <ArrowRight className="size-4" />
+                            </Link>
+                        ) : (
+                            <>
+                                <Link
+                                    href={login()}
+                                    className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-white"
+                                >
+                                    Masuk
+                                </Link>
+                                <Link
+                                    href={register()}
+                                    className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-800"
+                                >
+                                    Mulai sekarang
+                                </Link>
+                            </>
+                        )}
+                    </nav>
+                </header>
+                <main className="mx-auto max-w-7xl px-5 pt-8 pb-16 md:px-8 md:pt-16">
+                    <section className="grid items-center gap-12 lg:grid-cols-[1.1fr_.9fr]">
+                        <div>
+                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+                                <span className="size-2 rounded-full bg-emerald-500" />
+                                IoT untuk kumbung jamur
+                            </div>
+                            <h1 className="mt-6 max-w-2xl text-4xl leading-[1.12] font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                                Kumbung lebih terkontrol,{' '}
+                                <span className="text-blue-700">
+                                    dari mana saja.
+                                </span>
+                            </h1>
+                            <p className="mt-5 max-w-xl text-base leading-7 text-slate-500 md:text-lg">
+                                Pantau suhu, kelembapan, dan cahaya secara
+                                realtime. Atur pompa dan blower, lalu sesuaikan
+                                ambang batas sesuai kebutuhan budidaya Anda.
+                            </p>
+                            <div className="mt-8 flex flex-wrap gap-3">
+                                <Link
+                                    href={auth.user ? dashboard() : register()}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-700/15 transition hover:-translate-y-0.5 hover:bg-blue-800"
+                                >
+                                    Mulai kelola kumbung{' '}
+                                    <ArrowRight className="size-4" />
+                                </Link>
+                                <Link
+                                    href={login()}
+                                    className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                                >
+                                    Masuk ke aplikasi
+                                </Link>
+                            </div>
+                            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500">
+                                <span className="flex items-center gap-2">
+                                    <ShieldCheck className="size-4 text-emerald-600" />
+                                    Pengaturan per perangkat
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <Activity className="size-4 text-blue-600" />
+                                    Monitoring realtime
+                                </span>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-100 via-white to-emerald-100 blur-2xl" />
+                            <div className="relative rounded-[2rem] border border-white bg-white p-5 shadow-[0_24px_80px_rgba(30,64,175,0.12)] sm:p-7">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+                                    <div>
+                                        <p className="text-xs text-slate-400">
+                                            SUPATHINGS / PREVIEW
+                                        </p>
+                                        <h2 className="mt-1 text-lg font-semibold">
+                                            Kumbung Utama
+                                        </h2>
+                                    </div>
+                                    <span className="flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                                        Monitoring
+                                    </span>
+                                </div>
+                                <div className="mt-5 grid grid-cols-2 gap-3">
+                                    <div className="rounded-2xl bg-blue-50/80 p-4">
+                                        <div className="flex items-center justify-between text-blue-700">
+                                            <ThermometerIcon />
+                                            <span className="text-xs">
+                                                Suhu
+                                            </span>
+                                        </div>
+                                        <p className="mt-4 text-3xl font-semibold text-slate-900">
+                                            27.4
+                                            <span className="ml-1 text-sm font-medium text-slate-500">
+                                                °C
+                                            </span>
+                                        </p>
+                                        <p className="mt-1 text-xs text-emerald-700">
+                                            Dalam rentang
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl bg-emerald-50/80 p-4">
+                                        <div className="flex items-center justify-between text-emerald-700">
+                                            <Droplets className="size-5" />
+                                            <span className="text-xs">
+                                                Kelembapan
+                                            </span>
+                                        </div>
+                                        <p className="mt-4 text-3xl font-semibold text-slate-900">
+                                            86
+                                            <span className="ml-1 text-sm font-medium text-slate-500">
+                                                %
+                                            </span>
+                                        </p>
+                                        <p className="mt-1 text-xs text-emerald-700">
+                                            Optimal
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="mt-3 rounded-2xl border border-slate-100 p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-semibold">
+                                                Kontrol aktuator
+                                            </p>
+                                            <p className="mt-1 text-xs text-slate-400">
+                                                Pompa mist · Pompa water ·
+                                                Blower
+                                            </p>
+                                        </div>
+                                        <div className="flex -space-x-2">
+                                            <span className="grid size-9 place-items-center rounded-full border-2 border-white bg-blue-50 text-blue-700">
+                                                <Droplets className="size-4" />
+                                            </span>
+                                            <span className="grid size-9 place-items-center rounded-full border-2 border-white bg-emerald-50 text-emerald-700">
+                                                <Wind className="size-4" />
+                                            </span>
+                                            <span className="grid size-9 place-items-center rounded-full border-2 border-white bg-slate-100 text-slate-500">
+                                                <Cpu className="size-4" />
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+                                        <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-blue-600 to-emerald-500" />
+                                    </div>
+                                </div>
+                                <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+                                    <Gauge className="size-4 text-blue-600" />
+                                    Widget dashboard dapat diatur sesuai
+                                    kebutuhan
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {[
+                            {
+                                title: 'Monitoring realtime',
+                                detail: 'Baca sensor melalui koneksi WebSocket.',
+                                Icon: Activity,
+                            },
+                            {
+                                title: 'Kontrol perangkat',
+                                detail: 'Atur pompa mist, water, dan blower.',
+                                Icon: Wind,
+                            },
+                            {
+                                title: 'Ambang batas',
+                                detail: 'Simpan aturan suhu, kelembapan, dan cahaya.',
+                                Icon: Gauge,
+                            },
+                            {
+                                title: 'Dashboard fleksibel',
+                                detail: 'Pilih widget dan susun ulang dengan drag-and-drop.',
+                                Icon: Lightbulb,
+                            },
+                        ].map((feature) => (
+                            <article
+                                key={feature.title}
+                                className="rounded-2xl border border-slate-200 bg-white p-5"
+                            >
+                                <div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                                    <feature.Icon className="size-5" />
+                                </div>
+                                <h3 className="mt-4 font-semibold">
+                                    {feature.title}
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-slate-500">
+                                    {feature.detail}
+                                </p>
+                            </article>
+                        ))}
+                    </section>
+                    <footer className="mt-16 border-t border-slate-200 pt-6 text-center text-xs text-slate-400">
+                        Supathings · Smart monitoring and control for mushroom
+                        cultivation
+                    </footer>
+                </main>
+            </div>
+        </>
+    );
 }
 
 function ThermometerIcon() {
-    return <span className="inline-flex"><Gauge className="size-5" /></span>;
+    return (
+        <span className="inline-flex">
+            <Gauge className="size-5" />
+        </span>
+    );
 }

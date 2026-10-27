@@ -18,6 +18,7 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/cultivation/harvests', [CultivationController::class, 'harvests']);
     Route::post('/cultivation/batches/{batch}/harvests', [CultivationController::class, 'storeHarvest']);
     Route::get('/cultivation/alerts', [CultivationController::class, 'alerts']);
+    Route::get('/reports', [ReportController::class, 'index']);
 });
 
 Route::post('/telemetry', [IotDeviceController::class, 'telemetry'])->middleware('throttle:120,1');

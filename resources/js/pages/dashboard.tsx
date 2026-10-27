@@ -1,25 +1,334 @@
-import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { dashboard } from '@/routes';
+import { Head, Link } from '@inertiajs/react';
+import {
+    Activity,
+    ArrowDownRight,
+    ArrowRight,
+    ArrowUpRight,
+    Cpu,
+    Droplets,
+    Lightbulb,
+    Plus,
+    Thermometer,
+    Wind,
+} from 'lucide-react';
+
+const metrics = [
+    {
+        label: 'Suhu kumbung',
+        value: '27.4',
+        unit: '°C',
+        status: 'Dalam rentang',
+        change: '−0.3°',
+        positive: true,
+        Icon: Thermometer,
+        color: 'blue',
+    },
+    {
+        label: 'Kelembapan udara',
+        value: '86',
+        unit: '%',
+        status: 'Optimal',
+        change: '+2.4%',
+        positive: true,
+        Icon: Droplets,
+        color: 'emerald',
+    },
+    {
+        label: 'Intensitas cahaya',
+        value: '42',
+        unit: '%',
+        status: 'Normal',
+        change: '+1.2%',
+        positive: true,
+        Icon: Lightbulb,
+        color: 'teal',
+    },
+];
+const trend = [
+    48, 44, 52, 38, 42, 34, 39, 30, 37, 28, 34, 24, 29, 19, 27, 21, 25, 18, 23,
+    17, 21, 14, 19, 16,
+];
+
+function MiniTrend({ color }: { color: string }) {
+    return (
+        <svg viewBox="0 0 120 36" className="h-9 w-28" aria-hidden="true">
+            <path
+                d={trend
+                    .map(
+                        (v, i) =>
+                            `${i ? 'L' : 'M'} ${(i / (trend.length - 1)) * 120} ${v * 0.65}`,
+                    )
+                    .join(' ')}
+                fill="none"
+                stroke={color}
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
 
 export default function Dashboard() {
     return (
         <>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+            <div className="min-h-full bg-[#f6f8fb] px-4 py-6 md:px-8 md:py-8">
+                <div className="mx-auto max-w-[1500px] space-y-7">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
+                                <span>Supathings</span>
+                                <span>/</span>
+                                <span>Dashboard</span>
+                            </div>
+                            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                                Selamat datang 👋
+                            </h1>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Pantau kondisi kumbung jamur Anda dalam satu
+                                tampilan.
+                            </p>
+                        </div>
+                        <Link
+                            href="/devices"
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                        >
+                            <Plus className="size-4" />
+                            Hubungkan device
+                        </Link>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-800 via-blue-700 to-emerald-700 p-6 text-white shadow-sm md:p-8">
+                        <div className="absolute -top-24 -right-10 size-72 rounded-full border-[42px] border-white/5" />
+                        <div className="absolute -right-4 -bottom-32 size-72 rounded-full border-[1px] border-white/10" />
+                        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium">
+                                    <span className="size-2 rounded-full bg-emerald-300" />
+                                    Ringkasan lingkungan
+                                </div>
+                                <h2 className="max-w-xl text-2xl font-semibold tracking-tight md:text-3xl">
+                                    Kondisi kumbung terlihat stabil.
+                                </h2>
+                                <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
+                                    Sistem siap memantau sensor DHT22 dan LDR,
+                                    mengatur pompa, serta menjaga sirkulasi
+                                    udara melalui satu dashboard.
+                                </p>
+                                <Link
+                                    href="/monitoring"
+                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-800 transition hover:bg-blue-50"
+                                >
+                                    Buka monitoring{' '}
+                                    <ArrowRight className="size-4" />
+                                </Link>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
+                                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p className="text-xs text-blue-100">
+                                        Device terhubung
+                                    </p>
+                                    <p className="mt-2 text-3xl font-semibold">
+                                        1{' '}
+                                        <span className="text-sm font-normal text-blue-100">
+                                            perangkat
+                                        </span>
+                                    </p>
+                                    <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-200">
+                                        <span className="size-1.5 rounded-full bg-emerald-300" />
+                                        Status demo
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
+                                    <p className="text-xs text-blue-100">
+                                        Aktuator aktif
+                                    </p>
+                                    <p className="mt-2 text-3xl font-semibold">
+                                        0{' '}
+                                        <span className="text-sm font-normal text-blue-100">
+                                            dari 3
+                                        </span>
+                                    </p>
+                                    <p className="mt-2 text-xs text-blue-100">
+                                        Pompa dan blower
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section>
+                        <div className="mb-4 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    Kondisi lingkungan
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Pembacaan terbaru dari Kumbung Utama.
+                                </p>
+                            </div>
+                            <Link
+                                href="/monitoring"
+                                className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                            >
+                                Lihat semua <ArrowUpRight className="size-4" />
+                            </Link>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-3">
+                            {metrics.map((metric) => (
+                                <article
+                                    key={metric.label}
+                                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.025)]"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div
+                                            className={`grid size-10 place-items-center rounded-xl ${metric.color === 'blue' ? 'bg-blue-50 text-blue-700' : metric.color === 'emerald' ? 'bg-emerald-50 text-emerald-700' : 'bg-teal-50 text-teal-700'}`}
+                                        >
+                                            <metric.Icon className="size-5" />
+                                        </div>
+                                        <MiniTrend
+                                            color={
+                                                metric.color === 'blue'
+                                                    ? '#2563eb'
+                                                    : metric.color === 'emerald'
+                                                      ? '#059669'
+                                                      : '#0d9488'
+                                            }
+                                        />
+                                    </div>
+                                    <p className="mt-5 text-sm text-slate-500">
+                                        {metric.label}
+                                    </p>
+                                    <div className="mt-1 flex items-baseline gap-1">
+                                        <span className="text-3xl font-semibold tracking-tight text-slate-900">
+                                            {metric.value}
+                                        </span>
+                                        <span className="text-sm text-slate-500">
+                                            {metric.unit}
+                                        </span>
+                                    </div>
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <span
+                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${metric.color === 'blue' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}
+                                        >
+                                            {metric.status}
+                                        </span>
+                                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                                            {metric.positive ? (
+                                                <ArrowUpRight className="size-3.5" />
+                                            ) : (
+                                                <ArrowDownRight className="size-3.5" />
+                                            )}
+                                            {metric.change}
+                                        </span>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
+                    <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">
+                                        Aktuator
+                                    </h2>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Status pompa dan sirkulasi udara.
+                                    </p>
+                                </div>
+                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                    Mode manual
+                                </span>
+                            </div>
+                            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                                {[
+                                    {
+                                        label: 'Pompa mist',
+                                        detail: 'Pengabut kelembapan',
+                                        Icon: Droplets,
+                                    },
+                                    {
+                                        label: 'Pompa water',
+                                        detail: 'Penyiraman',
+                                        Icon: Droplets,
+                                    },
+                                    {
+                                        label: 'Blower',
+                                        detail: 'Sirkulasi udara',
+                                        Icon: Wind,
+                                    },
+                                ].map((item) => (
+                                    <div
+                                        key={item.label}
+                                        className="rounded-xl border border-slate-100 bg-slate-50/80 p-4"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="grid size-9 place-items-center rounded-lg bg-white text-slate-500 shadow-sm">
+                                                <item.Icon className="size-4" />
+                                            </div>
+                                            <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                <span className="size-1.5 rounded-full bg-slate-300" />
+                                                Mati
+                                            </span>
+                                        </div>
+                                        <p className="mt-4 text-sm font-semibold text-slate-800">
+                                            {item.label}
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            {item.detail}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                            <Link
+                                href="/monitoring"
+                                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                            >
+                                Buka kontrol aktuator{' '}
+                                <ArrowRight className="size-4" />
+                            </Link>
+                        </section>
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h2 className="font-semibold text-slate-900">
+                                        Koneksi device
+                                    </h2>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        Ringkasan status perangkat.
+                                    </p>
+                                </div>
+                                <Cpu className="size-5 text-slate-400" />
+                            </div>
+                            <div className="mt-5 flex items-center gap-3 rounded-xl border border-slate-100 p-4">
+                                <div className="grid size-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+                                    <Activity className="size-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-slate-800">
+                                        Kumbung Utama
+                                    </p>
+                                    <p className="mt-1 font-mono text-xs text-slate-400">
+                                        AA:BB:CC:DD:EE:FF
+                                    </p>
+                                </div>
+                                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                                    Demo
+                                </span>
+                            </div>
+                            <Link
+                                href="/devices"
+                                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                            >
+                                Kelola device <ArrowRight className="size-4" />
+                            </Link>
+                        </section>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+                    <p className="text-center text-xs text-slate-400">
+                        Nilai yang tampil saat perangkat belum terhubung
+                        merupakan data demonstrasi, bukan pembacaan sensor
+                        aktual.
+                    </p>
                 </div>
             </div>
         </>
@@ -27,10 +336,5 @@ export default function Dashboard() {
 }
 
 Dashboard.layout = {
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-    ],
+    breadcrumbs: [{ title: 'Dashboard', href: '/dashboard' }],
 };

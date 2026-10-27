@@ -1,0 +1,43 @@
+name: fix-php-style
+
+on:
+  push:
+    branches:
+      - feat/supathings-iot-dashboard
+
+permissions:
+  contents: write
+
+jobs:
+  fix-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: composer setup
+      - name: Fix PHP style
+        run: composer lint
+      - name: Commit style fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/Http/Controllers/Api/IotDeviceController.php app/Jobs/EvaluateControlRules.php app/Jobs/StoreSensorReading.php app/Models/User.php
+          if ! git diff --cached --quiet; then
+            git commit -m "style: apply Laravel Pint fixes"
+            git push
+          fi
+      - name: Run CI checks
+        run: composer ci:check

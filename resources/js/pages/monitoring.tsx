@@ -363,6 +363,7 @@ export default function Monitoring() {
             },
         ]);
         setShowAdd(false);
+        setNotice('Card berhasil ditambahkan ke layout.');
     };
     const moveWidget = (targetId: string) => {
         if (!dragId || dragId === targetId) return;
@@ -376,12 +377,12 @@ export default function Monitoring() {
             return next;
         });
         setDragId(null);
+        setNotice('Urutan card berhasil diperbarui.');
     };
     const sendActuator = async (
         key: keyof typeof actuators,
         enabled: boolean,
     ) => {
-        setActuators((prev) => ({ ...prev, [key]: enabled }));
         if (socket.current?.readyState === WebSocket.OPEN) {
             socket.current.send(
                 JSON.stringify({
@@ -394,7 +395,7 @@ export default function Monitoring() {
             );
         }
         try {
-            await fetch('/api/actuator-commands', {
+            const response = await fetch('/api/actuator-commands', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -411,15 +412,14 @@ export default function Monitoring() {
                     mode: 'manual',
                 }),
             });
-        } catch {
-            /* The WebSocket transport remains usable when the API is unavailable. */
+            if (!response.ok) throw new Error('Server gagal menerima perintah aktuator.');
+            setActuators((prev) => ({ ...prev, [key]: enabled }));
+            setNotice(`Perintah ${key === 'mist' ? 'pompa mist' : key === 'water' ? 'pompa water' : 'blower'} ${enabled ? 'ON' : 'OFF'} berhasil dikirim.`);
+        } catch (error) {
+            setNotice(error instanceof Error ? error.message : 'Perintah aktuator gagal dikirim.');
         }
-        setNotice(
-            `Perintah ${key === 'mist' ? 'pompa mist' : key === 'water' ? 'pompa water' : 'blower'} ${enabled ? 'ON' : 'OFF'} dikirim.`,
-        );
     };
     const saveMode = async (mode: 'manual' | 'automatic') => {
-        setManualMode(mode === 'manual');
         try {
             const response = await fetch('/api/control-mode', {
                 method: 'POST',
@@ -444,8 +444,10 @@ export default function Monitoring() {
                     }),
                 );
             }
+            setManualMode(mode === 'manual');
+            window.localStorage.setItem(`supathings:${deviceId}:mode`, mode);
             setNotice(
-                `Mode kontrol ${mode === 'manual' ? 'manual' : 'otomatis'} dipilih.`,
+                `Mode kontrol ${mode === 'manual' ? 'manual' : 'otomatis'} berhasil disimpan.`,
             );
         } catch (error) {
             setNotice(
@@ -457,7 +459,7 @@ export default function Monitoring() {
     };
     const saveThresholds = async () => {
         try {
-            await fetch('/api/control-rules', {
+            const response = await fetch('/api/control-rules', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -472,6 +474,10 @@ export default function Monitoring() {
                     rules: thresholds,
                 }),
             });
+            if (!response.ok) {
+                throw new Error('Server gagal menyimpan ambang batas.');
+            }
+            window.localStorage.setItem(`supathings:${deviceId}:thresholds`, JSON.stringify(thresholds));
             if (socket.current?.readyState === WebSocket.OPEN) {
                 socket.current.send(
                     JSON.stringify({
@@ -481,11 +487,9 @@ export default function Monitoring() {
                     }),
                 );
             }
-            setNotice('Pengaturan ambang batas dikirim.');
-        } catch {
-            setNotice(
-                'Pengaturan disimpan di tampilan ini, tetapi server belum dapat dijangkau.',
-            );
+            setNotice('Pengaturan ambang batas berhasil disimpan.');
+        } catch (error) {
+            setNotice(error instanceof Error ? error.message : 'Pengaturan ambang batas gagal disimpan.');
         }
     };
     const saveWidget = () => {
@@ -493,8 +497,32 @@ export default function Monitoring() {
         setWidgets((prev) =>
             prev.map((w) => (w.id === editing.id ? editing : w)),
         );
+        window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(widgets.map((widget) => widget.id === editing.id ? editing : widget)));
         setEditing(null);
+        setNotice('Pengaturan card berhasil disimpan.');
     };
+
+    useEffect(() => {
+        try {
+            const savedThresholds = window.localStorage.getItem(`supathings:${deviceId}:thresholds`);
+            const savedMode = window.localStorage.getItem(`supathings:${deviceId}:mode`);
+            const savedWidgets = window.localStorage.getItem(`supathings:${deviceId}:widgets`);
+            setThresholds(savedThresholds ? JSON.parse(savedThresholds) as typeof thresholds : {
+                temperatureMin: '24', temperatureMax: '30', humidityMin: '80',
+                humidityMax: '95', lightMin: '20', lightMax: '70',
+            });
+            setManualMode(savedMode !== 'automatic');
+            if (savedWidgets) {
+                const widgetIds = JSON.parse(savedWidgets) as Widget[];
+                if (widgetIds.length > 0) setWidgets(widgetIds);
+                else setWidgets(initialWidgets);
+            } else {
+                setWidgets(initialWidgets);
+            }
+        } catch {
+            setWidgets(initialWidgets);
+        }
+    }, [deviceId]);
 
     return (
         <>
@@ -569,14 +597,19 @@ export default function Monitoring() {
                         </div>
                     </div>
                     {notice && (
-                        <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            <span>{notice}</span>
-                            <button
-                                onClick={() => setNotice('')}
-                                aria-label="Tutup notifikasi"
-                            >
-                                <X className="size-4" />
-                            </button>
+                        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4" role="presentation">
+                            <section role="alertdialog" aria-modal="true" aria-labelledby="monitoring-result-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                                <div className="flex items-start gap-3">
+                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700"><Activity className="size-5" /></div>
+                                    <div className="min-w-0 flex-1">
+                                        <h2 id="monitoring-result-title" className="font-semibold text-slate-900">Status aksi</h2>
+                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{notice}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-6 flex justify-end">
+                                    <button onClick={() => setNotice('')} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">Tutup</button>
+                                </div>
+                            </section>
                         </div>
                     )}
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">

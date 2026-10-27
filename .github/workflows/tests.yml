@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feat/supathings-iot-dashboard
+      - feat/mushroom-cultivation-mvp
   pull_request:
     branches:
       - main

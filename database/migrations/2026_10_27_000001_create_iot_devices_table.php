@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('mac_address', 17)->unique();
             $table->string('name');
             $table->string('status')->default('offline');
+            $table->string('control_mode')->default('manual');
             $table->timestamp('last_seen_at')->nullable()->index();
             $table->string('device_token_hash', 64)->nullable();
             $table->json('metadata')->nullable();

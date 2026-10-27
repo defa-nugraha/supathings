@@ -19,6 +19,15 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $request->user()->iotDevices()->with('controlRules')->latest()->get()]);
     }
 
+    public function readings(Request $request, int $device): JsonResponse
+    {
+        $iotDevice = IotDevice::query()->whereKey($device)->where('user_id', $request->user()->id)->firstOrFail();
+
+        return response()->json([
+            'data' => $iotDevice->readings()->latest('measured_at')->limit(500)->get(),
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([

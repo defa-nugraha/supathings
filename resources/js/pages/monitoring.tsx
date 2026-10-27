@@ -68,6 +68,13 @@ export default function Monitoring() {
     const socket = useRef<WebSocket | null>(null);
 
     useEffect(() => {
+        if (deviceId) {
+            void fetch(`/api/devices/${encodeURIComponent(deviceId)}/readings`, { headers: { Accept: 'application/json' } }).then(response => response.ok ? response.json() : null).then(payload => {
+                if (!Array.isArray(payload?.data) || payload.data.length === 0) return;
+                const history = [...payload.data].reverse().map((item: { temperature: number | null; humidity: number | null; light_percent: number | null; measured_at: string }) => ({ temperature: Number(item.temperature ?? 0), humidity: Number(item.humidity ?? 0), light: Number(item.light_percent ?? 0), at: item.measured_at }));
+                setReadings(history.slice(-60)); setReading(history[history.length - 1]);
+            }).catch(() => undefined);
+        }
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) { setConnection('offline'); return; }
         let active = true;

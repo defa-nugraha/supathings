@@ -14,6 +14,7 @@ class ControlRule extends Model
         return ['minimum' => 'float', 'maximum' => 'float', 'enabled' => 'boolean', 'settings' => 'array'];
     }
 
+    /** @return BelongsTo<IotDevice, $this> */
     public function device(): BelongsTo
     {
         return $this->belongsTo(IotDevice::class, 'iot_device_id');

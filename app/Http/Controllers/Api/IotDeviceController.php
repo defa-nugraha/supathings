@@ -68,8 +68,9 @@ class IotDeviceController extends Controller
 
         $device->forceFill(['status' => 'online', 'last_seen_at' => now()])->save();
 
-        // Persist asynchronously after the HTTP response so telemetry ingestion remains fast.
+        // Persist and evaluate after the HTTP response so telemetry ingestion stays responsive.
         StoreSensorReading::dispatch($device->id, $reading)->afterResponse();
+        \App\Jobs\EvaluateControlRules::dispatch($device->id, $reading)->afterResponse();
 
         return response()->json(['accepted' => true], 202);
     }
@@ -103,6 +104,23 @@ class IotDeviceController extends Controller
         }
 
         return response()->json(['data' => $device->controlRules()->get()]);
+    }
+
+    public function mode(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'device_id' => ['required'],
+            'mode' => ['required', Rule::in(['manual', 'automatic'])],
+        ]);
+        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+            $query->where('id', $data['device_id']);
+            if (is_string($data['device_id'])) {
+                $query->orWhere('mac_address', Str::upper($data['device_id']));
+            }
+        })->firstOrFail();
+        $device->forceFill(['control_mode' => $data['mode']])->save();
+
+        return response()->json(['data' => $device->only(['id', 'mac_address', 'control_mode'])]);
     }
 
     public function command(Request $request): JsonResponse

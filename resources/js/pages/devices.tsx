@@ -523,7 +523,9 @@ export default function Devices() {
                                             Ubah nama
                                         </button>
                                         <button
-                                            onClick={() => setPendingDelete(device)}
+                                            onClick={() =>
+                                                setPendingDelete(device)
+                                            }
                                             title="Hapus dari daftar"
                                             className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                                         >
@@ -578,7 +580,9 @@ export default function Devices() {
                             Hapus device dari daftar?
                         </h2>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                            Apakah Anda yakin ingin menghapus “{pendingDelete.name}” dari daftar perangkat pada tampilan ini?
+                            Apakah Anda yakin ingin menghapus “
+                            {pendingDelete.name}” dari daftar perangkat pada
+                            tampilan ini?
                         </p>
                         <div className="mt-6 flex justify-end gap-2">
                             <button
@@ -591,7 +595,8 @@ export default function Devices() {
                                 onClick={() => {
                                     setDevices((prev) =>
                                         prev.filter(
-                                            (item) => item.id !== pendingDelete.id,
+                                            (item) =>
+                                                item.id !== pendingDelete.id,
                                         ),
                                     );
                                     setPendingDelete(null);

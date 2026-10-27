@@ -55,11 +55,6 @@ jobs:
       - name: Frontend lint and formatting checks
         run: npm run check
 
-      - name: Preview Laravel Pint formatting
-        run: |
-          composer lint
-          git diff -- app/Http/Controllers/Api/IotDeviceController.php app/Jobs/EvaluateControlRules.php app/Jobs/StoreSensorReading.php tests/Feature/IoTDeviceTest.php
-
       - name: Laravel Pint style check
         run: composer lint:check
 

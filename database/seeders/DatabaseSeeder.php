@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $password = env('SUPATHINGS_ADMIN_PASSWORD');
+        $password = config('supathings.admin.password');
 
         if (! $password && app()->environment(['local', 'testing'])) {
             $password = 'Supathings@123!';
@@ -29,9 +29,9 @@ class DatabaseSeeder extends Seeder
         }
 
         User::updateOrCreate(
-            ['email' => env('SUPATHINGS_ADMIN_EMAIL', 'admin@supathings.local')],
+            ['email' => config('supathings.admin.email')],
             [
-                'name' => env('SUPATHINGS_ADMIN_NAME', 'Supathings Admin'),
+                'name' => config('supathings.admin.name'),
                 'password' => $password,
                 'email_verified_at' => now(),
             ],

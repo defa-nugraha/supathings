@@ -19,9 +19,9 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $request->user()->iotDevices()->with('controlRules')->latest()->get()]);
     }
 
-    public function readings(Request $request, int $device): JsonResponse
+    public function readings(Request $request, string $device): JsonResponse
     {
-        $iotDevice = IotDevice::query()->whereKey($device)->where('user_id', $request->user()->id)->firstOrFail();
+        $iotDevice = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($device): void { $query->where('id', $device)->orWhere('mac_address', Str::upper($device)); })->firstOrFail();
 
         return response()->json([
             'data' => $iotDevice->readings()->latest('measured_at')->limit(500)->get(),

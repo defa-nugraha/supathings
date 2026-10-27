@@ -37,6 +37,7 @@ export default function Devices() {
     const [discovered, setDiscovered] = useState<Device[]>([]);
     const [scanning, setScanning] = useState(false);
     const [selected, setSelected] = useState<Device | null>(null);
+    const [pendingDelete, setPendingDelete] = useState<Device | null>(null);
     const [deviceName, setDeviceName] = useState('');
     const [query, setQuery] = useState('');
     const [notice, setNotice] = useState('');
@@ -239,11 +240,19 @@ export default function Devices() {
                         </button>
                     </div>
                     {notice && (
-                        <div className="flex items-start justify-between gap-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            <span>{notice}</span>
-                            <button onClick={() => setNotice('')}>
-                                <X className="size-4" />
-                            </button>
+                        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4" role="presentation">
+                            <section role="alertdialog" aria-modal="true" aria-labelledby="device-result-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                                <div className="flex items-start gap-3">
+                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700"><Check className="size-5" /></div>
+                                    <div className="min-w-0 flex-1">
+                                        <h2 id="device-result-title" className="font-semibold text-slate-900">Status aksi</h2>
+                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{notice}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-6 flex justify-end">
+                                    <button onClick={() => setNotice('')} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">Tutup</button>
+                                </div>
+                            </section>
                         </div>
                     )}
                     {issuedToken && (
@@ -483,14 +492,7 @@ export default function Devices() {
                                             Ubah nama
                                         </button>
                                         <button
-                                            onClick={() =>
-                                                setDevices((prev) =>
-                                                    prev.filter(
-                                                        (d) =>
-                                                            d.id !== device.id,
-                                                    ),
-                                                )
-                                            }
+                                            onClick={() => setPendingDelete(device)}
                                             title="Hapus dari daftar"
                                             className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                                         >
@@ -527,6 +529,22 @@ export default function Devices() {
                     </div>
                 </div>
             </div>
+            {pendingDelete && (
+                <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4" role="presentation">
+                    <section role="alertdialog" aria-modal="true" aria-labelledby="delete-device-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <h2 id="delete-device-title" className="text-lg font-semibold text-slate-900">Hapus device dari daftar?</h2>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">Apakah Anda yakin ingin menghapus “{pendingDelete.name}” dari daftar perangkat pada tampilan ini?</p>
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button onClick={() => setPendingDelete(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Batal</button>
+                            <button onClick={() => {
+                                setDevices((prev) => prev.filter((item) => item.id !== pendingDelete.id));
+                                setPendingDelete(null);
+                                setNotice('Device berhasil dihapus dari daftar tampilan. Data server tidak dihapus.');
+                            }} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700">Ya, hapus</button>
+                        </div>
+                    </section>
+                </div>
+            )}
             {selected && (
                 <div
                     className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
@@ -588,3 +606,7 @@ export default function Devices() {
         </>
     );
 }
+
+Devices.layout = {
+    breadcrumbs: [{ title: 'Kelola device', href: '/devices' }],
+};

@@ -97,7 +97,7 @@ class IotDeviceController extends Controller
         ];
 
         foreach ($map as $parameter => [$minKey, $maxKey]) {
-            if (!isset($data['rules'][$minKey], $data['rules'][$maxKey])) {
+            if (! isset($data['rules'][$minKey], $data['rules'][$maxKey])) {
                 continue;
             }
             $minimum = filter_var($data['rules'][$minKey], FILTER_VALIDATE_FLOAT);

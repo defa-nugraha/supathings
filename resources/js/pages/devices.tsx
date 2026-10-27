@@ -13,6 +13,7 @@ export default function Devices() {
     const [deviceName, setDeviceName] = useState('');
     const [query, setQuery] = useState('');
     const [notice, setNotice] = useState('');
+    const [issuedToken, setIssuedToken] = useState('');
     const socket = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>('offline');
 
@@ -50,14 +51,21 @@ export default function Devices() {
     };
     const register = async () => {
         if (!selected || !deviceName.trim()) return;
+        let token = '';
         try {
             const response = await fetch('/api/devices', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' }, body: JSON.stringify({ device_id: selected.id, name: deviceName.trim(), sensors: selected.sensors }) });
-            if (!response.ok) throw new Error('API unavailable');
-        } catch { /* Keep the workflow usable in preview; registration persists when the API is available. */ }
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Registrasi device gagal.');
+            token = payload.device_token || '';
+        } catch (error) {
+            setNotice(error instanceof Error ? error.message : 'Tidak dapat menyimpan device. Coba lagi.');
+            return;
+        }
+        setIssuedToken(token);
         setDevices(prev => prev.some(d => d.id === selected.id) ? prev.map(d => d.id === selected.id ? { ...selected, name: deviceName.trim() } : d) : [{ ...selected, name: deviceName.trim() }, ...prev]);
         setDiscovered(prev => prev.filter(d => d.id !== selected.id));
         setSelected(null); setDeviceName('');
-        setNotice('Perangkat ditambahkan ke daftar. Pastikan status koneksi dikonfirmasi oleh server.');
+        setNotice('Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.');
     };
     const visibleDevices = devices.filter(d => `${d.name} ${d.id}`.toLowerCase().includes(query.toLowerCase()));
 
@@ -67,6 +75,7 @@ export default function Devices() {
             <div className="mx-auto max-w-[1440px] space-y-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="mb-2 flex items-center gap-2 text-sm text-slate-500"><span>Supathings</span><span>/</span><span>Kelola device</span></div><h1 className="text-3xl font-semibold tracking-tight text-slate-900">Kelola device</h1><p className="mt-1 text-sm text-slate-500">Hubungkan ESP32, beri nama perangkat, dan pantau status koneksi.</p></div><button onClick={scan} disabled={scanning} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-60">{scanning ? <RefreshCw className="size-4 animate-spin" /> : <Plus className="size-4" />}{scanning ? 'Mencari perangkat…' : 'Tambah device'}</button></div>
                 {notice && <div className="flex items-start justify-between gap-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800"><span>{notice}</span><button onClick={() => setNotice('')}><X className="size-4" /></button></div>}
+                {issuedToken && <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-start gap-3"><div className="grid size-9 shrink-0 place-items-center rounded-lg bg-white text-amber-700"><Link2 className="size-4" /></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-800">Token device — tampil sekali</p><p className="mt-1 text-xs leading-relaxed text-slate-600">Salin token ini ke konfigurasi ESP32 untuk autentikasi pengiriman telemetry. Token tidak disimpan dalam bentuk teks biasa oleh server.</p><code className="mt-3 block break-all rounded-lg border border-amber-100 bg-white p-3 text-xs text-slate-700">{issuedToken}</code><div className="mt-3 flex gap-2"><button onClick={() => { void navigator.clipboard?.writeText(issuedToken); }} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Salin token</button><button onClick={() => setIssuedToken('')} className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">Sembunyikan</button></div></div></div></div>}
                 <div className="grid gap-4 md:grid-cols-3">
                     {[{ label: 'Total device', value: devices.length, Icon: Cpu, tint: 'bg-blue-50 text-blue-700' }, { label: 'Online', value: devices.filter(d => d.status === 'online').length, Icon: Wifi, tint: 'bg-emerald-50 text-emerald-700' }, { label: 'Offline', value: devices.filter(d => d.status === 'offline').length, Icon: Signal, tint: 'bg-slate-100 text-slate-500' }].map(item => <div key={item.label} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5"><div className={`grid size-11 place-items-center rounded-xl ${item.tint}`}><item.Icon className="size-5" /></div><div><p className="text-sm text-slate-500">{item.label}</p><p className="mt-0.5 text-2xl font-semibold text-slate-900">{item.value}</p></div></div>)}
                 </div>

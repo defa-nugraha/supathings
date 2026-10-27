@@ -13,11 +13,9 @@ class EvaluateControlRules implements ShouldQueue
     use Dispatchable, Queueable;
 
     /**
-     * @param array<string, mixed> $reading
+     * @param  array<string, mixed>  $reading
      */
-    public function __construct(public int $deviceId, public array $reading)
-    {
-    }
+    public function __construct(public int $deviceId, public array $reading) {}
 
     public function handle(): void
     {
@@ -36,7 +34,7 @@ class EvaluateControlRules implements ShouldQueue
         if ($temperature !== null && $temperatureRule?->enabled) {
             if ($temperature > $temperatureRule->maximum) {
                 $desired['blower'] = 'on';
-            } elseif ($temperature <= $temperatureRule->maximum -1.0) {
+            } elseif ($temperature <= $temperatureRule->maximum - 1.0) {
                 $desired['blower'] = 'off';
             }
         }

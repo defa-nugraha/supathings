@@ -112,8 +112,9 @@ export default function Monitoring() {
     };
     const sendActuator = async (key: keyof typeof actuators, enabled: boolean) => {
         setActuators(prev => ({ ...prev, [key]: enabled }));
-        const url = import.meta.env.VITE_WS_URL as string | undefined;
-        if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify({ type: 'actuator_command', device_id: deviceId || null, actuator: key, state: enabled ? 'on' : 'off', mode: 'manual' }));
+        if (socket.current?.readyState === WebSocket.OPEN) {
+            socket.current.send(JSON.stringify({ type: 'actuator_command', device_id: deviceId || null, actuator: key, state: enabled ? 'on' : 'off', mode: 'manual' }));
+        }
         try { await fetch('/api/actuator-commands', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' }, body: JSON.stringify({ device_id: deviceId || null, actuator: key, state: enabled ? 'on' : 'off', mode: 'manual' }) }); } catch { /* The WebSocket transport remains usable when the API is unavailable. */ }
         setNotice(`Perintah ${key === 'mist' ? 'pompa mist' : key === 'water' ? 'pompa water' : 'blower'} ${enabled ? 'ON' : 'OFF'} dikirim.`);
     };
@@ -122,7 +123,9 @@ export default function Monitoring() {
         try {
             const response = await fetch('/api/control-mode', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' }, body: JSON.stringify({ device_id: deviceId, mode }) });
             if (!response.ok) throw new Error('Server tidak dapat menyimpan mode kontrol.');
-            socket.current?.readyState === WebSocket.OPEN && socket.current.send(JSON.stringify({ type: 'control_mode', device_id: deviceId, mode }));
+            if (socket.current?.readyState === WebSocket.OPEN) {
+                socket.current.send(JSON.stringify({ type: 'control_mode', device_id: deviceId, mode }));
+            }
             setNotice(`Mode kontrol ${mode === 'manual' ? 'manual' : 'otomatis'} dipilih.`);
         } catch (error) {
             setNotice(error instanceof Error ? error.message : 'Mode kontrol belum tersimpan di server.');
@@ -131,7 +134,9 @@ export default function Monitoring() {
     const saveThresholds = async () => {
         try {
             await fetch('/api/control-rules', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' }, body: JSON.stringify({ device_id: deviceId || null, rules: thresholds }) });
-            socket.current?.readyState === WebSocket.OPEN && socket.current.send(JSON.stringify({ type: 'thresholds_update', device_id: deviceId || null, thresholds }));
+            if (socket.current?.readyState === WebSocket.OPEN) {
+                socket.current.send(JSON.stringify({ type: 'thresholds_update', device_id: deviceId || null, thresholds }));
+            }
             setNotice('Pengaturan ambang batas dikirim.');
         } catch { setNotice('Pengaturan disimpan di tampilan ini, tetapi server belum dapat dijangkau.'); }
     };

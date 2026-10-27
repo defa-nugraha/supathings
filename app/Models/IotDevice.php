@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'mac_address', 'name', 'status', 'last_seen_at', 'device_token_hash', 'metadata'])]
+#[Fillable(['user_id', 'mac_address', 'name', 'status', 'control_mode', 'last_seen_at', 'device_token_hash', 'metadata'])]
 class IotDevice extends Model
 {
     protected function casts(): array

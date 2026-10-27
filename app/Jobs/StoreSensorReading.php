@@ -23,7 +23,7 @@ class StoreSensorReading implements ShouldQueue
     {
         $device = IotDevice::query()->find($this->deviceId);
 
-        if (!$device) {
+        if (! $device) {
             return;
         }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\EvaluateControlRules;
 use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
 use App\Models\ControlRule;
@@ -70,7 +71,7 @@ class IotDeviceController extends Controller
 
         // Persist and evaluate after the HTTP response so telemetry ingestion stays responsive.
         StoreSensorReading::dispatch($device->id, $reading)->afterResponse();
-        \App\Jobs\EvaluateControlRules::dispatch($device->id, $reading)->afterResponse();
+        EvaluateControlRules::dispatch($device->id, $reading)->afterResponse();
 
         return response()->json(['accepted' => true], 202);
     }

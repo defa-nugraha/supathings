@@ -8,6 +8,7 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/devices/{device}/readings', [IotDeviceController::class, 'readings']);
     Route::post('/devices', [IotDeviceController::class, 'store']);
     Route::post('/control-rules', [IotDeviceController::class, 'rules']);
+    Route::post('/control-mode', [IotDeviceController::class, 'mode']);
     Route::post('/actuator-commands', [IotDeviceController::class, 'command']);
 });
 

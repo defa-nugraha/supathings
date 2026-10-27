@@ -75,7 +75,6 @@ export default function Monitoring() {
                 setReadings(history.slice(-60)); setReading(history[history.length - 1]);
             }).catch(() => undefined);
         }
-        const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) { setConnection('offline'); return; }
         let active = true;
         try {

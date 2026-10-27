@@ -57,7 +57,7 @@ class IotDeviceController extends Controller
     public function telemetry(Request $request): JsonResponse
     {
         $device = $this->deviceFromToken($request);
-        if (!$device) {
+        if (! $device) {
             return response()->json(['message' => 'Device token tidak valid.'], 401);
         }
 
@@ -160,7 +160,7 @@ class IotDeviceController extends Controller
     private function deviceFromToken(Request $request): ?IotDevice
     {
         $token = $request->bearerToken();
-        if (!$token) {
+        if (! $token) {
             return null;
         }
 

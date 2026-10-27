@@ -10,6 +10,7 @@ import {
     Wheat,
 } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type Batch = {
     id: number;
@@ -64,6 +65,7 @@ export default function Cultivation() {
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
     const [showBatchForm, setShowBatchForm] = useState(false);
+    const [showHarvestForm, setShowHarvestForm] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState('');
     const [batchForm, setBatchForm] = useState({
         name: '',
@@ -228,6 +230,7 @@ export default function Cultivation() {
                 sale_price_per_kg: '',
                 notes: '',
             });
+            setShowHarvestForm(false);
             setNotice('Catatan panen berhasil disimpan.');
             await refresh();
         } catch (cause) {
@@ -266,8 +269,7 @@ export default function Cultivation() {
                                 Budidaya jamur tiram
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
-                                Kelola umur baglog, fase budidaya, catatan
-                                panen, dan peringatan kumbung.
+                                Kelola umur baglog, fase budidaya, panen, dan kondisi kumbung.
                             </p>
                         </div>
                         <button
@@ -294,6 +296,52 @@ export default function Cultivation() {
                             {notice}
                         </div>
                     )}
+
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div className="mb-4 flex items-center gap-2">
+                            <AlertTriangle className="size-5 text-amber-600" />
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-900">
+                                    Peringatan kumbung
+                                </h2>
+                                <p className="text-sm text-slate-500">
+                                    Berdasarkan heartbeat perangkat dan ambang
+                                    sensor yang telah dikonfigurasi.
+                                </p>
+                            </div>
+                        </div>
+                        {alerts.length === 0 ? (
+                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                                <CheckCircle2 className="size-5" />
+                                Tidak ada peringatan aktif dari data yang
+                                tersedia.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {alerts.map((alert) => (
+                                    <div
+                                        key={alert.key}
+                                        className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"
+                                    >
+                                        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" />
+                                        <div>
+                                            <p className="font-semibold text-amber-950">
+                                                {alert.title}
+                                            </p>
+                                            <p className="mt-1 text-sm text-amber-900">
+                                                {alert.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <p className="mt-3 text-xs text-slate-500">
+                            Peringatan bergantung pada data sensor dan aturan
+                            yang tersedia. Nilai contoh atau data yang tidak
+                            terkirim tidak dianggap sebagai pengukuran aktual.
+                        </p>
+                    </section>
 
                     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <SummaryCard
@@ -330,12 +378,9 @@ export default function Cultivation() {
                         />
                     </section>
 
-                    {showBatchForm && (
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 className="mb-4 text-lg font-semibold text-slate-900">
-                                Batch budidaya baru
-                            </h2>
-                            <form
+                    <Dialog open={showBatchForm} onOpenChange={setShowBatchForm}>
+<DialogContent className="sm:max-w-3xl"><DialogHeader><DialogTitle>Batch budidaya baru</DialogTitle><DialogDescription>Masukkan informasi awal kelompok baglog yang akan dipantau.</DialogDescription></DialogHeader>
+<form
                                 onSubmit={createBatch}
                                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                             >
@@ -423,8 +468,8 @@ export default function Cultivation() {
                                     </button>
                                 </div>
                             </form>
-                        </section>
-                    )}
+                        </DialogContent>
+                    </Dialog>
 
                     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -559,19 +604,8 @@ export default function Cultivation() {
                             )}
                         </section>
 
-                        <section className="space-y-6">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <div className="mb-4 flex items-center gap-2">
-                                    <Wheat className="size-5 text-emerald-700" />
-                                    <div>
-                                        <h2 className="text-lg font-semibold text-slate-900">
-                                            Catat panen
-                                        </h2>
-                                        <p className="text-sm text-slate-500">
-                                            Simpan hasil setiap gelombang panen.
-                                        </p>
-                                    </div>
-                                </div>
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900">Panen</h2><p className="mt-1 text-sm text-slate-500">Catat berat dan kualitas panen melalui formulir.</p></div><button type="button" onClick={() => setShowHarvestForm(true)} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"><Plus className="size-4"/> Catat panen</button></div></section><Dialog open={showHarvestForm} onOpenChange={setShowHarvestForm}>
+<DialogContent className="sm:max-w-2xl"><DialogHeader><DialogTitle>Catat panen</DialogTitle><DialogDescription>Catat hasil panen pada salah satu batch budidaya.</DialogDescription></DialogHeader>
                                 <form
                                     onSubmit={createHarvest}
                                     className="space-y-3"
@@ -723,134 +757,13 @@ export default function Cultivation() {
                                             : 'Simpan catatan panen'}
                                     </button>
                                 </form>
-                            </div>
-                        </section>
+                        </DialogContent>
+                    </Dialog>
                     </div>
 
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2">
-                            <AlertTriangle className="size-5 text-amber-600" />
-                            <div>
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    Peringatan kumbung
-                                </h2>
-                                <p className="text-sm text-slate-500">
-                                    Berdasarkan heartbeat perangkat dan ambang
-                                    sensor yang telah dikonfigurasi.
-                                </p>
-                            </div>
-                        </div>
-                        {alerts.length === 0 ? (
-                            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
-                                <CheckCircle2 className="size-5" />
-                                Tidak ada peringatan aktif dari data yang
-                                tersedia.
-                            </div>
-                        ) : (
-                            <div className="space-y-2">
-                                {alerts.map((alert) => (
-                                    <div
-                                        key={alert.key}
-                                        className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4"
-                                    >
-                                        <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-700" />
-                                        <div>
-                                            <p className="font-semibold text-amber-950">
-                                                {alert.title}
-                                            </p>
-                                            <p className="mt-1 text-sm text-amber-900">
-                                                {alert.message}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <p className="mt-3 text-xs text-slate-500">
-                            Peringatan bergantung pada data sensor dan aturan
-                            yang tersedia. Nilai contoh atau data yang tidak
-                            terkirim tidak dianggap sebagai pengukuran aktual.
-                        </p>
-                    </section>
+                    
 
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="mb-4 flex items-center gap-2">
-                            <ClipboardList className="size-5 text-emerald-700" />
-                            <div>
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    Riwayat panen dan jurnal
-                                </h2>
-                                <p className="text-sm text-slate-500">
-                                    Catatan panen terakhir yang tersimpan.
-                                </p>
-                            </div>
-                        </div>
-                        {harvests.length === 0 ? (
-                            <p className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">
-                                Belum ada catatan panen.
-                            </p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[700px] text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-slate-200 text-xs tracking-wide text-slate-500 uppercase">
-                                            <th className="py-3 pr-4">
-                                                Tanggal
-                                            </th>
-                                            <th className="py-3 pr-4">Batch</th>
-                                            <th className="py-3 pr-4">
-                                                Gelombang
-                                            </th>
-                                            <th className="py-3 pr-4">Berat</th>
-                                            <th className="py-3 pr-4">
-                                                Kualitas
-                                            </th>
-                                            <th className="py-3 pr-4">
-                                                Catatan
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {harvests.map((item) => (
-                                            <tr
-                                                key={item.id}
-                                                className="border-b border-slate-100 align-top"
-                                            >
-                                                <td className="py-3 pr-4 whitespace-nowrap">
-                                                    {new Date(
-                                                        item.harvested_at,
-                                                    ).toLocaleDateString(
-                                                        'id-ID',
-                                                    )}
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    {item.batch?.name ??
-                                                        'Batch'}
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    {item.flush_number}
-                                                </td>
-                                                <td className="py-3 pr-4 font-semibold">
-                                                    {Number(
-                                                        item.weight_kg,
-                                                    ).toLocaleString('id-ID', {
-                                                        maximumFractionDigits: 3,
-                                                    })}{' '}
-                                                    kg
-                                                </td>
-                                                <td className="py-3 pr-4">
-                                                    {item.quality ?? '—'}
-                                                </td>
-                                                <td className="py-3 pr-4 whitespace-pre-wrap">
-                                                    {item.notes || '—'}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </section>
+                    
                 </div>
             </div>
         </>

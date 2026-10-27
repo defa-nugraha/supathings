@@ -257,7 +257,10 @@ export default function Monitoring() {
             .then((payload) => {
                 if (!Array.isArray(payload?.data)) return;
                 const devices = payload.data
-                    .filter((item: { mac_address?: string; name?: string }) => item.mac_address && item.name)
+                    .filter(
+                        (item: { mac_address?: string; name?: string }) =>
+                            item.mac_address && item.name,
+                    )
                     .map((item: { mac_address: string; name: string }) => ({
                         id: item.mac_address,
                         name: item.name,
@@ -527,8 +530,13 @@ export default function Monitoring() {
     const saveWidget = () => {
         if (!editing) return;
         setWidgets((prev) => {
-            const next = prev.map((widget) => widget.id === editing.id ? editing : widget);
-            window.localStorage.setItem(`supathings:${deviceId}:widgets`, JSON.stringify(next));
+            const next = prev.map((widget) =>
+                widget.id === editing.id ? editing : widget,
+            );
+            window.localStorage.setItem(
+                `supathings:${deviceId}:widgets`,
+                JSON.stringify(next),
+            );
             return next;
         });
         setEditing(null);
@@ -537,16 +545,36 @@ export default function Monitoring() {
 
     useEffect(() => {
         try {
-            const savedThresholds = window.localStorage.getItem(`supathings:${deviceId}:thresholds`);
-            const savedMode = window.localStorage.getItem(`supathings:${deviceId}:mode`);
-            const savedWidgets = window.localStorage.getItem(`supathings:${deviceId}:widgets`);
-            const savedActuators = window.localStorage.getItem(`supathings:${deviceId}:actuators`);
-            setThresholds(savedThresholds ? JSON.parse(savedThresholds) as typeof thresholds : {
-                temperatureMin: '24', temperatureMax: '30', humidityMin: '80',
-                humidityMax: '95', lightMin: '20', lightMax: '70',
-            });
+            const savedThresholds = window.localStorage.getItem(
+                `supathings:${deviceId}:thresholds`,
+            );
+            const savedMode = window.localStorage.getItem(
+                `supathings:${deviceId}:mode`,
+            );
+            const savedWidgets = window.localStorage.getItem(
+                `supathings:${deviceId}:widgets`,
+            );
+            const savedActuators = window.localStorage.getItem(
+                `supathings:${deviceId}:actuators`,
+            );
+            setThresholds(
+                savedThresholds
+                    ? (JSON.parse(savedThresholds) as typeof thresholds)
+                    : {
+                          temperatureMin: '24',
+                          temperatureMax: '30',
+                          humidityMin: '80',
+                          humidityMax: '95',
+                          lightMin: '20',
+                          lightMax: '70',
+                      },
+            );
             setManualMode(savedMode !== 'automatic');
-            setActuators(savedActuators ? JSON.parse(savedActuators) as typeof actuators : { mist: false, water: false, blower: false });
+            setActuators(
+                savedActuators
+                    ? (JSON.parse(savedActuators) as typeof actuators)
+                    : { mist: false, water: false, blower: false },
+            );
             if (savedWidgets) {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
                 if (widgetIds.length > 0) setWidgets(widgetIds);

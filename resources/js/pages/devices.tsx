@@ -46,7 +46,9 @@ export default function Devices() {
     const scan = () => {
         setScanning(true);
         setNotice('');
-        socket.current?.readyState === WebSocket.OPEN && socket.current.send(JSON.stringify({ type: 'discover_devices' }));
+        if (socket.current?.readyState === WebSocket.OPEN) {
+            socket.current.send(JSON.stringify({ type: 'discover_devices' }));
+        }
         window.setTimeout(() => { setScanning(false); if (discovered.length === 0) setNotice('Belum ada perangkat yang mengumumkan diri. Pastikan ESP32 terhubung ke jaringan dan endpoint WebSocket aktif.'); }, 5000);
     };
     const register = async () => {

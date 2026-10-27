@@ -37,7 +37,7 @@ class EvaluateControlRules implements ShouldQueue
         if ($temperature !== null && $temperatureRule?->enabled) {
             if ($temperature > $temperatureRule->maximum) {
                 $desired['blower'] = 'on';
-            } elseif ($temperature < $temperatureRule->minimum) {
+            } elseif ($temperature <= $temperatureRule->maximum - 1.0) {
                 $desired['blower'] = 'off';
             }
         }
@@ -46,7 +46,7 @@ class EvaluateControlRules implements ShouldQueue
         if ($humidity !== null && $humidityRule?->enabled) {
             if ($humidity < $humidityRule->minimum) {
                 $desired['mist'] = 'on';
-            } elseif ($humidity > $humidityRule->maximum) {
+            } elseif ($humidity >= $humidityRule->minimum + 2.0) {
                 $desired['mist'] = 'off';
             }
         }

@@ -240,17 +240,39 @@ export default function Devices() {
                         </button>
                     </div>
                     {notice && (
-                        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4" role="presentation">
-                            <section role="alertdialog" aria-modal="true" aria-labelledby="device-result-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <div
+                            className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4"
+                            role="presentation"
+                        >
+                            <section
+                                role="alertdialog"
+                                aria-modal="true"
+                                aria-labelledby="device-result-title"
+                                className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                            >
                                 <div className="flex items-start gap-3">
-                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700"><Check className="size-5" /></div>
+                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700">
+                                        <Check className="size-5" />
+                                    </div>
                                     <div className="min-w-0 flex-1">
-                                        <h2 id="device-result-title" className="font-semibold text-slate-900">Status aksi</h2>
-                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{notice}</p>
+                                        <h2
+                                            id="device-result-title"
+                                            className="font-semibold text-slate-900"
+                                        >
+                                            Status aksi
+                                        </h2>
+                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                            {notice}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="mt-6 flex justify-end">
-                                    <button onClick={() => setNotice('')} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">Tutup</button>
+                                    <button
+                                        onClick={() => setNotice('')}
+                                        className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
+                                    >
+                                        Tutup
+                                    </button>
                                 </div>
                             </section>
                         </div>

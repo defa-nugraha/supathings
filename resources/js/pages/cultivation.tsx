@@ -52,6 +52,19 @@ const phases = [
 
 const today = new Date().toLocaleDateString('en-CA');
 
+function formatIndonesianDate(value: string): string {
+    const dateOnly = value.slice(0, 10);
+    const date = new Date(`${dateOnly}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+
 function csrfHeaders(): HeadersInit {
     return {
         Accept: 'application/json',
@@ -279,12 +292,22 @@ export default function Cultivation() {
                                 kondisi kumbung.
                             </p>
                         </div>
-                        <button
-                            onClick={() => setShowBatchForm((value) => !value)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
-                        >
-                            <Plus className="size-4" /> Tambah batch
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowBatchForm(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                            >
+                                <Plus className="size-4" /> Tambah batch
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowHarvestForm(true)}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+                            >
+                                <Plus className="size-4" /> Catat panen
+                            </button>
+                        </div>
                     </header>
 
                     {error && (
@@ -544,10 +567,8 @@ export default function Cultivation() {
                                                         </p>
                                                         <p className="mt-1 text-sm text-slate-500">
                                                             Inokulasi{' '}
-                                                            {new Date(
+                                                            {formatIndonesianDate(
                                                                 batch.inoculated_at,
-                                                            ).toLocaleDateString(
-                                                                'id-ID',
                                                             )}{' '}
                                                             · umur {age} hari
                                                         </p>
@@ -621,26 +642,6 @@ export default function Cultivation() {
                             )}
                         </section>
 
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between gap-3">
-                                <div>
-                                    <h2 className="text-lg font-semibold text-slate-900">
-                                        Panen
-                                    </h2>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Catat berat dan kualitas panen melalui
-                                        formulir.
-                                    </p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowHarvestForm(true)}
-                                    className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
-                                >
-                                    <Plus className="size-4" /> Catat panen
-                                </button>
-                            </div>
-                        </section>
                         <Dialog
                             open={showHarvestForm}
                             onOpenChange={setShowHarvestForm}

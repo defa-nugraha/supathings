@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    /** @return HasMany<IotDevice, $this> */
     public function iotDevices(): HasMany
     {
         return $this->hasMany(IotDevice::class);

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Activity, Cpu, LayoutDashboard, Settings2 } from 'lucide-react';
+import { Activity, Cpu, LayoutDashboard } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -17,7 +17,6 @@ const mainNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { title: 'Monitoring & kontrol', href: '/monitoring', icon: Activity },
     { title: 'Kelola device', href: '/devices', icon: Cpu },
-    { title: 'Pengaturan profil', href: '/settings/profile', icon: Settings2 },
 ];
 
 export function AppSidebar() {

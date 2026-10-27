@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { Activity, Check, Clock3, Cpu, Link2, Plus, Radio, RefreshCw, Search, Signal, Trash2, Wifi, X } from 'lucide-react';
+import { Check, Clock3, Cpu, Link2, Plus, Radio, RefreshCw, Search, Signal, Trash2, Wifi, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 type Device = { id: string; name: string; status: 'online' | 'offline'; lastSeen: string; sensors: string[] };

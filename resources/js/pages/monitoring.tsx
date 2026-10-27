@@ -638,11 +638,15 @@ export default function Monitoring() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <button
-                                onClick={() => setEditingLayout((value) => !value)}
+                                onClick={() =>
+                                    setEditingLayout((value) => !value)
+                                }
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                             >
                                 <Settings2 className="size-4" />
-                                {editingLayout ? 'Selesai edit layout' : 'Edit layout'}
+                                {editingLayout
+                                    ? 'Selesai edit layout'
+                                    : 'Edit layout'}
                             </button>
                             <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                                 <span className="text-slate-500">Device</span>
@@ -690,17 +694,39 @@ export default function Monitoring() {
                         </div>
                     </div>
                     {notice && (
-                        <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4" role="presentation">
-                            <section role="alertdialog" aria-modal="true" aria-labelledby="monitoring-result-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <div
+                            className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/40 p-4"
+                            role="presentation"
+                        >
+                            <section
+                                role="alertdialog"
+                                aria-modal="true"
+                                aria-labelledby="monitoring-result-title"
+                                className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                            >
                                 <div className="flex items-start gap-3">
-                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700"><Activity className="size-5" /></div>
+                                    <div className="grid size-10 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-700">
+                                        <Activity className="size-5" />
+                                    </div>
                                     <div className="min-w-0 flex-1">
-                                        <h2 id="monitoring-result-title" className="font-semibold text-slate-900">Status aksi</h2>
-                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">{notice}</p>
+                                        <h2
+                                            id="monitoring-result-title"
+                                            className="font-semibold text-slate-900"
+                                        >
+                                            Status aksi
+                                        </h2>
+                                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                                            {notice}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="mt-6 flex justify-end">
-                                    <button onClick={() => setNotice('')} className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">Tutup</button>
+                                    <button
+                                        onClick={() => setNotice('')}
+                                        className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
+                                    >
+                                        Tutup
+                                    </button>
                                 </div>
                             </section>
                         </div>
@@ -1079,7 +1105,8 @@ export default function Monitoring() {
                             Hapus card?
                         </h2>
                         <p className="mt-2 text-sm text-slate-600">
-                            Apakah Anda yakin ingin menghapus card “{pendingDelete.title}” dari layout perangkat ini?
+                            Apakah Anda yakin ingin menghapus card “
+                            {pendingDelete.title}” dari layout perangkat ini?
                         </p>
                         <div className="mt-6 flex justify-end gap-2">
                             <button

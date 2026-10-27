@@ -5,11 +5,12 @@ namespace App\Jobs;
 use App\Models\IotDevice;
 use App\Models\SensorReading;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 
 class StoreSensorReading implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, Queueable;
 
     /**
      * @param array<string, mixed> $reading

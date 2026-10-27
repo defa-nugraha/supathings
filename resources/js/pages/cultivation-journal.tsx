@@ -1,6 +1,19 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { NotebookPen } from 'lucide-react';
+
+function formatIndonesianDate(value: string): string {
+    const dateOnly = value.slice(0, 10);
+    const date = new Date(`${dateOnly}T00:00:00`);
+
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
 type B = {
     id: number;
     name: string;
@@ -91,7 +104,7 @@ export default function CultivationJournal() {
                                             {e.title}
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            {e.date}
+                                            {formatIndonesianDate(e.date)}
                                         </p>
                                         <p className="mt-3 text-sm leading-6 whitespace-pre-wrap">
                                             {e.note}

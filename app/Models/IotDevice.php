@@ -15,21 +15,25 @@ class IotDevice extends Model
         return ['last_seen_at' => 'datetime', 'metadata' => 'array'];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<SensorReading, $this> */
     public function readings(): HasMany
     {
         return $this->hasMany(SensorReading::class);
     }
 
+    /** @return HasMany<ControlRule, $this> */
     public function controlRules(): HasMany
     {
         return $this->hasMany(ControlRule::class);
     }
 
+    /** @return HasMany<ActuatorCommand, $this> */
     public function actuatorCommands(): HasMany
     {
         return $this->hasMany(ActuatorCommand::class);

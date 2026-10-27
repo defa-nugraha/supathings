@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Cpu, Droplets, Gauge, Lightbulb, Plus, Thermometer, Wind } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Cpu, Droplets, Lightbulb, Plus, Thermometer, Wind } from 'lucide-react';
 
 const metrics = [
     { label: 'Suhu kumbung', value: '27.4', unit: '°C', status: 'Dalam rentang', change: '−0.3°', positive: true, Icon: Thermometer, color: 'blue' },

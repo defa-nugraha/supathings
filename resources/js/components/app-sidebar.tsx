@@ -74,6 +74,14 @@ export function AppSidebar() {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/devices')} tooltip={{ children: 'Kelola perangkat' }} className="h-10 rounded-xl">
+                                    <Link href="/admin/devices">
+                                        <Cpu className="size-[18px]" />
+                                        <span>Kelola perangkat</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
                         </>
                     )}
                     {mainNavItems.map((item) => (

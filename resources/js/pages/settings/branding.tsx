@@ -57,11 +57,10 @@ export default function BrandingSettingsPage() {
                 />
 
                 <form
-                    data-tour="settings-branding"
                     onSubmit={submit}
                     className="space-y-6"
                 >
-                    <div className="grid gap-2">
+                    <div data-tour="settings-branding" className="grid gap-2">
                         <Label htmlFor="app_name">Nama aplikasi</Label>
                         <Input
                             id="app_name"

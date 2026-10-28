@@ -15,8 +15,7 @@ class CultivationController extends Controller
 {
     public function batches(Request $request): JsonResponse
     {
-        $batches = CultivationBatch::query()
-            ->where('user_id', $request->user()->id)
+        $batches = $this->batchQuery($request)
             ->with(['harvests' => fn ($query) => $query->latest('harvested_at')])
             ->withSum('harvests as total_harvest_kg', 'weight_kg')
             ->latest('inoculated_at')
@@ -48,8 +47,7 @@ class CultivationController extends Controller
 
     public function updateBatch(Request $request, string $batch): JsonResponse
     {
-        $cultivationBatch = CultivationBatch::query()
-            ->where('user_id', $request->user()->id)
+        $cultivationBatch = $this->batchQuery($request)
             ->findOrFail($batch);
 
         $data = $request->validate([
@@ -67,8 +65,7 @@ class CultivationController extends Controller
 
     public function destroyBatch(Request $request, string $batch): JsonResponse
     {
-        $record = CultivationBatch::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->batchQuery($request)
             ->findOrFail($batch);
 
         if ($record->harvests()->exists() || $record->expenses()->exists()) {
@@ -84,8 +81,7 @@ class CultivationController extends Controller
 
     public function harvests(Request $request): JsonResponse
     {
-        $records = HarvestRecord::query()
-            ->where('user_id', $request->user()->id)
+        $records = $this->harvestQuery($request)
             ->with('batch:id,name')
             ->latest('harvested_at')
             ->limit(200)
@@ -96,8 +92,7 @@ class CultivationController extends Controller
 
     public function storeHarvest(Request $request, string $batch): JsonResponse
     {
-        $cultivationBatch = CultivationBatch::query()
-            ->where('user_id', $request->user()->id)
+        $cultivationBatch = $this->batchQuery($request)
             ->findOrFail($batch);
 
         $data = $request->validate([
@@ -111,7 +106,7 @@ class CultivationController extends Controller
 
         $record = HarvestRecord::query()->create([
             ...$data,
-            'user_id' => $request->user()->id,
+            'user_id' => $cultivationBatch->user_id,
             'cultivation_batch_id' => $cultivationBatch->id,
         ]);
 
@@ -120,8 +115,7 @@ class CultivationController extends Controller
 
     public function updateHarvest(Request $request, string $harvest): JsonResponse
     {
-        $record = HarvestRecord::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->harvestQuery($request)
             ->findOrFail($harvest);
 
         $data = $request->validate([
@@ -141,8 +135,7 @@ class CultivationController extends Controller
 
     public function destroyHarvest(Request $request, string $harvest): JsonResponse
     {
-        $record = HarvestRecord::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->harvestQuery($request)
             ->findOrFail($harvest);
         $record->delete();
 
@@ -155,8 +148,7 @@ class CultivationController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
-        $records = CultivationExpense::query()
-            ->where('user_id', $request->user()->id)
+        $records = $this->expenseQuery($request)
             ->with('batch:id,name')
             ->whereBetween('incurred_at', [
                 $data['from'] ?? now()->subDays(29)->toDateString(),
@@ -179,9 +171,13 @@ class CultivationController extends Controller
             'amount' => ['required', 'numeric', 'gt:0', 'max:100000000000'],
         ]);
 
+        $ownerId = isset($data['cultivation_batch_id'])
+            ? CultivationBatch::query()->findOrFail($data['cultivation_batch_id'])->user_id
+            : $request->user()->id;
+
         $expense = CultivationExpense::query()->create([
             ...$data,
-            'user_id' => $request->user()->id,
+            'user_id' => $ownerId,
         ]);
 
         return response()->json(['data' => $expense->load('batch:id,name')], 201);
@@ -189,8 +185,7 @@ class CultivationController extends Controller
 
     public function updateExpense(Request $request, string $expense): JsonResponse
     {
-        $record = CultivationExpense::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->expenseQuery($request)
             ->findOrFail($expense);
 
         $data = $request->validate([
@@ -208,18 +203,50 @@ class CultivationController extends Controller
 
     public function destroyExpense(Request $request, string $expense): JsonResponse
     {
-        $record = CultivationExpense::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->expenseQuery($request)
             ->findOrFail($expense);
         $record->delete();
 
         return response()->json(['message' => 'Biaya operasional berhasil dihapus.']);
     }
 
+    private function batchQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = CultivationBatch::query();
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return $query;
+    }
+
+    private function harvestQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = HarvestRecord::query();
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return $query;
+    }
+
+    private function expenseQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = CultivationExpense::query();
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return $query;
+    }
+
     public function alerts(Request $request): JsonResponse
     {
         $devices = IotDevice::query()
-            ->where('user_id', $request->user()->id)
+            ->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->with(['controlRules', 'readings' => fn ($query) => $query->latest('measured_at')->limit(1)])
             ->get();
 

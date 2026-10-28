@@ -126,8 +126,13 @@ class CultivationController extends Controller
         $record = $this->harvestQuery($request)
             ->findOrFail($harvest);
 
+        $batchRule = Rule::exists('cultivation_batches', 'id');
+        if (! $request->user()->isAdmin()) {
+            $batchRule->where('user_id', $request->user()->id);
+        }
+
         $data = $request->validate([
-            'cultivation_batch_id' => ['sometimes', 'required', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'cultivation_batch_id' => ['sometimes', 'required', 'integer', $batchRule],
             'harvested_at' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
             'flush_number' => ['sometimes', 'required', 'integer', 'min:1', 'max:20'],
             'weight_kg' => ['sometimes', 'required', 'numeric', 'gt:0', 'max:100000'],
@@ -135,6 +140,10 @@ class CultivationController extends Controller
             'sale_price_per_kg' => ['nullable', 'numeric', 'min:0', 'max:1000000000'],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
+
+        if (isset($data['cultivation_batch_id'])) {
+            $data['user_id'] = $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id;
+        }
 
         $record->update($data);
 
@@ -171,8 +180,17 @@ class CultivationController extends Controller
 
     public function storeExpense(Request $request): JsonResponse
     {
+        $batchRule = Rule::exists('cultivation_batches', 'id');
+        if (! $request->user()->isAdmin()) {
+            $batchRule->where('user_id', $request->user()->id);
+        }
+        $userIdRule = $request->user()->isAdmin()
+            ? ['nullable', 'integer', Rule::exists('users', 'id')->where('is_active', true)]
+            : ['prohibited'];
+
         $data = $request->validate([
-            'cultivation_batch_id' => ['nullable', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'user_id' => $userIdRule,
+            'cultivation_batch_id' => ['nullable', 'integer', $batchRule],
             'incurred_at' => ['required', 'date', 'before_or_equal:today'],
             'category' => ['required', Rule::in(['baglog', 'bibit', 'listrik', 'air', 'tenaga_kerja', 'perawatan', 'lainnya'])],
             'description' => ['required', 'string', 'max:160'],
@@ -180,8 +198,8 @@ class CultivationController extends Controller
         ]);
 
         $ownerId = isset($data['cultivation_batch_id'])
-            ? CultivationBatch::query()->findOrFail($data['cultivation_batch_id'])->user_id
-            : $request->user()->id;
+            ? $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id
+            : (int) ($data['user_id'] ?? $request->user()->id);
 
         $expense = CultivationExpense::query()->create([
             ...$data,
@@ -196,13 +214,22 @@ class CultivationController extends Controller
         $record = $this->expenseQuery($request)
             ->findOrFail($expense);
 
+        $batchRule = Rule::exists('cultivation_batches', 'id');
+        if (! $request->user()->isAdmin()) {
+            $batchRule->where('user_id', $request->user()->id);
+        }
+
         $data = $request->validate([
-            'cultivation_batch_id' => ['nullable', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'cultivation_batch_id' => ['nullable', 'integer', $batchRule],
             'incurred_at' => ['required', 'date', 'before_or_equal:today'],
             'category' => ['required', Rule::in(['baglog', 'bibit', 'listrik', 'air', 'tenaga_kerja', 'perawatan', 'lainnya'])],
             'description' => ['required', 'string', 'max:160'],
             'amount' => ['required', 'numeric', 'gt:0', 'max:100000000000'],
         ]);
+
+        if (isset($data['cultivation_batch_id'])) {
+            $data['user_id'] = $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id;
+        }
 
         $record->update($data);
 

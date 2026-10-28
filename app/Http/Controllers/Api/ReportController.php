@@ -24,7 +24,7 @@ class ReportController extends Controller
         $from = Carbon::parse($filters['from'] ?? now()->subDays(29)->toDateString())->startOfDay();
         $to = Carbon::parse($filters['to'] ?? now()->toDateString())->endOfDay();
 
-        $batchesQuery = CultivationBatch::query()->where('user_id', $request->user()->id)
+        $batchesQuery = CultivationBatch::query()->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->withSum(['harvests as total_harvest_kg' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])], 'weight_kg')
             ->withCount(['harvests as harvest_count' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])]);
         if (empty($filters['batch_id']) === false) {
@@ -34,13 +34,13 @@ class ReportController extends Controller
         if (empty($filters['batch_id']) === false && $batches->isEmpty()) {
             throw ValidationException::withMessages(['batch_id' => 'Batch tidak ditemukan.']);
         }
-        $harvests = HarvestRecord::query()->where('user_id', $request->user()->id)
+        $harvests = HarvestRecord::query()->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->whereBetween('harvested_at', [$from, $to])->whereIn('cultivation_batch_id', $batches->modelKeys())
             ->with('batch:id,name')->orderBy('harvested_at')->get();
         $daily = $harvests->groupBy(fn ($item) => Carbon::parse($item->harvested_at)->toDateString())
             ->map(fn ($items, $date) => ['date' => $date, 'weight_kg' => round((float) $items->sum('weight_kg'), 3), 'records' => $items->count()])->values();
 
-        $readingsQuery = SensorReading::query()->whereHas('device', fn ($q) => $q->where('user_id', $request->user()->id))
+        $readingsQuery = SensorReading::query()->when(! $request->user()->isAdmin(), fn ($query) => $query->whereHas('device', fn ($q) => $q->where('user_id', $request->user()->id)))
             ->whereBetween('measured_at', [$from, $to]);
         if (empty($filters['batch_id']) === false) {
             $deviceId = $batches->first()?->iot_device_id;
@@ -55,7 +55,7 @@ class ReportController extends Controller
         }
         $priced = $harvests->filter(fn ($h) => $h->sale_price_per_kg !== null);
         $expenses = CultivationExpense::query()
-            ->where('user_id', $request->user()->id)
+            ->when(! $request->user()->isAdmin(), fn ($query) => $query->where('user_id', $request->user()->id))
             ->whereBetween('incurred_at', [$from, $to])
             ->when(! empty($filters['batch_id']), fn ($q) => $q->where('cultivation_batch_id', $filters['batch_id']))
             ->with('batch:id,name')

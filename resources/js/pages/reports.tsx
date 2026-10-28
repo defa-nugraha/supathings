@@ -619,6 +619,75 @@ export default function Reports() {
 
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                 <h2 className="text-lg font-semibold">
+                                    Rincian catatan panen
+                                </h2>
+                                <p className="mt-1 mb-4 text-sm text-slate-500">
+                                    Omzet dihitung hanya jika harga jual per
+                                    kilogram tersedia.
+                                </p>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[650px] text-left text-sm">
+                                        <thead>
+                                            <tr className="border-b text-xs text-slate-500">
+                                                <th className="pb-3">
+                                                    Tanggal
+                                                </th>
+                                                <th className="pb-3">Batch</th>
+                                                <th className="pb-3">
+                                                    Gelombang
+                                                </th>
+                                                <th className="pb-3">Berat</th>
+                                                <th className="pb-3">
+                                                    Kualitas
+                                                </th>
+                                                <th className="pb-3 text-right">
+                                                    Harga/kg
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {data.harvests.map((harvest) => (
+                                                <tr
+                                                    key={harvest.id}
+                                                    className="border-b border-slate-50"
+                                                >
+                                                    <td className="py-3">
+                                                        {formatDate(
+                                                            harvest.date,
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {harvest.batch}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {harvest.flush_number}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {formatNumber(
+                                                            harvest.weight_kg,
+                                                            3,
+                                                        )}{' '}
+                                                        kg
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {harvest.quality ?? '—'}
+                                                    </td>
+                                                    <td className="py-3 text-right">
+                                                        {harvest.sale_price_per_kg ===
+                                                        null
+                                                            ? 'Belum diisi'
+                                                            : formatMoney(
+                                                                  harvest.sale_price_per_kg,
+                                                              )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <h2 className="text-lg font-semibold">
                                     Biaya operasional dan estimasi laba
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">

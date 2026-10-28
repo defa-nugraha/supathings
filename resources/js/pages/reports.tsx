@@ -618,7 +618,11 @@ export default function Reports() {
                     )}
                 </div>
             </main>
-            <style>{'@media print { body { background:white!important; } main {padding:0!important;background:white!important;} button {display:none!important;} article,section {break-inside:avoid;box-shadow:none!important;} }'}</style>
+            <style>
+                {
+                    '@media print { body { background:white!important; } main {padding:0!important;background:white!important;} button {display:none!important;} article,section {break-inside:avoid;box-shadow:none!important;} }'
+                }
+            </style>
         </>
     );
 }

@@ -18,7 +18,7 @@ class IotDeviceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $devices = $request->user()->iotDevices()->with('controlRules')->latest()->get();
+        $devices = $this->deviceQuery($request)->with('controlRules')->latest()->get();
         foreach ($devices as $device) {
             if (! $device->last_seen_at || Carbon::parse($device->last_seen_at)->lt(now()->subMinutes(5))) {
                 if ($device->status !== 'offline') {
@@ -32,7 +32,7 @@ class IotDeviceController extends Controller
 
     public function readings(Request $request, string $device): JsonResponse
     {
-        $iotDevice = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($device): void {
+        $iotDevice = $this->deviceQuery($request)->where(function ($query) use ($device): void {
             $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
         })->firstOrFail();
 
@@ -66,8 +66,7 @@ class IotDeviceController extends Controller
 
     public function update(Request $request, string $device): JsonResponse
     {
-        $record = IotDevice::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->deviceQuery($request)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -303,6 +302,17 @@ class IotDeviceController extends Controller
         ])->save();
 
         return response()->json(['data' => $record->fresh()]);
+    }
+
+    private function deviceQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = IotDevice::query();
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return $query;
     }
 
     private function deviceFromToken(Request $request): ?IotDevice

@@ -168,7 +168,7 @@ class IotDeviceController extends Controller
 
             $status[$actuator] = [
                 'actual_state' => in_array($actualState, ['on', 'off'], true) ? $actualState : null,
-                'command_status' => $latest?->status ?? 'unknown',
+                'command_status' => $latest->status ?? 'unknown',
                 'requested_state' => $latest?->state,
                 'updated_at' => $latest?->updated_at,
             ];

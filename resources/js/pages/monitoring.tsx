@@ -986,6 +986,13 @@ export default function Monitoring() {
                                                         <p className="text-xs text-slate-500">
                                                             {item.desc}
                                                         </p>
+                                                        <p className="mt-1 text-[11px] text-slate-500">
+                                                            {actuatorConfirmed[item.key]
+                                                                ? actuators[item.key]
+                                                                    ? 'Status terkonfirmasi: aktif'
+                                                                    : 'Status terkonfirmasi: mati'
+                                                                : 'Belum ada konfirmasi dari ESP32'}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <button

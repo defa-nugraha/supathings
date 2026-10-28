@@ -58,7 +58,7 @@ class IotDeviceController extends Controller
         $token = Str::random(64);
         $device = IotDevice::query()->updateOrCreate(
             ['mac_address' => $mac, 'user_id' => $request->user()->id],
-            ['name' => $data['name'], 'status' => 'online', 'last_seen_at' => now(), 'device_token_hash' => hash('sha256', $token), 'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']]],
+            ['name' => $data['name'], 'status' => 'offline', 'last_seen_at' => null, 'device_token_hash' => hash('sha256', $token), 'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']]],
         );
 
         return response()->json(['data' => $device, 'device_token' => $token], 201);
@@ -215,7 +215,10 @@ class IotDeviceController extends Controller
 
         $commands = ActuatorCommand::query()
             ->where('iot_device_id', $device->id)
-            ->where('status', 'pending')
+            ->where(function ($query): void {
+                $query->where('status', 'pending')
+                    ->orWhere(fn ($retry) => $retry->where('status', 'sent')->where('updated_at', '<', now()->subSeconds(30)));
+            })
             ->orderBy('id')
             ->limit(10)
             ->get();

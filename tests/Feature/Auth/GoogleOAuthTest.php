@@ -13,11 +13,11 @@ beforeEach(function () {
 function fakeGoogleIdentity(array $overrides = []): void
 {
     Http::fake([
-        'oauth2.googleapis.com/token' => Http::response([
+        'https://oauth2.googleapis.com/token' => Http::response([
             'access_token' => 'test-access-token',
             'token_type' => 'Bearer',
         ], 200),
-        'www.googleapis.com/oauth2/v3/userinfo' => Http::response(array_merge([
+        'https://www.googleapis.com/oauth2/v3/userinfo' => Http::response(array_merge([
             'sub' => 'google-user-123',
             'email' => 'grower@example.com',
             'email_verified' => true,

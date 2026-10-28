@@ -208,6 +208,45 @@ export default function Devices() {
                 : 'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
         );
     };
+    const deletePendingDevice = async () => {
+        if (!pendingDelete) return;
+
+        try {
+            const response = await fetch(
+                `/api/devices/${encodeURIComponent(pendingDelete.id)}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            const payload = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    payload.message ?? 'Perangkat gagal dihapus.',
+                );
+            }
+
+            setDevices((prev) =>
+                prev.filter((item) => item.id !== pendingDelete.id),
+            );
+            setPendingDelete(null);
+            setNotice('Perangkat berhasil dihapus dari akun.');
+        } catch (cause) {
+            setNotice(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Perangkat gagal dihapus.',
+            );
+        }
+    };
+
     const visibleDevices = devices.filter((d) =>
         `${d.name} ${d.id}`.toLowerCase().includes(query.toLowerCase()),
     );
@@ -598,49 +637,7 @@ export default function Devices() {
                                 Batal
                             </button>
                             <button
-                                onClick={async () => {
-                                    try {
-                                        const response = await fetch(
-                                            '/api/devices/' +
-                                                encodeURIComponent(
-                                                    pendingDelete.id,
-                                                ),
-                                            {
-                                                method: 'DELETE',
-                                                headers: {
-                                                    Accept: 'application/json',
-                                                    'X-CSRF-TOKEN':
-                                                        document.querySelector<HTMLMetaElement>(
-                                                            'meta[name="csrf-token"]',
-                                                        )?.content ?? '',
-                                                },
-                                            },
-                                        );
-                                        const payload = await response.json();
-                                        if (!response.ok) {
-                                            throw new Error(
-                                                payload.message ??
-                                                    'Perangkat gagal dihapus.',
-                                            );
-                                        }
-                                        setDevices((prev) =>
-                                            prev.filter(
-                                                (item) =>
-                                                    item.id !== pendingDelete.id,
-                                            ),
-                                        );
-                                        setPendingDelete(null);
-                                        setNotice(
-                                            'Perangkat berhasil dihapus dari akun.',
-                                        );
-                                    } catch (cause) {
-                                        setNotice(
-                                            cause instanceof Error
-                                                ? cause.message
-                                                : 'Perangkat gagal dihapus.',
-                                        );
-                                    }
-                                }}
+                                onClick={() => void deletePendingDevice()}
                                 className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
                             >
                                 Ya, hapus

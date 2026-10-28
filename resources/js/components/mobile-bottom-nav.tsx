@@ -27,7 +27,7 @@ export function MobileBottomNav() {
     return (
         <nav
             aria-label="Navigasi utama mobile"
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl md:hidden"
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl lg:hidden"
         >
             <ul className="mx-auto grid max-w-lg grid-cols-5 gap-1">
                 {items.map(({ label, href, icon: Icon }) => {

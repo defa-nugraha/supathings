@@ -220,10 +220,13 @@ class IotDeviceController extends Controller
             return response()->json(['message' => 'Perintah sudah diproses.', 'data' => $record], 409);
         }
 
+        $metadata = json_decode((string) $record->getRawOriginal('metadata'), true);
+        $metadata = is_array($metadata) ? $metadata : [];
+
         $record->forceFill([
             'status' => $data['status'],
             'acknowledged_at' => now(),
-            'metadata' => array_merge(is_array($record->metadata) ? $record->metadata : [], [
+            'metadata' => array_merge($metadata, [
                 'actual_state' => $data['actual_state'] ?? null,
                 'device_message' => $data['message'] ?? null,
             ]),

@@ -6,7 +6,6 @@ type TourStep = {
     target: string;
     title: string;
     description: string;
-    placement?: 'top' | 'bottom';
 };
 
 type TargetRect = {

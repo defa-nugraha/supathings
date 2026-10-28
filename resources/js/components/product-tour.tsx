@@ -23,142 +23,166 @@ const tours: Record<string, TourStep[]> = {
         {
             target: '[data-tour="dashboard-connect"]',
             title: 'Hubungkan perangkat',
-            description: 'Mulai dengan mencari dan mendaftarkan ESP32 milik Anda.',
+            description:
+                'Mulai dengan mencari dan mendaftarkan ESP32 milik Anda.',
         },
         {
             target: '[data-tour="dashboard-metrics"]',
             title: 'Pantau kondisi kumbung',
-            description: 'Suhu, kelembapan, dan intensitas cahaya ditampilkan dari pembacaan sensor terbaru.',
+            description:
+                'Suhu, kelembapan, dan intensitas cahaya ditampilkan dari pembacaan sensor terbaru.',
         },
         {
             target: '[data-tour="dashboard-device-status"]',
             title: 'Periksa koneksi perangkat',
-            description: 'Lihat perangkat yang online atau offline beserta waktu terakhir aktif.',
+            description:
+                'Lihat perangkat yang online atau offline beserta waktu terakhir aktif.',
         },
         {
             target: '[data-tour="dashboard-alerts"]',
             title: 'Kenali peringatan',
-            description: 'Peringatan membantu Anda menemukan perangkat offline atau kondisi di luar ambang.',
+            description:
+                'Peringatan membantu Anda menemukan perangkat offline atau kondisi di luar ambang.',
         },
     ],
     '/monitoring': [
         {
             target: '[data-tour="monitoring-device"]',
             title: 'Pilih perangkat',
-            description: 'Pilih perangkat yang ingin dipantau atau dikendalikan.',
+            description:
+                'Pilih perangkat yang ingin dipantau atau dikendalikan.',
         },
         {
             target: '[data-tour="monitoring-mode"]',
             title: 'Pilih mode kontrol',
-            description: 'Gunakan mode manual untuk mengendalikan aktuator atau otomatis untuk mengikuti aturan yang tersedia.',
+            description:
+                'Gunakan mode manual untuk mengendalikan aktuator atau otomatis untuk mengikuti aturan yang tersedia.',
         },
         {
             target: '[data-tour="monitoring-layout"]',
             title: 'Sesuaikan tampilan',
-            description: 'Aktifkan mode edit untuk menambah, menghapus, atau mengatur ulang kartu pemantauan.',
+            description:
+                'Aktifkan mode edit untuk menambah, menghapus, atau mengatur ulang kartu pemantauan.',
         },
         {
             target: '[data-tour="monitoring-controls"]',
             title: 'Pantau dan kendalikan',
-            description: 'Periksa nilai sensor dan gunakan kontrol aktuator yang tersedia untuk perangkat terpilih.',
+            description:
+                'Periksa nilai sensor dan gunakan kontrol aktuator yang tersedia untuk perangkat terpilih.',
         },
     ],
     '/devices': [
         {
             target: '[data-tour="devices-scan"]',
             title: 'Temukan ESP32',
-            description: 'Jalankan pencarian agar perangkat yang tersedia dapat ditemukan.',
+            description:
+                'Jalankan pencarian agar perangkat yang tersedia dapat ditemukan.',
         },
         {
             target: '[data-tour="devices-list"]',
             title: 'Kelola perangkat',
-            description: 'Periksa status perangkat, buka detailnya, atau hapus perangkat yang tidak digunakan.',
+            description:
+                'Periksa status perangkat, buka detailnya, atau hapus perangkat yang tidak digunakan.',
         },
     ],
     '/cultivation': [
         {
             target: '[data-tour="cultivation-actions"]',
             title: 'Catat aktivitas utama',
-            description: 'Tambah batch saat memulai siklus budidaya atau catat panen saat hasil sudah siap dipetik.',
+            description:
+                'Tambah batch saat memulai siklus budidaya atau catat panen saat hasil sudah siap dipetik.',
         },
         {
             target: '[data-tour="cultivation-batches"]',
             title: 'Kelola batch budidaya',
-            description: 'Pantau fase, jumlah baglog, dan catatan untuk setiap batch.',
+            description:
+                'Pantau fase, jumlah baglog, dan catatan untuk setiap batch.',
         },
         {
             target: '[data-tour="cultivation-harvests"]',
             title: 'Catat hasil panen',
-            description: 'Masukkan tanggal, batch, gelombang, berat, dan informasi penjualan untuk mencatat hasil panen.',
+            description:
+                'Masukkan tanggal, batch, gelombang, berat, dan informasi penjualan untuk mencatat hasil panen.',
         },
     ],
     '/cultivation/history': [
         {
             target: '[data-tour="harvest-history"]',
             title: 'Riwayat panen',
-            description: 'Tinjau hasil panen terdahulu dan gunakan aksi edit atau hapus untuk memperbaiki catatan.',
+            description:
+                'Tinjau hasil panen terdahulu dan gunakan aksi edit atau hapus untuk memperbaiki catatan.',
         },
     ],
     '/cultivation/journal': [
         {
             target: '[data-tour="cultivation-journal"]',
             title: 'Jurnal budidaya',
-            description: 'Gunakan jurnal untuk meninjau catatan kegiatan yang terkait dengan batch budidaya.',
+            description:
+                'Gunakan jurnal untuk meninjau catatan kegiatan yang terkait dengan batch budidaya.',
         },
     ],
     '/cultivation/expenses': [
         {
             target: '[data-tour="expenses-add"]',
             title: 'Catat pengeluaran',
-            description: 'Tambahkan biaya operasional agar perhitungan biaya dan laba lebih akurat.',
+            description:
+                'Tambahkan biaya operasional agar perhitungan biaya dan laba lebih akurat.',
         },
         {
             target: '[data-tour="expenses-summary"]',
             title: 'Ringkasan biaya',
-            description: 'Ringkasan menampilkan total pengeluaran, jumlah transaksi, dan rata-rata biaya.',
+            description:
+                'Ringkasan menampilkan total pengeluaran, jumlah transaksi, dan rata-rata biaya.',
         },
         {
             target: '[data-tour="expenses-table"]',
             title: 'Kelola transaksi',
-            description: 'Periksa detail pengeluaran dan gunakan aksi edit atau hapus jika diperlukan.',
+            description:
+                'Periksa detail pengeluaran dan gunakan aksi edit atau hapus jika diperlukan.',
         },
     ],
     '/reports': [
         {
             target: '[data-tour="reports-filters"]',
             title: 'Atur laporan',
-            description: 'Pilih rentang waktu atau filter yang tersedia sebelum memuat laporan.',
+            description:
+                'Pilih rentang waktu atau filter yang tersedia sebelum memuat laporan.',
         },
         {
             target: '[data-tour="reports-export"]',
             title: 'Ekspor laporan',
-            description: 'Unduh data laporan ke CSV atau gunakan cetak untuk menyimpan laporan.',
+            description:
+                'Unduh data laporan ke CSV atau gunakan cetak untuk menyimpan laporan.',
         },
         {
             target: '[data-tour="reports-summary"]',
             title: 'Baca ringkasan',
-            description: 'Gunakan metrik dan tabel untuk memahami perkembangan budidaya pada periode terpilih.',
+            description:
+                'Gunakan metrik dan tabel untuk memahami perkembangan budidaya pada periode terpilih.',
         },
     ],
     '/settings/profile': [
         {
             target: '[data-tour="settings-profile"]',
             title: 'Profil akun',
-            description: 'Perbarui informasi profil yang digunakan pada akun Anda.',
+            description:
+                'Perbarui informasi profil yang digunakan pada akun Anda.',
         },
     ],
     '/settings/branding': [
         {
             target: '[data-tour="settings-branding"]',
             title: 'Identitas aplikasi',
-            description: 'Sesuaikan identitas visual aplikasi melalui pengaturan yang tersedia.',
+            description:
+                'Sesuaikan identitas visual aplikasi melalui pengaturan yang tersedia.',
         },
     ],
     '/settings/security': [
         {
             target: '[data-tour="settings-security"]',
             title: 'Keamanan akun',
-            description: 'Kelola opsi keamanan akun seperti kata sandi dan autentikasi tambahan.',
+            description:
+                'Kelola opsi keamanan akun seperti kata sandi dan autentikasi tambahan.',
         },
     ],
 };
@@ -212,7 +236,11 @@ export function ProductTour() {
             if (firstIndex < 0) return;
 
             const firstTarget = getVisibleTarget(steps[firstIndex].target);
-            firstTarget?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            firstTarget?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest',
+            });
             setStepIndex(firstIndex);
             setOpen(true);
             setTargetMissing(false);
@@ -268,7 +296,11 @@ export function ProductTour() {
         while (nextIndex >= 0 && nextIndex < steps.length) {
             const target = getVisibleTarget(steps[nextIndex].target);
             if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest',
+                });
                 setStepIndex(nextIndex);
                 return;
             }
@@ -306,7 +338,10 @@ export function ProductTour() {
                 title="Panduan penggunaan"
                 className="fixed right-4 bottom-20 z-[70] inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-lg transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none md:right-6 md:bottom-6"
             >
-                <CircleHelp aria-hidden="true" className="size-5 text-blue-700" />
+                <CircleHelp
+                    aria-hidden="true"
+                    className="size-5 text-blue-700"
+                />
                 <span>Panduan</span>
             </button>
 
@@ -405,7 +440,10 @@ export function ProductTour() {
                                     disabled={stepIndex === 0}
                                     className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                    <ChevronLeft aria-hidden="true" className="size-4" />
+                                    <ChevronLeft
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
                                     Kembali
                                 </button>
                                 <button
@@ -413,9 +451,14 @@ export function ProductTour() {
                                     onClick={() => goTo(1)}
                                     className="inline-flex min-h-10 items-center gap-1 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none"
                                 >
-                                    {stepIndex === steps.length - 1 ? 'Selesai' : 'Lanjut'}
+                                    {stepIndex === steps.length - 1
+                                        ? 'Selesai'
+                                        : 'Lanjut'}
                                     {stepIndex < steps.length - 1 && (
-                                        <ChevronRight aria-hidden="true" className="size-4" />
+                                        <ChevronRight
+                                            aria-hidden="true"
+                                            className="size-4"
+                                        />
                                     )}
                                 </button>
                             </div>

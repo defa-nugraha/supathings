@@ -708,7 +708,10 @@ export default function Monitoring() {
                                         setDeviceId(selectedDevice.id);
                                     }}
                                 >
-                                    <SelectTrigger data-tour="monitoring-device" className="h-9 w-auto min-w-[180px] border-0 bg-transparent px-2 font-medium shadow-none">
+                                    <SelectTrigger
+                                        data-tour="monitoring-device"
+                                        className="h-9 w-auto min-w-[180px] border-0 bg-transparent px-2 font-medium shadow-none"
+                                    >
                                         <SelectValue placeholder="Pilih device" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -845,7 +848,10 @@ export default function Monitoring() {
                                 </p>
                             </div>
                         </div>
-                        <div data-tour="monitoring-mode" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white p-1">
+                        <div
+                            data-tour="monitoring-mode"
+                            className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white p-1"
+                        >
                             <button
                                 onClick={() => void saveMode('manual')}
                                 className={`rounded-lg px-3 py-2 text-xs font-semibold ${manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
@@ -860,7 +866,10 @@ export default function Monitoring() {
                             </button>
                         </div>
                     </div>
-                    <div data-tour="monitoring-controls" className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                    <div
+                        data-tour="monitoring-controls"
+                        className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
+                    >
                         {widgets.map((widget) => (
                             <section
                                 key={widget.id}

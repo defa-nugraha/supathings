@@ -272,7 +272,10 @@ export default function CultivationExpenses() {
                         </p>
                     )}
 
-                    <section data-tour="expenses-summary" className="grid gap-4 sm:grid-cols-3">
+                    <section
+                        data-tour="expenses-summary"
+                        className="grid gap-4 sm:grid-cols-3"
+                    >
                         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <p className="text-sm text-slate-500">
                                 Total pengeluaran tercatat
@@ -312,7 +315,10 @@ export default function CultivationExpenses() {
                         </article>
                     </section>
 
-                    <section data-tour="expenses-table" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <section
+                        data-tour="expenses-table"
+                        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    >
                         <div className="border-b border-slate-100 p-5">
                             <div className="flex items-center gap-2">
                                 <ReceiptText className="size-5 text-emerald-700" />

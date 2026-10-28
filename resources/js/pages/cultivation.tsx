@@ -579,7 +579,10 @@ export default function Cultivation() {
                     </Dialog>
 
                     <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-                        <section data-tour="cultivation-batches" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <section
+                            data-tour="cultivation-batches"
+                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                        >
                             <div className="mb-4 flex items-center justify-between">
                                 <div>
                                     <h2 className="text-lg font-semibold text-slate-900">

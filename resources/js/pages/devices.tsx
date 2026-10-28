@@ -471,7 +471,10 @@ export default function Devices() {
                             </div>
                         </section>
                     )}
-                    <section data-tour="devices-list" className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <section
+                        data-tour="devices-list"
+                        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    >
                         <div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h2 className="font-semibold text-slate-900">

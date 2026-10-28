@@ -203,7 +203,9 @@ export default function Devices() {
         setSelected(null);
         setDeviceName('');
         setNotice(
-            'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
+            token
+                ? 'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.'
+                : 'Nama perangkat berhasil diperbarui.',
         );
     };
     const visibleDevices = devices.filter((d) =>

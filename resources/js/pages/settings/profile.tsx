@@ -30,7 +30,7 @@ export default function Profile({
 
             <h1 className="sr-only">Profile settings</h1>
 
-            <div data-tour="settings-profile" className="space-y-6">
+            <div className="space-y-6">
                 <Heading
                     variant="small"
                     title="Profile"
@@ -46,7 +46,7 @@ export default function Profile({
                 >
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div data-tour="settings-profile" className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
 
                                 <Input

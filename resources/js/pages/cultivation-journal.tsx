@@ -76,7 +76,6 @@ export default function CultivationJournal() {
         <>
             <Head title="Jurnal budidaya" />
             <main
-                data-tour="cultivation-journal"
                 className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 md:p-8"
             >
                 <div className="mx-auto max-w-[1100px] space-y-6">

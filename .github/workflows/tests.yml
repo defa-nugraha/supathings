@@ -53,11 +53,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate --force
 
-      - name: Frontend formatter diagnostics
-        run: |
-          npm run check:fix
-          git diff -- resources/js/pages/reports.tsx
-
       - name: Frontend lint and formatting checks
         run: npm run check
 

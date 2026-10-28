@@ -358,7 +358,10 @@ export default function Monitoring() {
                         setActuatorConfirmed((prev) => ({
                             ...prev,
                             ...Object.fromEntries(
-                                Object.keys(message.state).map((key) => [key, true]),
+                                Object.keys(message.state).map((key) => [
+                                    key,
+                                    true,
+                                ]),
                             ),
                         }));
                     }
@@ -574,7 +577,8 @@ export default function Monitoring() {
         const refreshActuatorStatus = async () => {
             try {
                 const response = await fetch(
-                    '/api/actuator-status?device_id=' + encodeURIComponent(deviceId),
+                    '/api/actuator-status?device_id=' +
+                        encodeURIComponent(deviceId),
                     { headers: { Accept: 'application/json' } },
                 );
                 if (!response.ok) return;
@@ -605,7 +609,10 @@ export default function Monitoring() {
         };
 
         void refreshActuatorStatus();
-        const timer = window.setInterval(() => void refreshActuatorStatus(), 5000);
+        const timer = window.setInterval(
+            () => void refreshActuatorStatus(),
+            5000,
+        );
         return () => {
             active = false;
             window.clearInterval(timer);
@@ -987,8 +994,12 @@ export default function Monitoring() {
                                                             {item.desc}
                                                         </p>
                                                         <p className="mt-1 text-[11px] text-slate-500">
-                                                            {actuatorConfirmed[item.key]
-                                                                ? actuators[item.key]
+                                                            {actuatorConfirmed[
+                                                                item.key
+                                                            ]
+                                                                ? actuators[
+                                                                      item.key
+                                                                  ]
                                                                     ? 'Status terkonfirmasi: aktif'
                                                                     : 'Status terkonfirmasi: mati'
                                                                 : 'Belum ada konfirmasi dari ESP32'}
@@ -1003,8 +1014,12 @@ export default function Monitoring() {
                                                     onClick={() =>
                                                         void sendActuator(
                                                             item.key,
-                                                            actuatorConfirmed[item.key]
-                                                                ? !actuators[item.key]
+                                                            actuatorConfirmed[
+                                                                item.key
+                                                            ]
+                                                                ? !actuators[
+                                                                      item.key
+                                                                  ]
                                                                 : true,
                                                         )
                                                     }

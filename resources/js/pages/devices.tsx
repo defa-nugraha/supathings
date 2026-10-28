@@ -570,6 +570,7 @@ export default function Devices() {
                                                 setPendingDelete(device)
                                             }
                                             title="Hapus dari daftar"
+                                            aria-label={`Hapus perangkat ${device.name}`}
                                             className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                                         >
                                             <Trash2 className="size-4" />

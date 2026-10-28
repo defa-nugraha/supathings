@@ -220,7 +220,7 @@ export default function Reports() {
                             <button
                                 onClick={exportCsv}
                                 disabled={!data || loading}
-                                className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
                             >
                                 <Download className="size-4" />
                                 Ekspor CSV

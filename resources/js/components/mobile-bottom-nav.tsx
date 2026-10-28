@@ -32,7 +32,11 @@ const primaryItems = [
 
 const moreItems = [
     { label: 'Riwayat panen', href: '/cultivation/history', icon: History },
-    { label: 'Jurnal budidaya', href: '/cultivation/journal', icon: NotebookPen },
+    {
+        label: 'Jurnal budidaya',
+        href: '/cultivation/journal',
+        icon: NotebookPen,
+    },
     { label: 'Biaya operasional', href: '/cultivation/expenses', icon: Wallet },
     { label: 'Laporan budidaya', href: '/reports', icon: ChartNoAxesColumn },
     { label: 'Pengaturan akun', href: '/settings/profile', icon: Settings },
@@ -82,7 +86,9 @@ export function MobileBottomNav() {
                                     strokeWidth={active ? 2.4 : 1.9}
                                 />
                             </span>
-                            <span className="max-w-full truncate">{item.label}</span>
+                            <span className="max-w-full truncate">
+                                {item.label}
+                            </span>
                         </Link>
                     );
                 })}
@@ -95,7 +101,10 @@ export function MobileBottomNav() {
                             aria-label="Buka menu lainnya"
                         >
                             <span className="grid size-8 place-items-center rounded-xl">
-                                <MoreHorizontal aria-hidden="true" className="size-5" />
+                                <MoreHorizontal
+                                    aria-hidden="true"
+                                    className="size-5"
+                                />
                             </span>
                             <span>Lainnya</span>
                         </button>
@@ -106,7 +115,9 @@ export function MobileBottomNav() {
                     >
                         <SheetHeader className="px-1 pb-2 text-left">
                             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-slate-200" />
-                            <SheetTitle className="text-lg">Menu Supathings</SheetTitle>
+                            <SheetTitle className="text-lg">
+                                Menu Supathings
+                            </SheetTitle>
                             <SheetDescription>
                                 Akses catatan, laporan, dan pengaturan akun.
                             </SheetDescription>
@@ -120,7 +131,9 @@ export function MobileBottomNav() {
                                         <Link
                                             href={item.href}
                                             prefetch
-                                            aria-current={active ? 'page' : undefined}
+                                            aria-current={
+                                                active ? 'page' : undefined
+                                            }
                                             className={`flex min-h-12 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:outline-none ${
                                                 active
                                                     ? 'bg-emerald-50 text-emerald-800'
@@ -131,7 +144,9 @@ export function MobileBottomNav() {
                                                 aria-hidden="true"
                                                 className="size-5 shrink-0"
                                             />
-                                            <span className="min-w-0 flex-1">{item.label}</span>
+                                            <span className="min-w-0 flex-1">
+                                                {item.label}
+                                            </span>
                                         </Link>
                                     </SheetClose>
                                 );
@@ -142,7 +157,10 @@ export function MobileBottomNav() {
                                     onClick={() => router.post('/logout')}
                                     className="mt-2 flex min-h-12 items-center gap-3 rounded-xl border-t border-slate-100 px-3 pt-3 text-sm font-medium text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:outline-none"
                                 >
-                                    <LogOut aria-hidden="true" className="size-5 shrink-0" />
+                                    <LogOut
+                                        aria-hidden="true"
+                                        className="size-5 shrink-0"
+                                    />
                                     Keluar dari akun
                                 </button>
                             )}

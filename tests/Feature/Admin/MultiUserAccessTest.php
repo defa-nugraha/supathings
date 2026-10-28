@@ -52,7 +52,7 @@ test('admin cannot deactivate their own account or remove their own role', funct
     expect($admin->fresh()->role)->toBe('admin');
 });
 
-test('admin cannot remove the last active administrator', function () {
+test('admin can demote another administrator while retaining an active administrator', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $otherAdmin = User::factory()->create(['role' => 'admin']);
 
@@ -61,10 +61,12 @@ test('admin cannot remove the last active administrator', function () {
             'role' => 'user',
             'is_active' => false,
         ])
-        ->assertSessionHasErrors('user');
+        ->assertRedirect();
 
-    expect($otherAdmin->fresh()->role)->toBe('admin')
-        ->and($otherAdmin->fresh()->is_active)->toBeTrue();
+    expect($otherAdmin->fresh()->role)->toBe('user')
+        ->and($otherAdmin->fresh()->is_active)->toBeFalse()
+        ->and($admin->fresh()->isAdmin())->toBeTrue()
+        ->and($admin->fresh()->isActive())->toBeTrue();
 });
 
 test('inactive users are logged out and cannot access protected pages', function () {

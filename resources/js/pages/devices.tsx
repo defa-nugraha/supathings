@@ -148,9 +148,10 @@ export default function Devices() {
     const register = async () => {
         if (!selected || !deviceName.trim()) return;
         let token = '';
+        const isRegistered = devices.some((device) => device.id === selected.id);
         try {
-            const response = await fetch('/api/devices', {
-                method: 'POST',
+            const response = await fetch(isRegistered ? '/api/devices/' + encodeURIComponent(selected.id) : '/api/devices', {
+                method: isRegistered ? 'PATCH' : 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
@@ -159,7 +160,7 @@ export default function Devices() {
                             'meta[name="csrf-token"]',
                         )?.content ?? '',
                 },
-                body: JSON.stringify({
+                body: JSON.stringify(isRegistered ? { name: deviceName.trim() } : {
                     device_id: selected.id,
                     name: deviceName.trim(),
                     sensors: selected.sensors,
@@ -177,7 +178,7 @@ export default function Devices() {
             );
             return;
         }
-        setIssuedToken(token);
+        if (token) setIssuedToken(token);
         setDevices((prev) =>
             prev.some((d) => d.id === selected.id)
                 ? prev.map((d) =>
@@ -190,9 +191,7 @@ export default function Devices() {
         setDiscovered((prev) => prev.filter((d) => d.id !== selected.id));
         setSelected(null);
         setDeviceName('');
-        setNotice(
-            'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
-        );
+        setNotice(isRegistered ? 'Nama perangkat berhasil diperbarui.' : 'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.');
     };
     const visibleDevices = devices.filter((d) =>
         `${d.name} ${d.id}`.toLowerCase().includes(query.toLowerCase()),

@@ -148,23 +148,35 @@ export default function Devices() {
     const register = async () => {
         if (!selected || !deviceName.trim()) return;
         let token = '';
+        const isRegistered = devices.some(
+            (device) => device.id === selected.id,
+        );
         try {
-            const response = await fetch('/api/devices', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN':
-                        document.querySelector<HTMLMetaElement>(
-                            'meta[name="csrf-token"]',
-                        )?.content ?? '',
+            const response = await fetch(
+                isRegistered
+                    ? '/api/devices/' + encodeURIComponent(selected.id)
+                    : '/api/devices',
+                {
+                    method: isRegistered ? 'PATCH' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                    body: JSON.stringify(
+                        isRegistered
+                            ? { name: deviceName.trim() }
+                            : {
+                                  device_id: selected.id,
+                                  name: deviceName.trim(),
+                                  sensors: selected.sensors,
+                              },
+                    ),
                 },
-                body: JSON.stringify({
-                    device_id: selected.id,
-                    name: deviceName.trim(),
-                    sensors: selected.sensors,
-                }),
-            });
+            );
             const payload = await response.json();
             if (!response.ok)
                 throw new Error(payload.message || 'Registrasi device gagal.');
@@ -177,7 +189,7 @@ export default function Devices() {
             );
             return;
         }
-        setIssuedToken(token);
+        if (token) setIssuedToken(token);
         setDevices((prev) =>
             prev.some((d) => d.id === selected.id)
                 ? prev.map((d) =>
@@ -191,9 +203,48 @@ export default function Devices() {
         setSelected(null);
         setDeviceName('');
         setNotice(
-            'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
+            isRegistered
+                ? 'Nama perangkat berhasil diperbarui.'
+                : 'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
         );
     };
+    const deletePendingDevice = async () => {
+        if (!pendingDelete) return;
+
+        try {
+            const response = await fetch(
+                `/api/devices/${encodeURIComponent(pendingDelete.id)}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            const payload = await response.json();
+
+            if (!response.ok) {
+                throw new Error(payload.message ?? 'Perangkat gagal dihapus.');
+            }
+
+            setDevices((prev) =>
+                prev.filter((item) => item.id !== pendingDelete.id),
+            );
+            setPendingDelete(null);
+            setNotice('Perangkat berhasil dihapus dari akun.');
+        } catch (cause) {
+            setNotice(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Perangkat gagal dihapus.',
+            );
+        }
+    };
+
     const visibleDevices = devices.filter((d) =>
         `${d.name} ${d.id}`.toLowerCase().includes(query.toLowerCase()),
     );
@@ -519,6 +570,7 @@ export default function Devices() {
                                                 setPendingDelete(device)
                                             }
                                             title="Hapus dari daftar"
+                                            aria-label={`Hapus perangkat ${device.name}`}
                                             className="rounded-xl p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
                                         >
                                             <Trash2 className="size-4" />
@@ -584,18 +636,7 @@ export default function Devices() {
                                 Batal
                             </button>
                             <button
-                                onClick={() => {
-                                    setDevices((prev) =>
-                                        prev.filter(
-                                            (item) =>
-                                                item.id !== pendingDelete.id,
-                                        ),
-                                    );
-                                    setPendingDelete(null);
-                                    setNotice(
-                                        'Device berhasil dihapus dari daftar tampilan. Data server tidak dihapus.',
-                                    );
-                                }}
+                                onClick={() => void deletePendingDevice()}
                                 className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
                             >
                                 Ya, hapus

@@ -91,3 +91,66 @@ test('farmers can record cultivation expenses and cannot attach costs to another
         'category' => 'lainnya', 'description' => 'Tidak boleh', 'amount' => 1000,
     ])->assertUnprocessable();
 });
+
+test('farmers can update and delete their own expenses', function () {
+    $user = User::factory()->create();
+    $response = $this->actingAs($user)->postJson('/api/cultivation/expenses', [
+        'incurred_at' => now()->toDateString(),
+        'category' => 'listrik',
+        'description' => 'Listrik kumbung',
+        'amount' => 75000,
+    ])->assertCreated();
+    $id = $response->json('data.id');
+
+    $this->actingAs($user)->patchJson('/api/cultivation/expenses/'.$id, [
+        'incurred_at' => now()->toDateString(),
+        'category' => 'air',
+        'description' => 'Tagihan air kumbung',
+        'amount' => 25000,
+        'cultivation_batch_id' => null,
+    ])->assertOk()->assertJsonPath('data.amount', 25000)
+        ->assertJsonPath('data.description', 'Tagihan air kumbung');
+
+    $this->actingAs($user)->deleteJson('/api/cultivation/expenses/'.$id)->assertOk();
+    $this->assertDatabaseMissing('cultivation_expenses', ['id' => $id]);
+});
+
+test('farmers can update and delete harvest records and cannot modify other users records', function () {
+    $user = User::factory()->create();
+    $batch = CultivationBatch::query()->create([
+        'user_id' => $user->id, 'name' => 'Batch Panen', 'inoculated_at' => now()->subDays(30)->toDateString(),
+        'baglog_count' => 100, 'phase' => 'harvesting',
+    ]);
+    $record = HarvestRecord::query()->create([
+        'user_id' => $user->id, 'cultivation_batch_id' => $batch->id,
+        'harvested_at' => now()->toDateString(), 'flush_number' => 1,
+        'weight_kg' => 3.25, 'quality' => 'good', 'sale_price_per_kg' => 20000,
+    ]);
+
+    $this->actingAs($user)->patchJson('/api/cultivation/harvests/'.$record->id, [
+        'weight_kg' => 4.5, 'harvested_at' => now()->toDateString(),
+        'flush_number' => 2, 'quality' => 'premium', 'sale_price_per_kg' => 25000,
+        'cultivation_batch_id' => $batch->id,
+    ])->assertOk()->assertJsonPath('data.weight_kg', 4.5);
+
+    $this->actingAs(User::factory()->create())
+        ->deleteJson('/api/cultivation/harvests/'.$record->id)->assertNotFound();
+
+    $this->actingAs($user)->deleteJson('/api/cultivation/harvests/'.$record->id)->assertOk();
+    $this->assertDatabaseMissing('harvest_records', ['id' => $record->id]);
+});
+
+test('batch deletion is blocked while harvest or expense records are attached', function () {
+    $user = User::factory()->create();
+    $batch = CultivationBatch::query()->create([
+        'user_id' => $user->id, 'name' => 'Batch terlacak', 'inoculated_at' => now()->subDays(20)->toDateString(),
+        'baglog_count' => 100, 'phase' => 'fruiting',
+    ]);
+    $this->actingAs($user)->postJson('/api/cultivation/expenses', [
+        'cultivation_batch_id' => $batch->id, 'incurred_at' => now()->toDateString(),
+        'category' => 'baglog', 'description' => 'Baglog tambahan', 'amount' => 50000,
+    ])->assertCreated();
+
+    $this->actingAs($user)->deleteJson('/api/cultivation/batches/'.$batch->id)
+        ->assertUnprocessable();
+});

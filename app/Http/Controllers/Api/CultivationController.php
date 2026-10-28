@@ -55,12 +55,31 @@ class CultivationController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:100'],
             'strain' => ['nullable', 'string', 'max:100'],
+            'inoculated_at' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
+            'baglog_count' => ['sometimes', 'required', 'integer', 'min:1', 'max:1000000'],
             'phase' => ['sometimes', Rule::in(['incubation', 'fruiting', 'harvesting', 'resting', 'completed'])],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
         $cultivationBatch->update($data);
 
         return response()->json(['data' => $cultivationBatch->fresh()]);
+    }
+
+    public function destroyBatch(Request $request, string $batch): JsonResponse
+    {
+        $record = CultivationBatch::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($batch);
+
+        if ($record->harvests()->exists() || $record->expenses()->exists()) {
+            return response()->json([
+                'message' => 'Batch tidak dapat dihapus karena sudah memiliki catatan panen atau biaya. Hapus atau pindahkan catatan terkait terlebih dahulu.',
+            ], 422);
+        }
+
+        $record->delete();
+
+        return response()->json(['message' => 'Batch berhasil dihapus.']);
     }
 
     public function harvests(Request $request): JsonResponse
@@ -99,6 +118,37 @@ class CultivationController extends Controller
         return response()->json(['data' => $record->load('batch:id,name')], 201);
     }
 
+    public function updateHarvest(Request $request, string $harvest): JsonResponse
+    {
+        $record = HarvestRecord::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($harvest);
+
+        $data = $request->validate([
+            'cultivation_batch_id' => ['sometimes', 'required', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'harvested_at' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
+            'flush_number' => ['sometimes', 'required', 'integer', 'min:1', 'max:20'],
+            'weight_kg' => ['sometimes', 'required', 'numeric', 'gt:0', 'max:100000'],
+            'quality' => ['nullable', Rule::in(['premium', 'good', 'standard', 'reject'])],
+            'sale_price_per_kg' => ['nullable', 'numeric', 'min:0', 'max:1000000000'],
+            'notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $record->update($data);
+
+        return response()->json(['data' => $record->fresh()->load('batch:id,name')]);
+    }
+
+    public function destroyHarvest(Request $request, string $harvest): JsonResponse
+    {
+        $record = HarvestRecord::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($harvest);
+        $record->delete();
+
+        return response()->json(['message' => 'Catatan panen berhasil dihapus.']);
+    }
+
     public function expenses(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -135,6 +185,35 @@ class CultivationController extends Controller
         ]);
 
         return response()->json(['data' => $expense->load('batch:id,name')], 201);
+    }
+
+    public function updateExpense(Request $request, string $expense): JsonResponse
+    {
+        $record = CultivationExpense::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($expense);
+
+        $data = $request->validate([
+            'cultivation_batch_id' => ['nullable', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'incurred_at' => ['required', 'date', 'before_or_equal:today'],
+            'category' => ['required', Rule::in(['baglog', 'bibit', 'listrik', 'air', 'tenaga_kerja', 'perawatan', 'lainnya'])],
+            'description' => ['required', 'string', 'max:160'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:100000000000'],
+        ]);
+
+        $record->update($data);
+
+        return response()->json(['data' => $record->fresh()->load('batch:id,name')]);
+    }
+
+    public function destroyExpense(Request $request, string $expense): JsonResponse
+    {
+        $record = CultivationExpense::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($expense);
+        $record->delete();
+
+        return response()->json(['message' => 'Biaya operasional berhasil dihapus.']);
     }
 
     public function alerts(Request $request): JsonResponse

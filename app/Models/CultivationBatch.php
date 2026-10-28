@@ -36,4 +36,10 @@ class CultivationBatch extends Model
     {
         return $this->hasMany(HarvestRecord::class);
     }
+
+    /** @return HasMany<CultivationExpense, $this> */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(CultivationExpense::class);
+    }
 }

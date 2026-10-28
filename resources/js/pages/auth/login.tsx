@@ -10,7 +10,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
@@ -22,8 +21,24 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Log in" />
 
-            <PasskeyVerify />
-
+            <a
+                href="/auth/google/redirect"
+                className="flex h-10 w-full items-center justify-center gap-3 rounded-md border border-input bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                data-test="google-login"
+            >
+                <img
+                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                    alt=""
+                    className="h-5 w-5"
+                />
+                Continue with Google
+            </a>
+            <div className="relative my-1 flex items-center">
+                <span className="w-full border-t border-border" />
+                <span className="absolute left-1/2 -translate-x-1/2 bg-background px-3 text-xs text-muted-foreground">
+                    OR
+                </span>
+            </div>
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
@@ -113,5 +128,5 @@ export default function Login({ status, canResetPassword }: Props) {
 
 Login.layout = {
     title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    description: 'Sign in with your Google account or email and password',
 };

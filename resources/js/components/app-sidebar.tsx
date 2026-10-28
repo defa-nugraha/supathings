@@ -56,6 +56,29 @@ export function AppSidebar() {
                     Workspace
                 </div>
                 <SidebarMenu>
+                    {auth.user?.role === 'admin' && (
+                        <>
+                            <div className="mb-2 mt-4 px-3 text-[10px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                                Administrasi
+                            </div>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/dashboard')} tooltip={{ children: 'Dashboard Admin' }} className="h-10 rounded-xl">
+                                    <Link href="/admin/dashboard">
+                                        <ShieldCheck className="size-[18px]" />
+                                        <span>Dashboard Admin</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/users')} tooltip={{ children: 'Kelola pengguna' }} className="h-10 rounded-xl">
+                                    <Link href="/admin/users">
+                                        <Users className="size-[18px]" />
+                                        <span>Kelola pengguna</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </>
+                    )}
                     {mainNavItems.map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton

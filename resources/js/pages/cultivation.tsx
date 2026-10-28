@@ -357,7 +357,7 @@ export default function Cultivation() {
                                     });
                                     setShowBatchForm(true);
                                 }}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
                             >
                                 <Plus className="size-4" /> Tambah batch
                             </button>
@@ -567,7 +567,7 @@ export default function Cultivation() {
                                 <div className="flex items-end">
                                     <button
                                         disabled={busy}
-                                        className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                                        className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                                     >
                                         {busy ? 'Menyimpan…' : 'Simpan batch'}
                                     </button>
@@ -919,7 +919,7 @@ export default function Cultivation() {
                                     </Field>
                                     <button
                                         disabled={busy || batches.length === 0}
-                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                                     >
                                         {busy
                                             ? 'Menyimpan…'

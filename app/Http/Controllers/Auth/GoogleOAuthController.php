@@ -68,12 +68,24 @@ class GoogleOAuthController extends Controller
                 ->throw()
                 ->json();
 
-            $googleUser = Http::withToken((string) ($tokenResponse['access_token'] ?? ''))
+            if (! is_array($tokenResponse) || ! is_string($tokenResponse['access_token'] ?? null)) {
+                return redirect()->route('login')->withErrors([
+                    'google' => 'Google tidak mengembalikan token akses yang valid.',
+                ]);
+            }
+
+            $googleUser = Http::withToken($tokenResponse['access_token'])
                 ->acceptJson()
                 ->timeout(10)
                 ->get('https://www.googleapis.com/oauth2/v3/userinfo')
                 ->throw()
                 ->json();
+
+            if (! is_array($googleUser)) {
+                return redirect()->route('login')->withErrors([
+                    'google' => 'Respons identitas dari Google tidak valid.',
+                ]);
+            }
         } catch (Throwable $exception) {
             Log::warning('Google OAuth callback failed.', [
                 'exception' => $exception::class,

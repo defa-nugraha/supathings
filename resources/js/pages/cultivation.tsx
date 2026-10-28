@@ -345,6 +345,7 @@ export default function Cultivation() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <button
+                                data-tour="cultivation-actions"
                                 type="button"
                                 onClick={() => {
                                     setEditingBatch(null);
@@ -388,7 +389,7 @@ export default function Cultivation() {
                         </div>
                     )}
 
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <section data-tour="cultivation-harvests" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex items-center gap-2">
                             <AlertTriangle className="size-5 text-amber-600" />
                             <div>
@@ -434,7 +435,7 @@ export default function Cultivation() {
                         </p>
                     </section>
 
-                    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <section data-tour="cultivation-batches" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <SummaryCard
                             icon={<Sprout className="size-5" />}
                             label="Batch aktif"

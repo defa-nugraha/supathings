@@ -12,15 +12,15 @@
             }
         </style>
 
-        <link rel="icon" href="/brand/supathings-logo.jpg" type="image/jpeg">
-        <link rel="apple-touch-icon" href="/brand/supathings-logo.jpg">
+        <link rel="icon" href="{{ data_get($page, 'props.branding.logoUrl') ?: '/brand/supathings-logo.jpg' }}">
+        <link rel="apple-touch-icon" href="{{ data_get($page, 'props.branding.logoUrl') ?: '/brand/supathings-logo.jpg' }}">
 
         @fonts
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Supathings') }}</title>
+            <title>{{ data_get($page, 'props.branding.name', config('app.name', 'Supathings')) }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

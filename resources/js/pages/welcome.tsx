@@ -12,15 +12,15 @@ import {
 import { dashboard, login, register } from '@/routes';
 
 export default function Welcome() {
-    const { auth } = usePage().props;
+    const { auth, branding } = usePage().props;
     return (
         <>
-            <Head title="Supathings — Smart Mushroom House" />
+            <Head title={branding.name} />
             <div className="min-h-screen overflow-hidden bg-[#f7f9fc] text-slate-900">
                 <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
                     <img
-                        src="/brand/supathings-logo.jpg"
-                        alt="Supathings"
+                        src={branding.logoUrl ?? '/brand/supathings-logo.jpg'}
+                        alt={branding.name}
                         className="h-14 w-40 object-contain object-left"
                     />
                     <nav className="flex items-center gap-2">

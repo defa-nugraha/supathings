@@ -13,7 +13,9 @@ export default function GoogleOAuthButton({ mode }: Props) {
         }
     ).errors;
     const separator =
-        mode === 'login' ? 'atau masuk dengan email' : 'atau daftar dengan email';
+        mode === 'login'
+            ? 'atau masuk dengan email'
+            : 'atau daftar dengan email';
 
     return (
         <>
@@ -30,7 +32,10 @@ export default function GoogleOAuthButton({ mode }: Props) {
                 Lanjutkan dengan Google
             </a>
             {errors?.google && (
-                <InputError message={errors.google} className="mt-2 text-center" />
+                <InputError
+                    message={errors.google}
+                    className="mt-2 text-center"
+                />
             )}
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">

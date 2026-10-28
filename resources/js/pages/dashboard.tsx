@@ -52,6 +52,294 @@ const number = (value: number | null | undefined) =>
               maximumFractionDigits: 1,
           }).format(value);
 
+type DashboardMetric = {
+    label: string;
+    value: string;
+    unit: string;
+    Icon: typeof Thermometer;
+};
+
+function DashboardMobile({
+    devices,
+    batches,
+    alerts,
+    loading,
+    error,
+    metrics,
+    fresh,
+    measuredAt,
+}: {
+    devices: Device[];
+    batches: Batch[];
+    alerts: Alert[];
+    loading: boolean;
+    error: string;
+    metrics: DashboardMetric[];
+    fresh: boolean;
+    measuredAt?: string;
+}) {
+    const onlineCount = devices.filter(
+        (device) => device.status === 'online',
+    ).length;
+    const activeBatches = batches.filter(
+        (batch) => batch.phase !== 'completed',
+    ).length;
+
+    return (
+        <main className="min-h-full bg-slate-50 px-4 pt-4 pb-5 lg:hidden">
+            <div className="mx-auto max-w-xl space-y-5">
+                <header className="space-y-3">
+                    <div>
+                        <p className="text-xs font-semibold tracking-wide text-blue-700">
+                            SUPATHINGS · RINGKASAN
+                        </p>
+                        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+                            Kondisi kumbung
+                        </h1>
+                        <p className="mt-1 text-sm leading-5 text-slate-500">
+                            Pantau kondisi dan aktivitas budidaya hari ini.
+                        </p>
+                    </div>
+                    <Link
+                        href="/devices"
+                        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-sm active:bg-blue-800"
+                    >
+                        <Plus className="size-4" />
+                        Hubungkan perangkat
+                    </Link>
+                </header>
+
+                {error && (
+                    <div
+                        role="alert"
+                        className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+                    >
+                        {error}
+                    </div>
+                )}
+
+                <section aria-labelledby="mobile-sensor-title">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                        <h2
+                            id="mobile-sensor-title"
+                            className="text-base font-semibold text-slate-900"
+                        >
+                            Sensor kumbung
+                        </h2>
+                        <span
+                            className={
+                                'rounded-full px-2.5 py-1 text-[11px] font-semibold ' +
+                                (fresh
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-slate-200 text-slate-600')
+                            }
+                        >
+                            {fresh ? 'Data terbaru' : 'Belum diperbarui'}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        {metrics.map(({ label, value, unit, Icon }, index) => (
+                            <article
+                                key={label}
+                                className={
+                                    'min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ' +
+                                    (index === 0 ? 'col-span-2' : '')
+                                }
+                            >
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                                        <Icon className="size-5" />
+                                    </span>
+                                    <p className="text-xs font-medium leading-4">
+                                        {label}
+                                    </p>
+                                </div>
+                                <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+                                    {value}
+                                    <span className="ml-1 text-sm font-medium text-slate-500">
+                                        {unit}
+                                    </span>
+                                </p>
+                                <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                                    {fresh && measuredAt
+                                        ? 'Diperbarui ' + dateTime(measuredAt)
+                                        : 'Menunggu pembacaan sensor yang terbaru'}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section
+                    aria-label="Ringkasan aktivitas"
+                    className="grid grid-cols-3 gap-2"
+                >
+                    <Link
+                        href="/devices"
+                        className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 active:bg-slate-50"
+                    >
+                        <Wifi className="size-4 text-blue-700" />
+                        <p className="mt-2 text-xl font-bold text-slate-900">
+                            {onlineCount}
+                            <span className="text-xs font-medium text-slate-500">
+                                /{devices.length}
+                            </span>
+                        </p>
+                        <p className="text-[11px] leading-4 text-slate-500">
+                            Perangkat online
+                        </p>
+                    </Link>
+                    <Link
+                        href="/cultivation"
+                        className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 active:bg-slate-50"
+                    >
+                        <Sprout className="size-4 text-emerald-700" />
+                        <p className="mt-2 text-xl font-bold text-slate-900">
+                            {activeBatches}
+                        </p>
+                        <p className="text-[11px] leading-4 text-slate-500">
+                            Batch aktif
+                        </p>
+                    </Link>
+                    <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-3">
+                        <AlertTriangle className="size-4 text-amber-600" />
+                        <p className="mt-2 text-xl font-bold text-slate-900">
+                            {alerts.length}
+                        </p>
+                        <p className="text-[11px] leading-4 text-slate-500">
+                            Peringatan
+                        </p>
+                    </div>
+                </section>
+
+                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4">
+                        <div>
+                            <h2 className="font-semibold text-slate-900">
+                                Perangkat
+                            </h2>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Status koneksi sensor
+                            </p>
+                        </div>
+                        <Link
+                            href="/devices"
+                            className="flex min-h-10 items-center rounded-lg px-2 text-xs font-semibold text-blue-700"
+                        >
+                            Lihat semua
+                        </Link>
+                    </div>
+                    {loading ? (
+                        <p className="p-4 text-sm text-slate-500">
+                            Memuat perangkat…
+                        </p>
+                    ) : devices.length === 0 ? (
+                        <div className="p-4">
+                            <p className="text-sm text-slate-600">
+                                Belum ada perangkat yang terhubung.
+                            </p>
+                            <Link
+                                href="/devices"
+                                className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-blue-700"
+                            >
+                                Hubungkan ESP32
+                            </Link>
+                        </div>
+                    ) : (
+                        <ul className="divide-y divide-slate-100">
+                            {devices.slice(0, 4).map((device) => (
+                                <li
+                                    key={device.id}
+                                    className="flex min-w-0 items-center justify-between gap-3 p-4"
+                                >
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        <span
+                                            className={
+                                                'grid size-10 shrink-0 place-items-center rounded-xl ' +
+                                                (device.status === 'online'
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-amber-50 text-amber-700')
+                                            }
+                                        >
+                                            <Cpu className="size-5" />
+                                        </span>
+                                        <div className="min-w-0">
+                                            <p className="truncate text-sm font-semibold text-slate-900">
+                                                {device.name}
+                                            </p>
+                                            <p className="truncate text-xs text-slate-500">
+                                                {dateTime(device.last_seen_at)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        className={
+                                            'shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ' +
+                                            (device.status === 'online'
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'bg-amber-50 text-amber-700')
+                                        }
+                                    >
+                                        {device.status === 'online'
+                                            ? 'Online'
+                                            : 'Offline'}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                        <div>
+                            <h2 className="font-semibold text-slate-900">
+                                Peringatan terbaru
+                            </h2>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                                Kondisi yang perlu diperhatikan
+                            </p>
+                        </div>
+                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                            {alerts.length}
+                        </span>
+                    </div>
+                    {alerts.length ? (
+                        <ul className="mt-3 space-y-2">
+                            {alerts.slice(0, 3).map((alert) => (
+                                <li
+                                    key={alert.key}
+                                    className="rounded-xl bg-amber-50 p-3"
+                                >
+                                    <p className="text-sm font-semibold text-amber-900">
+                                        {alert.title}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-5 text-amber-800">
+                                        {alert.message}
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="mt-3 text-sm leading-5 text-slate-500">
+                            Tidak ada peringatan aktif berdasarkan data yang
+                            tersimpan.
+                        </p>
+                    )}
+                </section>
+
+                <Link
+                    href="/monitoring"
+                    className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 active:bg-slate-50"
+                >
+                    <Activity className="size-4 text-blue-700" />
+                    Buka monitoring lengkap
+                </Link>
+            </div>
+        </main>
+    );
+}
+
 export default function Dashboard() {
     const [devices, setDevices] = useState<Device[]>([]);
     const [readings, setReadings] = useState<Reading[]>([]);
@@ -161,6 +449,17 @@ export default function Dashboard() {
     return (
         <>
             <Head title="Dashboard" />
+            <DashboardMobile
+                devices={devices}
+                batches={batches}
+                alerts={alerts}
+                loading={loading}
+                error={error}
+                metrics={metrics}
+                fresh={fresh}
+                measuredAt={latest?.measured_at}
+            />
+            <div className="hidden lg:block">
             <main className="min-h-full bg-slate-50 px-4 py-6 md:px-8 md:py-8">
                 <div className="mx-auto max-w-7xl space-y-6">
                     <header className="flex flex-wrap items-end justify-between gap-4">
@@ -368,6 +667,7 @@ export default function Dashboard() {
                     </section>
                 </div>
             </main>
+            </div>
         </>
     );
 }

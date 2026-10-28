@@ -219,7 +219,7 @@ export default function CultivationHistory() {
                             {notice}
                         </p>
                     )}
-                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <section data-tour="harvest-history" className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex items-center gap-2">
                             <ClipboardList className="size-5 text-emerald-700" />
                             <h2 className="text-lg font-semibold">

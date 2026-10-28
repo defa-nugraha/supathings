@@ -8,6 +8,7 @@ import {
     Weight,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Batch = {
     id: number;
@@ -254,20 +255,13 @@ export default function Reports() {
                             </label>
                             <label className="text-sm text-slate-600">
                                 Batch budidaya
-                                <select
-                                    value={batchId}
-                                    onChange={(event) =>
-                                        setBatchId(event.target.value)
-                                    }
-                                    className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5"
-                                >
-                                    <option value="all">Semua batch</option>
-                                    {batchOptions.map((batch) => (
-                                        <option key={batch.id} value={batch.id}>
-                                            {batch.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <Select value={batchId} onValueChange={setBatchId}>
+                                    <SelectTrigger className="mt-1.5 h-11 w-full rounded-xl border-slate-200"><SelectValue placeholder="Pilih batch" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Semua batch</SelectItem>
+                                        {batchOptions.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </label>
                             <button
                                 onClick={() => void loadReport()}

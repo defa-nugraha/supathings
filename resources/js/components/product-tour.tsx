@@ -211,6 +211,8 @@ export function ProductTour() {
             );
             if (firstIndex < 0) return;
 
+            const firstTarget = getVisibleTarget(steps[firstIndex].target);
+            firstTarget?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
             setStepIndex(firstIndex);
             setOpen(true);
             setTargetMissing(false);
@@ -264,7 +266,9 @@ export function ProductTour() {
     const goTo = (direction: -1 | 1) => {
         let nextIndex = stepIndex + direction;
         while (nextIndex >= 0 && nextIndex < steps.length) {
-            if (getVisibleTarget(steps[nextIndex].target)) {
+            const target = getVisibleTarget(steps[nextIndex].target);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
                 setStepIndex(nextIndex);
                 return;
             }

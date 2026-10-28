@@ -61,7 +61,7 @@ class ReportController extends Controller
                 'priced_harvest_count' => $priced->count(), 'unpriced_harvest_count' => $harvests->count() - $priced->count()],
             'daily' => $daily,
             'batches' => $batches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'strain' => $b->strain, 'phase' => $b->phase,
-                'inoculated_at' => $b->inoculated_at === null ? null : Carbon::parse($b->inoculated_at)->toDateString(), 'baglog_count' => $b->baglog_count,
+                'inoculated_at' => blank($b->getRawOriginal('inoculated_at')) ? null : Carbon::parse($b->inoculated_at)->toDateString(), 'baglog_count' => $b->baglog_count,
                 'harvest_kg' => round((float) ($b->total_harvest_kg ?? 0), 3), 'harvest_count' => $b->harvest_count,
                 'has_device' => $b->iot_device_id !== null])->values(),
             'harvests' => $harvests->map(fn ($h) => ['id' => $h->id, 'date' => Carbon::parse($h->harvested_at)->toDateString(), 'batch' => $h->batch->name,

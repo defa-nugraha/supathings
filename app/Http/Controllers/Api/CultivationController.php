@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CultivationBatch;
+use App\Models\CultivationExpense;
 use App\Models\HarvestRecord;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
@@ -104,7 +105,7 @@ class CultivationController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
-        $records = \App\Models\CultivationExpense::query()
+        $records = CultivationExpense::query()
             ->where('user_id', $request->user()->id)
             ->with('batch:id,name')
             ->whereBetween('incurred_at', [
@@ -128,7 +129,7 @@ class CultivationController extends Controller
             'amount' => ['required', 'numeric', 'gt:0', 'max:100000000000'],
         ]);
 
-        $expense = \App\Models\CultivationExpense::query()->create([
+        $expense = CultivationExpense::query()->create([
             ...$data,
             'user_id' => $request->user()->id,
         ]);

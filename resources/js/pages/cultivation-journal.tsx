@@ -80,7 +80,7 @@ export default function CultivationJournal() {
                 className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 md:p-8"
             >
                 <div className="mx-auto max-w-[1100px] space-y-6">
-                    <header>
+                    <header data-tour="cultivation-journal">
                         <h1 className="text-3xl font-semibold text-slate-900">
                             Jurnal budidaya
                         </h1>

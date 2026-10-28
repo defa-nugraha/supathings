@@ -1,0 +1,20 @@
+name: Temporary mobile formatter
+on:
+  push:
+    branches:
+      - feat/adaptive-mobile-experience
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check:fix
+      - name: Print formatted component
+        run: cat resources/js/components/mobile-bottom-nav.tsx

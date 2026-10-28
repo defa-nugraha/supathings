@@ -28,7 +28,7 @@ export default function Security(props: Props) {
 
             <h1 className="sr-only">Security settings</h1>
 
-            <div data-tour="settings-security" className="space-y-6">
+            <div className="space-y-6">
                 <Heading
                     variant="small"
                     title="Update password"
@@ -59,7 +59,7 @@ export default function Security(props: Props) {
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div className="grid gap-2">
+                            <div data-tour="settings-security" className="grid gap-2">
                                 <Label htmlFor="current_password">
                                     Current password
                                 </Label>

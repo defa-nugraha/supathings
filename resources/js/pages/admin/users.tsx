@@ -113,7 +113,15 @@ export default function AdminUsers({ users, filters, activeAdminCount }: Props) 
                             <p className="text-xs text-slate-500">Halaman {users.current_page} dari {users.last_page}</p>
                             <nav className="flex flex-wrap gap-1" aria-label="Navigasi halaman pengguna">
                                 {users.links.map((link, index) => (
-                                    <button key={index} type="button" disabled={!link.url} onClick={() => link.url && router.visit(link.url, { preserveScroll: true })} className={`rounded-lg border px-3 py-2 text-xs disabled:opacity-40 ${link.active ? 'bg-blue-700 text-white' : 'bg-white'}`} {link.label.replace(/&laquo;/g, '«').replace(/&raquo;/g, '»').replace(/&hellip;/g, '…')} />
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        disabled={!link.url}
+                                        onClick={() => link.url && router.visit(link.url, { preserveScroll: true })}
+                                        className={`rounded-lg border px-3 py-2 text-xs disabled:opacity-40 ${link.active ? 'bg-blue-700 text-white' : 'bg-white'}`}
+                                    >
+                                        {link.label.replace(/&laquo;/g, '«').replace(/&raquo;/g, '»').replace(/&hellip;/g, '…')}
+                                    </button>
                                 ))}
                             </nav>
                         </div>

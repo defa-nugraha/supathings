@@ -53,6 +53,7 @@ class ReportController extends Controller
                 'minimum' => $values->isNotEmpty() ? round($values->min(), 2) : null, 'maximum' => $values->isNotEmpty() ? round($values->max(), 2) : null, 'sample_count' => $values->count()];
         }
         $priced = $harvests->filter(fn ($h) => $h->sale_price_per_kg !== null);
+
         return response()->json(['data' => [
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
             'summary' => ['harvest_kg' => round((float) $harvests->sum('weight_kg'), 3), 'harvest_count' => $harvests->count(),

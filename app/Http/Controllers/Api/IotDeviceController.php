@@ -8,6 +8,7 @@ use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
 use App\Models\ControlRule;
 use App\Models\IotDevice;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -302,7 +303,7 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $record->fresh()]);
     }
 
-    private function deviceQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    private function deviceQuery(Request $request): Builder
     {
         $query = IotDevice::query();
 

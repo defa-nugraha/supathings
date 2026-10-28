@@ -30,8 +30,14 @@ const sidebarNavItems: NavItem[] = [
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
-    const { auth } = usePage().props as { auth: { user: { role: string } | null } };
-    const visibleNavItems = sidebarNavItems.filter((item) => item.href !== '/settings/branding' || auth.user?.role === 'admin');
+    const { auth } = usePage().props as {
+        auth: { user: { role: string } | null };
+    };
+    const visibleNavItems = sidebarNavItems.filter(
+        (item) =>
+            item.href !== '/settings/branding' ||
+            auth.user?.role === 'admin',
+    );
 
     return (
         <div className="px-4 py-6">

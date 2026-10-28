@@ -123,6 +123,7 @@ class GoogleOAuthController extends Controller
         }
 
         if ($user->two_factor_secret && $user->two_factor_confirmed_at) {
+            $request->session()->regenerate();
             $request->session()->put([
                 'login.id' => $user->getKey(),
                 'login.remember' => false,

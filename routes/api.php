@@ -12,8 +12,6 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/control-rules', [IotDeviceController::class, 'rules']);
     Route::post('/control-mode', [IotDeviceController::class, 'mode']);
     Route::post('/actuator-commands', [IotDeviceController::class, 'command']);
-    Route::get('/device/commands', [IotDeviceController::class, 'pollCommands']);
-    Route::post('/device/commands/{command}/ack', [IotDeviceController::class, 'acknowledgeCommand']);
 
     Route::get('/cultivation/batches', [CultivationController::class, 'batches']);
     Route::post('/cultivation/batches', [CultivationController::class, 'storeBatch']);
@@ -26,4 +24,6 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/reports', [ReportController::class, 'index']);
 });
 
+Route::get('/device/commands', [IotDeviceController::class, 'pollCommands'])->middleware('throttle:120,1');
+Route::post('/device/commands/{command}/ack', [IotDeviceController::class, 'acknowledgeCommand'])->middleware('throttle:120,1');
 Route::post('/telemetry', [IotDeviceController::class, 'telemetry'])->middleware('throttle:120,1');

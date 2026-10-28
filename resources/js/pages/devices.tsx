@@ -149,9 +149,13 @@ export default function Devices() {
         if (!selected || !deviceName.trim()) return;
         let token = '';
         try {
-            const isRegistered = devices.some((device) => device.id === selected.id);
+            const isRegistered = devices.some(
+                (device) => device.id === selected.id,
+            );
             const response = await fetch(
-                isRegistered ? '/api/devices/' + encodeURIComponent(selected.id) : '/api/devices',
+                isRegistered
+                    ? '/api/devices/' + encodeURIComponent(selected.id)
+                    : '/api/devices',
                 {
                     method: isRegistered ? 'PATCH' : 'POST',
                     headers: {
@@ -581,7 +585,9 @@ export default function Devices() {
                         </h2>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
                             Apakah Anda yakin ingin menghapus “
-                            {pendingDelete.name}” dari server? Jika perangkat masih digunakan oleh batch budidaya, server akan menolak penghapusan.
+                            {pendingDelete.name}” dari server? Jika perangkat
+                            masih digunakan oleh batch budidaya, server akan
+                            menolak penghapusan.
                         </p>
                         <div className="mt-6 flex justify-end gap-2">
                             <button
@@ -594,24 +600,45 @@ export default function Devices() {
                                 onClick={async () => {
                                     try {
                                         const response = await fetch(
-                                            '/api/devices/' + encodeURIComponent(pendingDelete.id),
+                                            '/api/devices/' +
+                                                encodeURIComponent(
+                                                    pendingDelete.id,
+                                                ),
                                             {
                                                 method: 'DELETE',
                                                 headers: {
                                                     Accept: 'application/json',
                                                     'X-CSRF-TOKEN':
-                                                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                                                        document.querySelector<HTMLMetaElement>(
+                                                            'meta[name="csrf-token"]',
+                                                        )?.content ?? '',
                                                 },
                                             },
                                         );
                                         const payload = await response.json();
-                                        if (!response.ok) throw new Error(payload.message ?? 'Device gagal dihapus.');
-                                        setDevices((prev) => prev.filter((item) => item.id !== pendingDelete.id));
+                                        if (!response.ok)
+                                            throw new Error(
+                                                payload.message ??
+                                                    'Device gagal dihapus.',
+                                            );
+                                        setDevices((prev) =>
+                                            prev.filter(
+                                                (item) =>
+                                                    item.id !==
+                                                    pendingDelete.id,
+                                            ),
+                                        );
                                         setPendingDelete(null);
-                                        setNotice('Perangkat berhasil dihapus dari server.');
+                                        setNotice(
+                                            'Perangkat berhasil dihapus dari server.',
+                                        );
                                     } catch (cause) {
                                         setPendingDelete(null);
-                                        setNotice(cause instanceof Error ? cause.message : 'Device gagal dihapus.');
+                                        setNotice(
+                                            cause instanceof Error
+                                                ? cause.message
+                                                : 'Device gagal dihapus.',
+                                        );
                                     }
                                 }}
                                 className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"

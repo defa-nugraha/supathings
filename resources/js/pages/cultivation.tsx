@@ -12,7 +12,13 @@ import {
     Wheat,
 } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -152,16 +158,21 @@ export default function Cultivation() {
         setError('');
         setNotice('');
         try {
-            const response = await fetch(editingBatch ? '/api/cultivation/batches/' + editingBatch.id : '/api/cultivation/batches', {
-                method: editingBatch ? 'PATCH' : 'POST',
-                headers: csrfHeaders(),
-                body: JSON.stringify({
-                    ...batchForm,
-                    baglog_count: Number(batchForm.baglog_count),
-                    strain: batchForm.strain || null,
-                    notes: batchForm.notes || null,
-                }),
-            });
+            const response = await fetch(
+                editingBatch
+                    ? '/api/cultivation/batches/' + editingBatch.id
+                    : '/api/cultivation/batches',
+                {
+                    method: editingBatch ? 'PATCH' : 'POST',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify({
+                        ...batchForm,
+                        baglog_count: Number(batchForm.baglog_count),
+                        strain: batchForm.strain || null,
+                        notes: batchForm.notes || null,
+                    }),
+                },
+            );
             const payload = await response.json();
             if (!response.ok)
                 throw new Error(
@@ -176,7 +187,11 @@ export default function Cultivation() {
                 notes: '',
             });
             setShowBatchForm(false);
-            setNotice(editingBatch ? 'Batch budidaya berhasil diperbarui.' : 'Batch budidaya berhasil ditambahkan.');
+            setNotice(
+                editingBatch
+                    ? 'Batch budidaya berhasil diperbarui.'
+                    : 'Batch budidaya berhasil ditambahkan.',
+            );
             setEditingBatch(null);
             await refresh();
         } catch (cause) {
@@ -302,7 +317,13 @@ export default function Cultivation() {
                                 type="button"
                                 onClick={() => {
                                     setEditingBatch(null);
-                                    setBatchForm({ name: '', strain: '', inoculated_at: today, baglog_count: '100', notes: '' });
+                                    setBatchForm({
+                                        name: '',
+                                        strain: '',
+                                        inoculated_at: today,
+                                        baglog_count: '100',
+                                        notes: '',
+                                    });
                                     setShowBatchForm(true);
                                 }}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
@@ -423,7 +444,11 @@ export default function Cultivation() {
                     >
                         <DialogContent className="sm:max-w-3xl">
                             <DialogHeader>
-                                <DialogTitle>{editingBatch ? 'Edit batch budidaya' : 'Batch budidaya baru'}</DialogTitle>
+                                <DialogTitle>
+                                    {editingBatch
+                                        ? 'Edit batch budidaya'
+                                        : 'Batch budidaya baru'}
+                                </DialogTitle>
                                 <DialogDescription>
                                     Masukkan informasi awal kelompok baglog yang
                                     akan dipantau.
@@ -513,7 +538,11 @@ export default function Cultivation() {
                                         disabled={busy}
                                         className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                                     >
-                                        {busy ? 'Menyimpan…' : editingBatch ? 'Simpan perubahan' : 'Simpan batch'}
+                                        {busy
+                                            ? 'Menyimpan…'
+                                            : editingBatch
+                                              ? 'Simpan perubahan'
+                                              : 'Simpan batch'}
                                     </button>
                                 </div>
                             </form>
@@ -615,44 +644,130 @@ export default function Cultivation() {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                setEditingBatch(batch);
+                                                                setEditingBatch(
+                                                                    batch,
+                                                                );
                                                                 setBatchForm({
                                                                     name: batch.name,
-                                                                    strain: batch.strain ?? '',
-                                                                    inoculated_at: batch.inoculated_at.slice(0, 10),
-                                                                    baglog_count: String(batch.baglog_count),
-                                                                    notes: batch.notes ?? '',
+                                                                    strain:
+                                                                        batch.strain ??
+                                                                        '',
+                                                                    inoculated_at:
+                                                                        batch.inoculated_at.slice(
+                                                                            0,
+                                                                            10,
+                                                                        ),
+                                                                    baglog_count:
+                                                                        String(
+                                                                            batch.baglog_count,
+                                                                        ),
+                                                                    notes:
+                                                                        batch.notes ??
+                                                                        '',
                                                                 });
-                                                                setShowBatchForm(true);
+                                                                setShowBatchForm(
+                                                                    true,
+                                                                );
                                                             }}
                                                             className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                                                         >
-                                                            <Pencil className="size-4" /> Edit
+                                                            <Pencil className="size-4" />{' '}
+                                                            Edit
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={async () => {
-                                                                if (!window.confirm('Hapus batch "' + batch.name + '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.')) return;
+                                                                if (
+                                                                    !window.confirm(
+                                                                        'Hapus batch "' +
+                                                                            batch.name +
+                                                                            '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.',
+                                                                    )
+                                                                )
+                                                                    return;
                                                                 try {
-                                                                    const response = await fetch('/api/cultivation/batches/' + batch.id, { method: 'DELETE', headers: csrfHeaders() });
-                                                                    const payload = await response.json();
-                                                                    if (!response.ok) throw new Error(payload.message ?? 'Batch gagal dihapus.');
-                                                                    setNotice('Batch berhasil dihapus.');
-                                                                    setError('');
+                                                                    const response =
+                                                                        await fetch(
+                                                                            '/api/cultivation/batches/' +
+                                                                                batch.id,
+                                                                            {
+                                                                                method: 'DELETE',
+                                                                                headers:
+                                                                                    csrfHeaders(),
+                                                                            },
+                                                                        );
+                                                                    const payload =
+                                                                        await response.json();
+                                                                    if (
+                                                                        !response.ok
+                                                                    )
+                                                                        throw new Error(
+                                                                            payload.message ??
+                                                                                'Batch gagal dihapus.',
+                                                                        );
+                                                                    setNotice(
+                                                                        'Batch berhasil dihapus.',
+                                                                    );
+                                                                    setError(
+                                                                        '',
+                                                                    );
                                                                     await refresh();
                                                                 } catch (cause) {
-                                                                    setError(cause instanceof Error ? cause.message : 'Batch gagal dihapus.');
+                                                                    setError(
+                                                                        cause instanceof
+                                                                            Error
+                                                                            ? cause.message
+                                                                            : 'Batch gagal dihapus.',
+                                                                    );
                                                                 }
                                                             }}
                                                             className="inline-flex h-10 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50"
                                                         >
-                                                            <Trash2 className="size-4" /> Hapus
+                                                            <Trash2 className="size-4" />{' '}
+                                                            Hapus
                                                         </button>
                                                         <Field label="Perbarui fase">
-                                                        <Select value={batch.phase} onValueChange={(value) => void updatePhase(batch, value)}>
-                                                            <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih fase" /></SelectTrigger>
-                                                            <SelectContent>{phases.map((phase) => <SelectItem key={phase.value} value={phase.value}>{phase.label}</SelectItem>)}</SelectContent>
-                                                        </Select>
+                                                            <Select
+                                                                value={
+                                                                    batch.phase
+                                                                }
+                                                                onValueChange={(
+                                                                    value,
+                                                                ) =>
+                                                                    void updatePhase(
+                                                                        batch,
+                                                                        value,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <SelectTrigger
+                                                                    className={
+                                                                        inputClass
+                                                                    }
+                                                                >
+                                                                    <SelectValue placeholder="Pilih fase" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {phases.map(
+                                                                        (
+                                                                            phase,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    phase.value
+                                                                                }
+                                                                                value={
+                                                                                    phase.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    phase.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
                                                         </Field>
                                                     </div>
                                                 </div>
@@ -680,9 +795,34 @@ export default function Cultivation() {
                                     className="space-y-3"
                                 >
                                     <Field label="Batch">
-                                        <Select value={selectedBatch || 'none'} onValueChange={(value) => setSelectedBatch(value === 'none' ? '' : value)}>
-                                            <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih batch" /></SelectTrigger>
-                                            <SelectContent><SelectItem value="none">Pilih batch</SelectItem>{batches.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}</SelectContent>
+                                        <Select
+                                            value={selectedBatch || 'none'}
+                                            onValueChange={(value) =>
+                                                setSelectedBatch(
+                                                    value === 'none'
+                                                        ? ''
+                                                        : value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                className={inputClass}
+                                            >
+                                                <SelectValue placeholder="Pilih batch" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">
+                                                    Pilih batch
+                                                </SelectItem>
+                                                {batches.map((batch) => (
+                                                    <SelectItem
+                                                        key={batch.id}
+                                                        value={String(batch.id)}
+                                                    >
+                                                        {batch.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
                                         </Select>
                                     </Field>
                                     <div className="grid grid-cols-2 gap-3">
@@ -740,9 +880,34 @@ export default function Cultivation() {
                                             />
                                         </Field>
                                         <Field label="Kualitas">
-                                            <Select value={harvestForm.quality} onValueChange={(value) => setHarvestForm({ ...harvestForm, quality: value })}>
-                                                <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih kualitas" /></SelectTrigger>
-                                                <SelectContent><SelectItem value="premium">Premium</SelectItem><SelectItem value="good">Baik</SelectItem><SelectItem value="standard">Standar</SelectItem><SelectItem value="reject">Afkir</SelectItem></SelectContent>
+                                            <Select
+                                                value={harvestForm.quality}
+                                                onValueChange={(value) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        quality: value,
+                                                    })
+                                                }
+                                            >
+                                                <SelectTrigger
+                                                    className={inputClass}
+                                                >
+                                                    <SelectValue placeholder="Pilih kualitas" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="premium">
+                                                        Premium
+                                                    </SelectItem>
+                                                    <SelectItem value="good">
+                                                        Baik
+                                                    </SelectItem>
+                                                    <SelectItem value="standard">
+                                                        Standar
+                                                    </SelectItem>
+                                                    <SelectItem value="reject">
+                                                        Afkir
+                                                    </SelectItem>
+                                                </SelectContent>
                                             </Select>
                                         </Field>
                                     </div>

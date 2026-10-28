@@ -139,10 +139,15 @@ export function AppSidebar() {
                                     </SidebarMenuButton>
                                     <SidebarMenuButton
                                         asChild
-                                        isActive={isCurrentUrl('/cultivation/expenses')}
+                                        isActive={isCurrentUrl(
+                                            '/cultivation/expenses',
+                                        )}
                                         className="h-9 rounded-lg text-sm"
                                     >
-                                        <Link href="/cultivation/expenses" prefetch>
+                                        <Link
+                                            href="/cultivation/expenses"
+                                            prefetch
+                                        >
                                             <Wallet className="size-4" />
                                             <span>Biaya operasional</span>
                                         </Link>

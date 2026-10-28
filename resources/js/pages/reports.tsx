@@ -8,7 +8,13 @@ import {
     Weight,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 type Batch = {
     id: number;
@@ -256,9 +262,26 @@ export default function Reports() {
                             </label>
                             <label className="text-sm text-slate-600">
                                 Batch budidaya
-                                <Select value={batchId} onValueChange={setBatchId}>
-                                    <SelectTrigger className="mt-1.5 w-full rounded-xl border-slate-200 bg-white"><SelectValue placeholder="Pilih batch" /></SelectTrigger>
-                                    <SelectContent><SelectItem value="all">Semua batch</SelectItem>{batchOptions.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}</SelectContent>
+                                <Select
+                                    value={batchId}
+                                    onValueChange={setBatchId}
+                                >
+                                    <SelectTrigger className="mt-1.5 w-full rounded-xl border-slate-200 bg-white">
+                                        <SelectValue placeholder="Pilih batch" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            Semua batch
+                                        </SelectItem>
+                                        {batchOptions.map((batch) => (
+                                            <SelectItem
+                                                key={batch.id}
+                                                value={String(batch.id)}
+                                            >
+                                                {batch.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
                                 </Select>
                             </label>
                             <button

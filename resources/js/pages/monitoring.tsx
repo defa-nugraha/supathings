@@ -456,14 +456,7 @@ export default function Monitoring() {
             if (!response.ok) {
                 throw new Error('Server gagal menerima perintah aktuator.');
             }
-            setActuators((prev) => {
-                const next = { ...prev, [key]: enabled };
-                window.localStorage.setItem(
-                    `supathings:${deviceId}:actuators`,
-                    JSON.stringify(next),
-                );
-                return next;
-            });
+            // Do not optimistically display a relay state before the ESP32 acknowledges it.
             const actuatorLabel =
                 key === 'mist'
                     ? 'pompa mist'
@@ -471,7 +464,7 @@ export default function Monitoring() {
                       ? 'pompa water'
                       : 'blower';
             setNotice(
-                `Perintah ${actuatorLabel} ${enabled ? 'ON' : 'OFF'} berhasil dikirim.`,
+                `Perintah ${actuatorLabel} ${enabled ? 'ON' : 'OFF'} masuk antrean. Status aktual berubah setelah ESP32 mengonfirmasi.`,
             );
         } catch (error) {
             setNotice(

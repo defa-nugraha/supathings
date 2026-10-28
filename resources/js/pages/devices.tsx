@@ -22,15 +22,7 @@ type Device = {
     lastSeen: string;
     sensors: string[];
 };
-const seedDevices: Device[] = [
-    {
-        id: 'AA:BB:CC:DD:EE:FF',
-        name: 'Kumbung Utama',
-        status: 'online',
-        lastSeen: 'Baru saja',
-        sensors: ['DHT22', 'LDR'],
-    },
-];
+const seedDevices: Device[] = [];
 
 export default function Devices() {
     const [devices, setDevices] = useState<Device[]>(seedDevices);

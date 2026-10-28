@@ -309,6 +309,42 @@ test('automatic control avoids duplicate pending commands for the same state', f
     $this->assertDatabaseCount('actuator_commands', 1);
 });
 
+test('device tokens can poll pending actuator commands and acknowledge execution', function () {
+    $device = createIotDevice(User::factory()->create(), ['device_token_hash' => hash('sha256', 'device-token')]);
+    $command = ActuatorCommand::query()->create([
+        'iot_device_id' => $device->id, 'actuator' => 'mist', 'state' => 'on', 'mode' => 'manual', 'status' => 'pending',
+    ]);
+
+    $this->withToken('device-token')->getJson('/api/device/commands')
+        ->assertOk()->assertJsonPath('data.0.id', $command->id)->assertJsonPath('data.0.status', 'sent');
+    $this->withToken('device-token')->postJson('/api/device/commands/'.$command->id.'/ack', [
+        'status' => 'acknowledged', 'actual_state' => 'on',
+    ])->assertOk()->assertJsonPath('data.status', 'acknowledged');
+
+    $this->assertDatabaseHas('actuator_commands', ['id' => $command->id, 'status' => 'acknowledged']);
+});
+
+test('users can read actuator status only for their own device', function () {
+    $user = User::factory()->create();
+    $device = createIotDevice($user);
+    ActuatorCommand::query()->create([
+        'iot_device_id' => $device->id,
+        'actuator' => 'mist',
+        'state' => 'on',
+        'mode' => 'manual',
+        'status' => 'acknowledged',
+        'metadata' => ['actual_state' => 'on'],
+    ]);
+
+    $this->actingAs($user)->getJson('/api/actuator-status?device_id='.$device->id)
+        ->assertOk()
+        ->assertJsonPath('data.mist.actual_state', 'on');
+
+    $this->actingAs(User::factory()->create())
+        ->getJson('/api/actuator-status?device_id='.$device->id)
+        ->assertNotFound();
+});
+
 test('users can visit the monitoring and device management pages', function () {
     $user = User::factory()->create();
 

@@ -1,336 +1,373 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     Activity,
-    ArrowDownRight,
-    ArrowRight,
-    ArrowUpRight,
-    Cpu,
+    AlertTriangle,
     Droplets,
     Lightbulb,
     Plus,
     Thermometer,
-    Wind,
+    Wifi,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-const metrics = [
-    {
-        label: 'Suhu kumbung',
-        value: '27.4',
-        unit: '°C',
-        status: 'Dalam rentang',
-        change: '−0.3°',
-        positive: true,
-        Icon: Thermometer,
-        color: 'blue',
-    },
-    {
-        label: 'Kelembapan udara',
-        value: '86',
-        unit: '%',
-        status: 'Optimal',
-        change: '+2.4%',
-        positive: true,
-        Icon: Droplets,
-        color: 'emerald',
-    },
-    {
-        label: 'Intensitas cahaya',
-        value: '42',
-        unit: '%',
-        status: 'Normal',
-        change: '+1.2%',
-        positive: true,
-        Icon: Lightbulb,
-        color: 'teal',
-    },
-];
-const trend = [
-    48, 44, 52, 38, 42, 34, 39, 30, 37, 28, 34, 24, 29, 19, 27, 21, 25, 18, 23,
-    17, 21, 14, 19, 16,
-];
+type Device = {
+    id: number;
+    name: string;
+    status: string;
+    last_seen_at: string | null;
+    mac_address: string;
+};
+type Reading = {
+    temperature: number | null;
+    humidity: number | null;
+    light_percent: number | null;
+    measured_at: string;
+};
+type Batch = {
+    id: number;
+    name: string;
+    baglog_count: number;
+    phase: string;
+    inoculated_at: string;
+    total_harvest_kg?: number;
+};
+type Alert = {
+    key: string;
+    severity: string;
+    title: string;
+    message: string;
+};
 
-function MiniTrend({ color }: { color: string }) {
-    return (
-        <svg viewBox="0 0 120 36" className="h-9 w-28" aria-hidden="true">
-            <path
-                d={trend
-                    .map(
-                        (v, i) =>
-                            `${i ? 'L' : 'M'} ${(i / (trend.length - 1)) * 120} ${v * 0.65}`,
-                    )
-                    .join(' ')}
-                fill="none"
-                stroke={color}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
+const dateTime = (value?: string | null) =>
+    value
+        ? new Date(value).toLocaleString('id-ID', {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+          })
+        : 'Belum ada data';
+const number = (value: number | null | undefined) =>
+    value == null
+        ? '—'
+        : new Intl.NumberFormat('id-ID', {
+              maximumFractionDigits: 1,
+          }).format(value);
 
 export default function Dashboard() {
+    const [devices, setDevices] = useState<Device[]>([]);
+    const [readings, setReadings] = useState<Reading[]>([]);
+    const [batches, setBatches] = useState<Batch[]>([]);
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        let active = true;
+        const load = async () => {
+            try {
+                const responses = await Promise.all([
+                    fetch('/api/devices', {
+                        headers: { Accept: 'application/json' },
+                    }),
+                    fetch('/api/cultivation/batches', {
+                        headers: { Accept: 'application/json' },
+                    }),
+                    fetch('/api/cultivation/alerts', {
+                        headers: { Accept: 'application/json' },
+                    }),
+                ]);
+                if (!responses.every((response) => response.ok)) {
+                    throw new Error('Data dashboard belum dapat dimuat.');
+                }
+
+                const [devicePayload, batchPayload, alertPayload] =
+                    await Promise.all(
+                        responses.map((response) => response.json()),
+                    );
+                if (!active) return;
+
+                const list: Device[] = devicePayload.data ?? [];
+                setDevices(list);
+                setBatches(batchPayload.data ?? []);
+                setAlerts(alertPayload.data ?? []);
+
+                const device =
+                    list.find((item) => item.status === 'online') ?? list[0];
+                if (device) {
+                    const response = await fetch(
+                        '/api/devices/' +
+                            encodeURIComponent(device.mac_address) +
+                            '/readings',
+                        { headers: { Accept: 'application/json' } },
+                    );
+                    const payload = response.ok
+                        ? await response.json()
+                        : { data: [] };
+                    if (active) setReadings(payload.data ?? []);
+                } else if (active) {
+                    setReadings([]);
+                }
+
+                if (active) setError('');
+            } catch (cause) {
+                if (active) {
+                    setError(
+                        cause instanceof Error
+                            ? cause.message
+                            : 'Gagal memuat data.',
+                    );
+                }
+            } finally {
+                if (active) setLoading(false);
+            }
+        };
+
+        void load();
+        const timer = window.setInterval(() => void load(), 30000);
+        return () => {
+            active = false;
+            window.clearInterval(timer);
+        };
+    }, []);
+
+    const latest = readings[0];
+    const measuredAt = latest
+        ? new Date(latest.measured_at).getTime()
+        : Number.NaN;
+    const fresh =
+        !!latest &&
+        Number.isFinite(measuredAt) &&
+        Date.now() - measuredAt <= 5 * 60 * 1000;
+    const metrics = [
+        {
+            label: 'Suhu kumbung',
+            value: fresh ? number(latest?.temperature) : '—',
+            unit: '°C',
+            Icon: Thermometer,
+        },
+        {
+            label: 'Kelembapan udara',
+            value: fresh ? number(latest?.humidity) : '—',
+            unit: '%',
+            Icon: Droplets,
+        },
+        {
+            label: 'Intensitas cahaya',
+            value: fresh ? number(latest?.light_percent) : '—',
+            unit: '%',
+            Icon: Lightbulb,
+        },
+    ];
+
     return (
         <>
             <Head title="Dashboard" />
-            <div className="min-h-full bg-[#f6f8fb] px-4 py-6 md:px-8 md:py-8">
-                <div className="mx-auto max-w-[1500px] space-y-7">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <main className="min-h-full bg-slate-50 px-4 py-6 md:px-8 md:py-8">
+                <div className="mx-auto max-w-7xl space-y-6">
+                    <header className="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
-                                <span>Supathings</span>
-                                <span>/</span>
-                                <span>Dashboard</span>
-                            </div>
-                            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-                                Selamat datang 👋
+                            <p className="text-sm text-slate-500">
+                                Supathings / Dashboard
+                            </p>
+                            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+                                Ringkasan kumbung
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
-                                Pantau kondisi kumbung jamur Anda dalam satu
-                                tampilan.
+                                Data berasal dari sensor dan catatan budidaya,
+                                bukan nilai contoh.
                             </p>
                         </div>
                         <Link
                             href="/devices"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                            className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
                         >
                             <Plus className="size-4" />
-                            Hubungkan device
+                            Hubungkan perangkat
                         </Link>
-                    </div>
-                    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-800 via-blue-700 to-emerald-700 p-6 text-white shadow-sm md:p-8">
-                        <div className="absolute -top-24 -right-10 size-72 rounded-full border-[42px] border-white/5" />
-                        <div className="absolute -right-4 -bottom-32 size-72 rounded-full border-[1px] border-white/10" />
-                        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium">
-                                    <span className="size-2 rounded-full bg-emerald-300" />
-                                    Ringkasan lingkungan
-                                </div>
-                                <h2 className="max-w-xl text-2xl font-semibold tracking-tight md:text-3xl">
-                                    Kondisi kumbung terlihat stabil.
-                                </h2>
-                                <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
-                                    Sistem siap memantau sensor DHT22 dan LDR,
-                                    mengatur pompa, serta menjaga sirkulasi
-                                    udara melalui satu dashboard.
-                                </p>
-                                <Link
-                                    href="/monitoring"
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-800 transition hover:bg-blue-50"
-                                >
-                                    Buka monitoring{' '}
-                                    <ArrowRight className="size-4" />
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 sm:min-w-[320px]">
-                                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                                    <p className="text-xs text-blue-100">
-                                        Device terhubung
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        1{' '}
-                                        <span className="text-sm font-normal text-blue-100">
-                                            perangkat
-                                        </span>
-                                    </p>
-                                    <p className="mt-2 flex items-center gap-1.5 text-xs text-emerald-200">
-                                        <span className="size-1.5 rounded-full bg-emerald-300" />
-                                        Status demo
-                                    </p>
-                                </div>
-                                <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm">
-                                    <p className="text-xs text-blue-100">
-                                        Aktuator aktif
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        0{' '}
-                                        <span className="text-sm font-normal text-blue-100">
-                                            dari 3
-                                        </span>
-                                    </p>
-                                    <p className="mt-2 text-xs text-blue-100">
-                                        Pompa dan blower
-                                    </p>
-                                </div>
-                            </div>
+                    </header>
+
+                    {error && (
+                        <div
+                            role="alert"
+                            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+                        >
+                            {error}
                         </div>
+                    )}
+
+                    <section className="grid gap-4 sm:grid-cols-3">
+                        {metrics.map(({ label, value, unit, Icon }) => (
+                            <article
+                                key={label}
+                                className="rounded-2xl border bg-white p-5 shadow-sm"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-slate-500">
+                                        {label}
+                                    </p>
+                                    <Icon className="size-5 text-blue-700" />
+                                </div>
+                                <p className="mt-4 text-3xl font-semibold">
+                                    {value}{' '}
+                                    <span className="text-sm font-normal text-slate-500">
+                                        {unit}
+                                    </span>
+                                </p>
+                                <p className="mt-2 text-xs text-slate-500">
+                                    {fresh
+                                        ? 'Pembacaan ' +
+                                          dateTime(latest?.measured_at)
+                                        : 'Data belum tersedia atau lebih dari 5 menit'}
+                                </p>
+                            </article>
+                        ))}
                     </section>
-                    <section>
-                        <div className="mb-4 flex items-center justify-between">
+
+                    <section className="grid gap-4 md:grid-cols-3">
+                        <article className="rounded-2xl border bg-white p-5">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Wifi className="size-4" />
+                                Perangkat online
+                            </div>
+                            <p className="mt-3 text-3xl font-semibold">
+                                {
+                                    devices.filter(
+                                        (device) => device.status === 'online',
+                                    ).length
+                                }{' '}
+                                <span className="text-sm font-normal text-slate-500">
+                                    / {devices.length}
+                                </span>
+                            </p>
+                            <Link
+                                href="/devices"
+                                className="mt-3 inline-block text-sm font-semibold text-blue-700"
+                            >
+                                Kelola perangkat →
+                            </Link>
+                        </article>
+                        <article className="rounded-2xl border bg-white p-5">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <Activity className="size-4" />
+                                Batch aktif
+                            </div>
+                            <p className="mt-3 text-3xl font-semibold">
+                                {
+                                    batches.filter(
+                                        (batch) => batch.phase !== 'completed',
+                                    ).length
+                                }
+                            </p>
+                            <Link
+                                href="/cultivation"
+                                className="mt-3 inline-block text-sm font-semibold text-blue-700"
+                            >
+                                Buka budidaya →
+                            </Link>
+                        </article>
+                        <article className="rounded-2xl border bg-white p-5">
+                            <div className="flex items-center gap-2 text-slate-500">
+                                <AlertTriangle className="size-4" />
+                                Peringatan aktif
+                            </div>
+                            <p className="mt-3 text-3xl font-semibold">
+                                {alerts.length}
+                            </p>
+                            <p className="mt-2 text-xs text-slate-500">
+                                Perangkat offline atau sensor di luar ambang
+                            </p>
+                        </article>
+                    </section>
+
+                    <section className="rounded-2xl border bg-white p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    Kondisi lingkungan
+                                <h2 className="text-lg font-semibold">
+                                    Status perangkat
                                 </h2>
-                                <p className="mt-1 text-sm text-slate-500">
-                                    Pembacaan terbaru dari Kumbung Utama.
+                                <p className="text-sm text-slate-500">
+                                    Pembaruan otomatis setiap 30 detik.
                                 </p>
                             </div>
                             <Link
                                 href="/monitoring"
-                                className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800"
+                                className="text-sm font-semibold text-blue-700"
                             >
-                                Lihat semua <ArrowUpRight className="size-4" />
+                                Buka monitoring →
                             </Link>
                         </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                            {metrics.map((metric) => (
-                                <article
-                                    key={metric.label}
-                                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.025)]"
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div
-                                            className={`grid size-10 place-items-center rounded-xl ${metric.color === 'blue' ? 'bg-blue-50 text-blue-700' : metric.color === 'emerald' ? 'bg-emerald-50 text-emerald-700' : 'bg-teal-50 text-teal-700'}`}
-                                        >
-                                            <metric.Icon className="size-5" />
-                                        </div>
-                                        <MiniTrend
-                                            color={
-                                                metric.color === 'blue'
-                                                    ? '#2563eb'
-                                                    : metric.color === 'emerald'
-                                                      ? '#059669'
-                                                      : '#0d9488'
-                                            }
-                                        />
-                                    </div>
-                                    <p className="mt-5 text-sm text-slate-500">
-                                        {metric.label}
-                                    </p>
-                                    <div className="mt-1 flex items-baseline gap-1">
-                                        <span className="text-3xl font-semibold tracking-tight text-slate-900">
-                                            {metric.value}
-                                        </span>
-                                        <span className="text-sm text-slate-500">
-                                            {metric.unit}
-                                        </span>
-                                    </div>
-                                    <div className="mt-4 flex items-center justify-between">
-                                        <span
-                                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${metric.color === 'blue' ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700'}`}
-                                        >
-                                            {metric.status}
-                                        </span>
-                                        <span className="flex items-center gap-1 text-xs text-slate-400">
-                                            {metric.positive ? (
-                                                <ArrowUpRight className="size-3.5" />
-                                            ) : (
-                                                <ArrowDownRight className="size-3.5" />
-                                            )}
-                                            {metric.change}
-                                        </span>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
-                    </section>
-                    <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="font-semibold text-slate-900">
-                                        Aktuator
-                                    </h2>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Status pompa dan sirkulasi udara.
-                                    </p>
-                                </div>
-                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                                    Mode manual
-                                </span>
-                            </div>
-                            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                                {[
-                                    {
-                                        label: 'Pompa mist',
-                                        detail: 'Pengabut kelembapan',
-                                        Icon: Droplets,
-                                    },
-                                    {
-                                        label: 'Pompa water',
-                                        detail: 'Penyiraman',
-                                        Icon: Droplets,
-                                    },
-                                    {
-                                        label: 'Blower',
-                                        detail: 'Sirkulasi udara',
-                                        Icon: Wind,
-                                    },
-                                ].map((item) => (
+                        {loading ? (
+                            <p className="py-8 text-sm text-slate-500">
+                                Memuat data...
+                            </p>
+                        ) : devices.length === 0 ? (
+                            <p className="py-8 text-sm text-slate-500">
+                                Belum ada perangkat. Hubungkan ESP32 untuk mulai
+                                memantau kumbung.
+                            </p>
+                        ) : (
+                            <div className="mt-4 divide-y">
+                                {devices.map((device) => (
                                     <div
-                                        key={item.label}
-                                        className="rounded-xl border border-slate-100 bg-slate-50/80 p-4"
+                                        key={device.id}
+                                        className="flex flex-wrap items-center justify-between gap-3 py-3"
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div className="grid size-9 place-items-center rounded-lg bg-white text-slate-500 shadow-sm">
-                                                <item.Icon className="size-4" />
-                                            </div>
-                                            <span className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                <span className="size-1.5 rounded-full bg-slate-300" />
-                                                Mati
-                                            </span>
+                                        <div>
+                                            <p className="font-medium">
+                                                {device.name}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {device.mac_address} · Terakhir
+                                                aktif:{' '}
+                                                {dateTime(device.last_seen_at)}
+                                            </p>
                                         </div>
-                                        <p className="mt-4 text-sm font-semibold text-slate-800">
-                                            {item.label}
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {item.detail}
-                                        </p>
+                                        <span
+                                            className={
+                                                'rounded-full px-3 py-1 text-xs font-semibold ' +
+                                                (device.status === 'online'
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-amber-50 text-amber-700')
+                                            }
+                                        >
+                                            {device.status === 'online'
+                                                ? 'Online'
+                                                : 'Offline'}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
-                            <Link
-                                href="/monitoring"
-                                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
-                            >
-                                Buka kontrol aktuator{' '}
-                                <ArrowRight className="size-4" />
-                            </Link>
-                        </section>
-                        <section className="rounded-2xl border border-slate-200 bg-white p-5 md:p-6">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <h2 className="font-semibold text-slate-900">
-                                        Koneksi device
-                                    </h2>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Ringkasan status perangkat.
-                                    </p>
-                                </div>
-                                <Cpu className="size-5 text-slate-400" />
-                            </div>
-                            <div className="mt-5 flex items-center gap-3 rounded-xl border border-slate-100 p-4">
-                                <div className="grid size-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
-                                    <Activity className="size-5" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-semibold text-slate-800">
-                                        Kumbung Utama
-                                    </p>
-                                    <p className="mt-1 font-mono text-xs text-slate-400">
-                                        AA:BB:CC:DD:EE:FF
-                                    </p>
-                                </div>
-                                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-                                    Demo
-                                </span>
-                            </div>
-                            <Link
-                                href="/devices"
-                                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800"
-                            >
-                                Kelola device <ArrowRight className="size-4" />
-                            </Link>
-                        </section>
-                    </div>
-                    <p className="text-center text-xs text-slate-400">
-                        Nilai yang tampil saat perangkat belum terhubung
-                        merupakan data demonstrasi, bukan pembacaan sensor
-                        aktual.
-                    </p>
+                        )}
+                    </section>
+
+                    <section className="rounded-2xl border bg-white p-5">
+                        <h2 className="text-lg font-semibold">
+                            Peringatan terbaru
+                        </h2>
+                        {alerts.length ? (
+                            <ul className="mt-3 space-y-2">
+                                {alerts.slice(0, 5).map((alert) => (
+                                    <li
+                                        key={alert.key}
+                                        className="rounded-xl bg-amber-50 p-3"
+                                    >
+                                        <p className="font-medium text-amber-900">
+                                            {alert.title}
+                                        </p>
+                                        <p className="text-sm text-amber-800">
+                                            {alert.message}
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="mt-2 text-sm text-slate-500">
+                                Tidak ada peringatan aktif berdasarkan data yang
+                                tersimpan.
+                            </p>
+                        )}
+                    </section>
                 </div>
-            </div>
+            </main>
         </>
     );
 }

@@ -70,3 +70,24 @@ test('farmers cannot read or record harvests for another users batch', function 
             'weight_kg' => 1.0,
         ])->assertNotFound();
 });
+
+test('farmers can record cultivation expenses and cannot attach costs to another users batch', function () {
+    $user = User::factory()->create();
+    $batch = CultivationBatch::query()->create([
+        'user_id' => $user->id, 'name' => 'Batch Biaya', 'inoculated_at' => now()->subDays(10)->toDateString(),
+        'baglog_count' => 100, 'phase' => 'fruiting',
+    ]);
+    $this->actingAs($user)->postJson('/api/cultivation/expenses', [
+        'cultivation_batch_id' => $batch->id, 'incurred_at' => now()->toDateString(),
+        'category' => 'listrik', 'description' => 'Listrik kumbung', 'amount' => 75000,
+    ])->assertCreated()->assertJsonPath('data.amount', 75000);
+
+    $otherBatch = CultivationBatch::query()->create([
+        'user_id' => User::factory()->create()->id, 'name' => 'Batch Orang Lain',
+        'inoculated_at' => now()->subDays(10)->toDateString(), 'baglog_count' => 50, 'phase' => 'fruiting',
+    ]);
+    $this->actingAs($user)->postJson('/api/cultivation/expenses', [
+        'cultivation_batch_id' => $otherBatch->id, 'incurred_at' => now()->toDateString(),
+        'category' => 'lainnya', 'description' => 'Tidak boleh', 'amount' => 1000,
+    ])->assertUnprocessable();
+});

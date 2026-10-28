@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CultivationBatch;
+use App\Models\CultivationExpense;
 use App\Models\HarvestRecord;
 use App\Models\SensorReading;
 use Illuminate\Http\JsonResponse;
@@ -53,17 +54,28 @@ class ReportController extends Controller
                 'minimum' => $values->isNotEmpty() ? round($values->min(), 2) : null, 'maximum' => $values->isNotEmpty() ? round($values->max(), 2) : null, 'sample_count' => $values->count()];
         }
         $priced = $harvests->filter(fn ($h) => $h->sale_price_per_kg !== null);
+        $expenses = CultivationExpense::query()
+            ->where('user_id', $request->user()->id)
+            ->whereBetween('incurred_at', [$from, $to])
+            ->when(! empty($filters['batch_id']), fn ($q) => $q->where('cultivation_batch_id', $filters['batch_id']))
+            ->with('batch:id,name')
+            ->orderByDesc('incurred_at')
+            ->get();
+        $expenseTotal = (float) $expenses->sum('amount');
+        $revenue = (float) $priced->sum(fn ($h) => (float) $h->weight_kg * (float) $h->sale_price_per_kg);
 
         return response()->json(['data' => [
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
             'summary' => ['harvest_kg' => round((float) $harvests->sum('weight_kg'), 3), 'harvest_count' => $harvests->count(),
-                'batch_count' => $batches->count(), 'revenue_recorded' => round((float) $priced->sum(fn ($h) => (float) $h->weight_kg * (float) $h->sale_price_per_kg), 2),
+                'batch_count' => $batches->count(), 'revenue_recorded' => round($revenue, 2), 'expenses_recorded' => round($expenseTotal, 2), 'estimated_profit' => round($revenue - $expenseTotal, 2),
                 'priced_harvest_count' => $priced->count(), 'unpriced_harvest_count' => $harvests->count() - $priced->count()],
             'daily' => $daily,
             'batches' => $batches->map(fn ($b) => ['id' => $b->id, 'name' => $b->name, 'strain' => $b->strain, 'phase' => $b->phase,
                 'inoculated_at' => blank($b->getRawOriginal('inoculated_at')) ? null : Carbon::parse($b->inoculated_at)->toDateString(), 'baglog_count' => $b->baglog_count,
                 'harvest_kg' => round((float) ($b->total_harvest_kg ?? 0), 3), 'harvest_count' => $b->harvest_count,
+                'kg_per_100_baglogs' => $b->baglog_count > 0 ? round(((float) ($b->total_harvest_kg ?? 0) / $b->baglog_count) * 100, 3) : 0,
                 'has_device' => $b->iot_device_id !== null])->values(),
+            'expenses' => $expenses->map(fn ($e) => ['id' => $e->id, 'date' => Carbon::parse($e->incurred_at)->toDateString(), 'batch' => $e->batch?->name, 'category' => $e->category, 'description' => $e->description, 'amount' => (float) $e->amount])->values(),
             'harvests' => $harvests->map(fn ($h) => ['id' => $h->id, 'date' => Carbon::parse($h->harvested_at)->toDateString(), 'batch' => $h->batch->name,
                 'flush_number' => $h->flush_number, 'weight_kg' => (float) $h->weight_kg, 'quality' => $h->quality,
                 'sale_price_per_kg' => $h->sale_price_per_kg === null ? null : (float) $h->sale_price_per_kg])->values(),

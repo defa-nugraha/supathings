@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CultivationBatch;
+use App\Models\CultivationExpense;
 use App\Models\HarvestRecord;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
@@ -96,6 +97,44 @@ class CultivationController extends Controller
         ]);
 
         return response()->json(['data' => $record->load('batch:id,name')], 201);
+    }
+
+    public function expenses(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
+        ]);
+        $records = CultivationExpense::query()
+            ->where('user_id', $request->user()->id)
+            ->with('batch:id,name')
+            ->whereBetween('incurred_at', [
+                $data['from'] ?? now()->subDays(29)->toDateString(),
+                $data['to'] ?? now()->toDateString(),
+            ])
+            ->latest('incurred_at')
+            ->limit(500)
+            ->get();
+
+        return response()->json(['data' => $records]);
+    }
+
+    public function storeExpense(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'cultivation_batch_id' => ['nullable', 'integer', Rule::exists('cultivation_batches', 'id')->where('user_id', $request->user()->id)],
+            'incurred_at' => ['required', 'date', 'before_or_equal:today'],
+            'category' => ['required', Rule::in(['baglog', 'bibit', 'listrik', 'air', 'tenaga_kerja', 'perawatan', 'lainnya'])],
+            'description' => ['required', 'string', 'max:160'],
+            'amount' => ['required', 'numeric', 'gt:0', 'max:100000000000'],
+        ]);
+
+        $expense = CultivationExpense::query()->create([
+            ...$data,
+            'user_id' => $request->user()->id,
+        ]);
+
+        return response()->json(['data' => $expense->load('batch:id,name')], 201);
     }
 
     public function alerts(Request $request): JsonResponse

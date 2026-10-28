@@ -116,7 +116,9 @@ export default function Reports() {
             }
         } catch (e) {
             setError(
-                e instanceof Error ? e.message : 'Terjadi kesalahan saat memuat laporan.',
+                e instanceof Error
+                    ? e.message
+                    : 'Terjadi kesalahan saat memuat laporan.',
             );
             setData(null);
         } finally {

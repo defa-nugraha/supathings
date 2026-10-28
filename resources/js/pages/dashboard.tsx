@@ -2,9 +2,11 @@ import { Head, Link } from '@inertiajs/react';
 import {
     Activity,
     AlertTriangle,
+    Cpu,
     Droplets,
     Lightbulb,
     Plus,
+    Sprout,
     Thermometer,
     Wifi,
 } from 'lucide-react';

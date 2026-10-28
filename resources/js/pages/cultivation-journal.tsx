@@ -69,7 +69,10 @@ export default function CultivationJournal() {
                     .map((harvest) => ({
                         id: `h${harvest.id}`,
                         date: harvest.harvested_at,
-                        title: `${harvest.batch?.name ?? 'Batch'} · panen gelombang ${harvest.flush_number}`,
+                        title:
+                            (harvest.batch?.name ?? 'Batch') +
+                            ' · panen gelombang ' +
+                            harvest.flush_number,
                         note: harvest.notes as string,
                     }));
 

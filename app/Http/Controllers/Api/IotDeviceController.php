@@ -10,6 +10,7 @@ use App\Models\ControlRule;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,7 @@ class IotDeviceController extends Controller
     {
         $devices = $request->user()->iotDevices()->with('controlRules')->latest()->get();
         foreach ($devices as $device) {
-            if (! $device->last_seen_at || $device->last_seen_at->lt(now()->subMinutes(5))) {
+            if (! $device->last_seen_at || Carbon::parse($device->last_seen_at)->lt(now()->subMinutes(5))) {
                 if ($device->status !== 'offline') {
                     $device->forceFill(['status' => 'offline'])->save();
                 }
@@ -222,7 +223,7 @@ class IotDeviceController extends Controller
         $record->forceFill([
             'status' => $data['status'],
             'acknowledged_at' => now(),
-            'metadata' => array_merge($record->metadata ?? [], [
+            'metadata' => array_merge(is_array($record->metadata) ? $record->metadata : [], [
                 'actual_state' => $data['actual_state'] ?? null,
                 'device_message' => $data['message'] ?? null,
             ]),

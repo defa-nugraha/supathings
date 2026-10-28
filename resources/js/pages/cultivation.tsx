@@ -800,7 +800,7 @@ export default function Cultivation() {
                                             </SelectContent>
                                         </Select>
                                     </Field>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <Field label="Tanggal panen">
                                             <input
                                                 type="date"
@@ -835,7 +835,7 @@ export default function Cultivation() {
                                             />
                                         </Field>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <Field label="Berat (kg)">
                                             <input
                                                 type="number"

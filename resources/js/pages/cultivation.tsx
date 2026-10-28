@@ -649,36 +649,10 @@ export default function Cultivation() {
                                                             <Trash2 className="size-4" /> Hapus
                                                         </button>
                                                         <Field label="Perbarui fase">
-                                                        <select
-                                                            value={batch.phase}
-                                                            onChange={(event) =>
-                                                                void updatePhase(
-                                                                    batch,
-                                                                    event.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            className={
-                                                                inputClass
-                                                            }
-                                                        >
-                                                            {phases.map(
-                                                                (phase) => (
-                                                                    <option
-                                                                        key={
-                                                                            phase.value
-                                                                        }
-                                                                        value={
-                                                                            phase.value
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            phase.label
-                                                                        }
-                                                                    </option>
-                                                                ),
-                                                            )}
-                                                        </select>
+                                                        <Select value={batch.phase} onValueChange={(value) => void updatePhase(batch, value)}>
+                                                            <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih fase" /></SelectTrigger>
+                                                            <SelectContent>{phases.map((phase) => <SelectItem key={phase.value} value={phase.value}>{phase.label}</SelectItem>)}</SelectContent>
+                                                        </Select>
                                                         </Field>
                                                     </div>
                                                 </div>
@@ -706,28 +680,10 @@ export default function Cultivation() {
                                     className="space-y-3"
                                 >
                                     <Field label="Batch">
-                                        <select
-                                            required
-                                            value={selectedBatch}
-                                            onChange={(event) =>
-                                                setSelectedBatch(
-                                                    event.target.value,
-                                                )
-                                            }
-                                            className={inputClass}
-                                        >
-                                            <option value="">
-                                                Pilih batch
-                                            </option>
-                                            {batches.map((batch) => (
-                                                <option
-                                                    key={batch.id}
-                                                    value={batch.id}
-                                                >
-                                                    {batch.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <Select value={selectedBatch || 'none'} onValueChange={(value) => setSelectedBatch(value === 'none' ? '' : value)}>
+                                            <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih batch" /></SelectTrigger>
+                                            <SelectContent><SelectItem value="none">Pilih batch</SelectItem>{batches.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}</SelectContent>
+                                        </Select>
                                     </Field>
                                     <div className="grid grid-cols-2 gap-3">
                                         <Field label="Tanggal panen">
@@ -784,30 +740,10 @@ export default function Cultivation() {
                                             />
                                         </Field>
                                         <Field label="Kualitas">
-                                            <select
-                                                value={harvestForm.quality}
-                                                onChange={(event) =>
-                                                    setHarvestForm({
-                                                        ...harvestForm,
-                                                        quality:
-                                                            event.target.value,
-                                                    })
-                                                }
-                                                className={inputClass}
-                                            >
-                                                <option value="premium">
-                                                    Premium
-                                                </option>
-                                                <option value="good">
-                                                    Baik
-                                                </option>
-                                                <option value="standard">
-                                                    Standar
-                                                </option>
-                                                <option value="reject">
-                                                    Afkir
-                                                </option>
-                                            </select>
+                                            <Select value={harvestForm.quality} onValueChange={(value) => setHarvestForm({ ...harvestForm, quality: value })}>
+                                                <SelectTrigger className={inputClass}><SelectValue placeholder="Pilih kualitas" /></SelectTrigger>
+                                                <SelectContent><SelectItem value="premium">Premium</SelectItem><SelectItem value="good">Baik</SelectItem><SelectItem value="standard">Standar</SelectItem><SelectItem value="reject">Afkir</SelectItem></SelectContent>
+                                            </Select>
                                         </Field>
                                     </div>
                                     <Field label="Harga jual per kg (Rp)">

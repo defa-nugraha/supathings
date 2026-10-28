@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   format:
-    if: contains(github.event.head_commit.message, 'Temporary formatter runner') == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +29,7 @@ jobs:
             exit 0
           fi
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+defa-nugraha@users.noreply.github.com"
           git add resources/js/pages/devices.tsx
           git commit -m "chore: format devices page"
           git push

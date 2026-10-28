@@ -17,7 +17,16 @@ class IotDeviceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()->iotDevices()->with('controlRules')->latest()->get()]);
+        $devices = $request->user()->iotDevices()->with('controlRules')->latest()->get();
+        foreach ($devices as $device) {
+            if (! $device->last_seen_at || $device->last_seen_at->lt(now()->subMinutes(5))) {
+                if ($device->status !== 'offline') {
+                    $device->forceFill(['status' => 'offline'])->save();
+                }
+            }
+        }
+
+        return response()->json(['data' => $devices]);
     }
 
     public function readings(Request $request, string $device): JsonResponse
@@ -72,8 +81,8 @@ class IotDeviceController extends Controller
         $device->forceFill(['status' => 'online', 'last_seen_at' => now()])->save();
 
         // Persist and evaluate after the HTTP response so telemetry ingestion stays responsive.
-        StoreSensorReading::dispatch($device->id, $reading)->afterResponse();
-        EvaluateControlRules::dispatch($device->id, $reading)->afterResponse();
+        StoreSensorReading::dispatchSync($device->id, $reading);
+        EvaluateControlRules::dispatchSync($device->id, $reading);
 
         return response()->json(['accepted' => true], 202);
     }
@@ -155,6 +164,64 @@ class IotDeviceController extends Controller
         ]);
 
         return response()->json(['data' => $command], 201);
+    }
+
+    /**
+     * ESP32 polls for commands using Authorization: Bearer <device_token>.
+     */
+    public function pollCommands(Request $request): JsonResponse
+    {
+        $device = $this->deviceFromToken($request);
+        if (! $device) {
+            return response()->json(['message' => 'Device token tidak valid.'], 401);
+        }
+
+        $commands = ActuatorCommand::query()
+            ->where('iot_device_id', $device->id)
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->limit(10)
+            ->get();
+
+        foreach ($commands as $command) {
+            $command->forceFill(['status' => 'sent'])->save();
+        }
+
+        return response()->json(['data' => $commands]);
+    }
+
+    /** Record device acknowledgement; this is not independent proof of electrical state. */
+    public function acknowledgeCommand(Request $request, string $command): JsonResponse
+    {
+        $device = $this->deviceFromToken($request);
+        if (! $device) {
+            return response()->json(['message' => 'Device token tidak valid.'], 401);
+        }
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['acknowledged', 'failed'])],
+            'actual_state' => ['nullable', Rule::in(['on', 'off'])],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $record = ActuatorCommand::query()
+            ->where('iot_device_id', $device->id)
+            ->findOrFail($command);
+
+        if (! in_array($record->status, ['pending', 'sent'], true)) {
+            return response()->json(['message' => 'Perintah sudah diproses.', 'data' => $record], 409);
+        }
+
+        $record->forceFill([
+            'status' => $data['status'],
+            'acknowledged_at' => now(),
+            'metadata' => array_merge($record->metadata ?? [], [
+                'actual_state' => $data['actual_state'] ?? null,
+                'device_message' => $data['message'] ?? null,
+            ]),
+        ])->save();
+
+        return response()->json(['data' => $record->fresh()]);
     }
 
     private function deviceFromToken(Request $request): ?IotDevice

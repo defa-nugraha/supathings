@@ -32,22 +32,23 @@ class EvaluateControlRules implements ShouldQueue
         $desired = [];
         $temperatureRule = $rules->get('temperature');
         if ($temperature !== null && $temperatureRule?->enabled) {
-            if ($temperature > $temperatureRule->maximum) {
+            if ($temperature > (float) $temperatureRule->maximum) {
                 $desired['blower'] = 'on';
-            } elseif ($temperature <= $temperatureRule->maximum - 1.0) {
+            } elseif ($temperature < (float) $temperatureRule->minimum) {
                 $desired['blower'] = 'off';
             }
         }
 
         $humidityRule = $rules->get('humidity');
         if ($humidity !== null && $humidityRule?->enabled) {
-            if ($humidity < $humidityRule->minimum) {
+            if ($humidity < (float) $humidityRule->minimum) {
                 $desired['mist'] = 'on';
-            } elseif ($humidity >= $humidityRule->minimum + 2.0) {
+            } elseif ($humidity > (float) $humidityRule->maximum) {
                 $desired['mist'] = 'off';
             }
         }
 
+        // Light rules produce alerts only; no light actuator is configured.
         // Watering is deliberately manual until a watering schedule is explicitly configured.
         foreach ($desired as $actuator => $state) {
             $latest = ActuatorCommand::query()

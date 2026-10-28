@@ -131,3 +131,23 @@ test('administrators can view cultivation records across user accounts while reg
 
     expect($batch->fresh()->user_id)->toBe($owner->id);
 });
+
+test('administrators can create cultivation batches for an active user', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $owner = User::factory()->create(['role' => 'user']);
+
+    $this->actingAs($admin)
+        ->postJson('/api/cultivation/batches', [
+            'user_id' => $owner->id,
+            'name' => 'Batch untuk pengguna',
+            'inoculated_at' => now()->subDays(3)->toDateString(),
+            'baglog_count' => 50,
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.user_id', $owner->id);
+
+    $this->assertDatabaseHas('cultivation_batches', [
+        'user_id' => $owner->id,
+        'name' => 'Batch untuk pengguna',
+    ]);
+});

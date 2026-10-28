@@ -26,19 +26,27 @@ class CultivationController extends Controller
 
     public function storeBatch(Request $request): JsonResponse
     {
+        $ownerId = $request->user()->isAdmin() && $request->filled('user_id')
+            ? (int) $request->input('user_id')
+            : $request->user()->id;
+        $userIdRule = $request->user()->isAdmin()
+            ? ['nullable', 'integer', Rule::exists('users', 'id')->where('is_active', true)]
+            : ['prohibited'];
+
         $data = $request->validate([
+            'user_id' => $userIdRule,
             'name' => ['required', 'string', 'max:100'],
             'strain' => ['nullable', 'string', 'max:100'],
             'inoculated_at' => ['required', 'date', 'before_or_equal:today'],
             'baglog_count' => ['required', 'integer', 'min:1', 'max:1000000'],
             'phase' => ['sometimes', Rule::in(['incubation', 'fruiting', 'harvesting', 'resting', 'completed'])],
-            'iot_device_id' => ['nullable', 'integer', Rule::exists('iot_devices', 'id')->where('user_id', $request->user()->id)],
+            'iot_device_id' => ['nullable', 'integer', Rule::exists('iot_devices', 'id')->where('user_id', $ownerId)],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $batch = CultivationBatch::query()->create([
             ...$data,
-            'user_id' => $request->user()->id,
+            'user_id' => $ownerId,
             'phase' => $data['phase'] ?? 'incubation',
         ]);
 

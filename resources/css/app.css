@@ -133,7 +133,6 @@
 /* Public landing page: motion-brand styling */
 .landing-page {
     --landing-blue: #155eef;
-    --landing-navy: #102a50;
     scroll-behavior: smooth;
 }
 

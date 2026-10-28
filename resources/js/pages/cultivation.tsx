@@ -6,6 +6,8 @@ import {
     CircleAlert,
     ClipboardList,
     Plus,
+    Pencil,
+    Trash2,
     Sprout,
     Wheat,
 } from 'lucide-react';
@@ -84,6 +86,7 @@ export default function Cultivation() {
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
     const [showBatchForm, setShowBatchForm] = useState(false);
+    const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
     const [showHarvestForm, setShowHarvestForm] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState('');
     const [batchForm, setBatchForm] = useState({
@@ -142,14 +145,14 @@ export default function Cultivation() {
         void refresh();
     }, [refresh]);
 
-    const createBatch = async (event: FormEvent<HTMLFormElement>) => {
+    const saveBatch = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setBusy(true);
         setError('');
         setNotice('');
         try {
-            const response = await fetch('/api/cultivation/batches', {
-                method: 'POST',
+            const response = await fetch(editingBatch ? '/api/cultivation/batches/' + editingBatch.id : '/api/cultivation/batches', {
+                method: editingBatch ? 'PATCH' : 'POST',
                 headers: csrfHeaders(),
                 body: JSON.stringify({
                     ...batchForm,
@@ -172,7 +175,8 @@ export default function Cultivation() {
                 notes: '',
             });
             setShowBatchForm(false);
-            setNotice('Batch budidaya berhasil ditambahkan.');
+            setNotice(editingBatch ? 'Batch budidaya berhasil diperbarui.' : 'Batch budidaya berhasil ditambahkan.');
+            setEditingBatch(null);
             await refresh();
         } catch (cause) {
             setError(
@@ -295,7 +299,11 @@ export default function Cultivation() {
                         <div className="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => setShowBatchForm(true)}
+                                onClick={() => {
+                                    setEditingBatch(null);
+                                    setBatchForm({ name: '', strain: '', inoculated_at: today, baglog_count: '100', notes: '' });
+                                    setShowBatchForm(true);
+                                }}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
                             >
                                 <Plus className="size-4" /> Tambah batch
@@ -414,14 +422,14 @@ export default function Cultivation() {
                     >
                         <DialogContent className="sm:max-w-3xl">
                             <DialogHeader>
-                                <DialogTitle>Batch budidaya baru</DialogTitle>
+                                <DialogTitle>{editingBatch ? 'Edit batch budidaya' : 'Batch budidaya baru'}</DialogTitle>
                                 <DialogDescription>
                                     Masukkan informasi awal kelompok baglog yang
                                     akan dipantau.
                                 </DialogDescription>
                             </DialogHeader>
                             <form
-                                onSubmit={createBatch}
+                                onSubmit={saveBatch}
                                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
                             >
                                 <Field label="Nama batch">
@@ -504,7 +512,7 @@ export default function Cultivation() {
                                         disabled={busy}
                                         className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                                     >
-                                        {busy ? 'Menyimpan…' : 'Simpan batch'}
+                                        {busy ? 'Menyimpan…' : editingBatch ? 'Simpan perubahan' : 'Simpan batch'}
                                     </button>
                                 </div>
                             </form>
@@ -602,7 +610,44 @@ export default function Cultivation() {
                                                             kg
                                                         </strong>
                                                     </p>
-                                                    <Field label="Perbarui fase">
+                                                    <div className="flex flex-wrap items-end gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingBatch(batch);
+                                                                setBatchForm({
+                                                                    name: batch.name,
+                                                                    strain: batch.strain ?? '',
+                                                                    inoculated_at: batch.inoculated_at.slice(0, 10),
+                                                                    baglog_count: String(batch.baglog_count),
+                                                                    notes: batch.notes ?? '',
+                                                                });
+                                                                setShowBatchForm(true);
+                                                            }}
+                                                            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                                        >
+                                                            <Pencil className="size-4" /> Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!window.confirm('Hapus batch "' + batch.name + '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.')) return;
+                                                                try {
+                                                                    const response = await fetch('/api/cultivation/batches/' + batch.id, { method: 'DELETE', headers: csrfHeaders() });
+                                                                    const payload = await response.json();
+                                                                    if (!response.ok) throw new Error(payload.message ?? 'Batch gagal dihapus.');
+                                                                    setNotice('Batch berhasil dihapus.');
+                                                                    setError('');
+                                                                    await refresh();
+                                                                } catch (cause) {
+                                                                    setError(cause instanceof Error ? cause.message : 'Batch gagal dihapus.');
+                                                                }
+                                                            }}
+                                                            className="inline-flex h-10 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 className="size-4" /> Hapus
+                                                        </button>
+                                                        <Field label="Perbarui fase">
                                                         <select
                                                             value={batch.phase}
                                                             onChange={(event) =>
@@ -633,7 +678,8 @@ export default function Cultivation() {
                                                                 ),
                                                             )}
                                                         </select>
-                                                    </Field>
+                                                        </Field>
+                                                    </div>
                                                 </div>
                                             </article>
                                         );

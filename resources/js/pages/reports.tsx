@@ -210,7 +210,7 @@ export default function Reports() {
                                 kondisi kumbung berdasarkan data yang tercatat.
                             </p>
                         </div>
-                        <div className="flex gap-2 print:hidden">
+                        <div data-tour="reports-export" className="flex gap-2 print:hidden">
                             <button
                                 onClick={() => window.print()}
                                 className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium"
@@ -228,7 +228,7 @@ export default function Reports() {
                         </div>
                     </header>
 
-                    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print:hidden">
+                    <section data-tour="reports-filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm print:hidden">
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
                             <CalendarDays className="size-4 text-emerald-700" />
                             Atur laporan
@@ -313,7 +313,7 @@ export default function Reports() {
                                 Periode {formatDate(data.period.from)} –{' '}
                                 {formatDate(data.period.to)}
                             </p>
-                            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <section data-tour="reports-summary" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                 {[
                                     {
                                         icon: Weight,

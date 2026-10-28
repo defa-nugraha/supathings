@@ -253,10 +253,7 @@ export default function Reports() {
                                 >
                                     <option value="all">Semua batch</option>
                                     {batchOptions.map((batch) => (
-                                        <option
-                                            key={batch.id}
-                                            value={batch.id}
-                                        >
+                                        <option key={batch.id} value={batch.id}>
                                             {batch.name}
                                         </option>
                                     ))}
@@ -264,9 +261,7 @@ export default function Reports() {
                             </label>
                             <button
                                 onClick={() => void loadReport()}
-                                disabled={
-                                    loading || !from || !to || from > to
-                                }
+                                disabled={loading || !from || !to || from > to}
                                 className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
                             >
                                 {loading ? 'Memuat…' : 'Terapkan'}
@@ -321,7 +316,8 @@ export default function Reports() {
                                             data.summary.revenue_recorded,
                                         ),
                                         hint:
-                                            data.summary.unpriced_harvest_count +
+                                            data.summary
+                                                .unpriced_harvest_count +
                                             ' catatan belum memiliki harga',
                                     },
                                     {
@@ -368,37 +364,41 @@ export default function Reports() {
                                         </p>
                                     ) : (
                                         <div className="mt-5 space-y-3">
-                                            {data.daily.slice(-12).map((item) => (
-                                                <div
-                                                    key={item.date}
-                                                    className="grid grid-cols-[82px_1fr_68px] items-center gap-3 text-sm"
-                                                >
-                                                    <span className="text-xs text-slate-500">
-                                                        {formatDate(item.date)}
-                                                    </span>
-                                                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                                                        <div
-                                                            className="h-full rounded-full bg-emerald-600"
-                                                            style={{
-                                                                width:
-                                                                    Math.max(
-                                                                        2,
-                                                                        (item.weight_kg /
-                                                                            maxDaily) *
-                                                                            100,
-                                                                    ) + '%',
-                                                            }}
-                                                        />
+                                            {data.daily
+                                                .slice(-12)
+                                                .map((item) => (
+                                                    <div
+                                                        key={item.date}
+                                                        className="grid grid-cols-[82px_1fr_68px] items-center gap-3 text-sm"
+                                                    >
+                                                        <span className="text-xs text-slate-500">
+                                                            {formatDate(
+                                                                item.date,
+                                                            )}
+                                                        </span>
+                                                        <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                                                            <div
+                                                                className="h-full rounded-full bg-emerald-600"
+                                                                style={{
+                                                                    width:
+                                                                        Math.max(
+                                                                            2,
+                                                                            (item.weight_kg /
+                                                                                maxDaily) *
+                                                                                100,
+                                                                        ) + '%',
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-right font-medium">
+                                                            {formatNumber(
+                                                                item.weight_kg,
+                                                                3,
+                                                            )}{' '}
+                                                            kg
+                                                        </span>
                                                     </div>
-                                                    <span className="text-right font-medium">
-                                                        {formatNumber(
-                                                            item.weight_kg,
-                                                            3,
-                                                        )}{' '}
-                                                        kg
-                                                    </span>
-                                                </div>
-                                            ))}
+                                                ))}
                                         </div>
                                     )}
                                 </article>
@@ -447,21 +447,32 @@ export default function Reports() {
                                                                 'Tertinggi',
                                                                 metric.maximum,
                                                             ],
-                                                        ].map(([label, value]) => (
-                                                            <div key={String(label)}>
-                                                                <p className="text-xs text-slate-500">
-                                                                    {label}
-                                                                </p>
-                                                                <p className="font-semibold">
-                                                                    {formatNumber(
-                                                                        Number(
-                                                                            value,
-                                                                        ),
-                                                                    )}{' '}
-                                                                    {metric.unit}
-                                                                </p>
-                                                            </div>
-                                                        ))}
+                                                        ].map(
+                                                            ([
+                                                                label,
+                                                                value,
+                                                            ]) => (
+                                                                <div
+                                                                    key={String(
+                                                                        label,
+                                                                    )}
+                                                                >
+                                                                    <p className="text-xs text-slate-500">
+                                                                        {label}
+                                                                    </p>
+                                                                    <p className="font-semibold">
+                                                                        {formatNumber(
+                                                                            Number(
+                                                                                value,
+                                                                            ),
+                                                                        )}{' '}
+                                                                        {
+                                                                            metric.unit
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            ),
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -483,7 +494,7 @@ export default function Reports() {
                                 <h2 className="text-lg font-semibold">
                                     Perbandingan batch
                                 </h2>
-                                <p className="mb-4 mt-1 text-sm text-slate-500">
+                                <p className="mt-1 mb-4 text-sm text-slate-500">
                                     Hanya panen yang tercatat pada periode
                                     terpilih.
                                 </p>
@@ -491,10 +502,14 @@ export default function Reports() {
                                     <table className="w-full min-w-[620px] text-left text-sm">
                                         <thead>
                                             <tr className="border-b text-xs text-slate-500">
-                                                <th className="pb-3">Nama batch</th>
+                                                <th className="pb-3">
+                                                    Nama batch
+                                                </th>
                                                 <th className="pb-3">Mulai</th>
                                                 <th className="pb-3">Baglog</th>
-                                                <th className="pb-3">Catatan panen</th>
+                                                <th className="pb-3">
+                                                    Catatan panen
+                                                </th>
                                                 <th className="pb-3 text-right">
                                                     Total panen
                                                 </th>
@@ -509,8 +524,9 @@ export default function Reports() {
                                                     <td className="py-3 font-medium">
                                                         {batch.name}
                                                         <p className="mt-1 text-xs font-normal text-slate-500">
-                                                            {phaseLabels[batch.phase] ??
-                                                                batch.phase}
+                                                            {phaseLabels[
+                                                                batch.phase
+                                                            ] ?? batch.phase}
                                                             {batch.strain
                                                                 ? ' · ' +
                                                                   batch.strain
@@ -559,11 +575,17 @@ export default function Reports() {
                                     <table className="w-full min-w-[650px] text-left text-sm">
                                         <thead>
                                             <tr className="border-b text-xs text-slate-500">
-                                                <th className="pb-3">Tanggal</th>
+                                                <th className="pb-3">
+                                                    Tanggal
+                                                </th>
                                                 <th className="pb-3">Batch</th>
-                                                <th className="pb-3">Gelombang</th>
+                                                <th className="pb-3">
+                                                    Gelombang
+                                                </th>
                                                 <th className="pb-3">Berat</th>
-                                                <th className="pb-3">Kualitas</th>
+                                                <th className="pb-3">
+                                                    Kualitas
+                                                </th>
                                                 <th className="pb-3 text-right">
                                                     Harga/kg
                                                 </th>
@@ -576,7 +598,9 @@ export default function Reports() {
                                                     className="border-b border-slate-50"
                                                 >
                                                     <td className="py-3">
-                                                        {formatDate(harvest.date)}
+                                                        {formatDate(
+                                                            harvest.date,
+                                                        )}
                                                     </td>
                                                     <td className="py-3">
                                                         {harvest.batch}

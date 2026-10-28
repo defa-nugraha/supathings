@@ -107,13 +107,19 @@ class CultivationController extends Controller
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
-        $records = CultivationExpense::query()
+        $query = CultivationExpense::query()
             ->where('user_id', $request->user()->id)
-            ->with('batch:id,name')
-            ->whereBetween('incurred_at', [
-                $data['from'] ?? now()->subDays(29)->toDateString(),
-                $data['to'] ?? now()->toDateString(),
-            ])
+            ->with('batch:id,name');
+
+        if (isset($data['from'])) {
+            $query->whereDate('incurred_at', '>=', $data['from']);
+        }
+
+        if (isset($data['to'])) {
+            $query->whereDate('incurred_at', '<=', $data['to']);
+        }
+
+        $records = $query
             ->latest('incurred_at')
             ->limit(500)
             ->get();

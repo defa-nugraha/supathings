@@ -178,6 +178,7 @@ export default function Dashboard() {
                         </div>
                         <Link
                             href="/devices"
+                            data-tour="dashboard-connect"
                             className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
                         >
                             <Plus className="size-4" />
@@ -194,7 +195,7 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    <section className="grid gap-4 sm:grid-cols-3">
+                    <section data-tour="dashboard-metrics" className="grid gap-4 sm:grid-cols-3">
                         {metrics.map(({ label, value, unit, Icon }) => (
                             <article
                                 key={label}
@@ -278,7 +279,7 @@ export default function Dashboard() {
                         </article>
                     </section>
 
-                    <section className="rounded-2xl border bg-white p-5">
+                    <section data-tour="dashboard-device-status" className="rounded-2xl border bg-white p-5">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <h2 className="text-lg font-semibold">
@@ -339,7 +340,7 @@ export default function Dashboard() {
                         )}
                     </section>
 
-                    <section className="rounded-2xl border bg-white p-5">
+                    <section data-tour="dashboard-alerts" className="rounded-2xl border bg-white p-5">
                         <h2 className="text-lg font-semibold">
                             Peringatan terbaru
                         </h2>

@@ -228,9 +228,7 @@ export default function Devices() {
             const payload = await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    payload.message ?? 'Perangkat gagal dihapus.',
-                );
+                throw new Error(payload.message ?? 'Perangkat gagal dihapus.');
             }
 
             setDevices((prev) =>

@@ -229,7 +229,11 @@ export default function Dashboard() {
                                 Perangkat online
                             </div>
                             <p className="mt-3 text-3xl font-semibold">
-                                {devices.filter((device) => device.status === 'online').length}{' '}
+                                {
+                                    devices.filter(
+                                        (device) => device.status === 'online',
+                                    ).length
+                                }{' '}
                                 <span className="text-sm font-normal text-slate-500">
                                     / {devices.length}
                                 </span>

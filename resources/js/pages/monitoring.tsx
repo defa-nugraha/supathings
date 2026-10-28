@@ -212,7 +212,9 @@ function TrendChart({ readings }: { readings: Reading[] }) {
 export default function Monitoring() {
     const [device, setDevice] = useState('');
     const [deviceId, setDeviceId] = useState('');
-    const [availableDevices, setAvailableDevices] = useState<DeviceOption[]>([]);
+    const [availableDevices, setAvailableDevices] = useState<DeviceOption[]>(
+        [],
+    );
     const [reading, setReading] = useState(initialReading);
     const [readings, setReadings] = useState<Reading[]>([]);
     const [connection, setConnection] = useState<
@@ -723,7 +725,9 @@ export default function Monitoring() {
                                 <p className="text-xs text-slate-500">
                                     ESP32 · DHT22 + LDR · Data terakhir{' '}
                                     {reading.at
-                                        ? new Date(reading.at).toLocaleTimeString('id-ID', {
+                                        ? new Date(
+                                              reading.at,
+                                          ).toLocaleTimeString('id-ID', {
                                               hour: '2-digit',
                                               minute: '2-digit',
                                               second: '2-digit',
@@ -1020,23 +1024,32 @@ export default function Monitoring() {
                                                 {[
                                                     {
                                                         name: 'Suhu',
-                                                        value: (Number.isFinite(reading.temperature) ? reading.temperature : 0).toFixed(
-                                                            1,
-                                                        ),
+                                                        value: (Number.isFinite(
+                                                            reading.temperature,
+                                                        )
+                                                            ? reading.temperature
+                                                            : 0
+                                                        ).toFixed(1),
                                                         unit: '°C',
                                                     },
                                                     {
                                                         name: 'Kelembapan',
-                                                        value: (Number.isFinite(reading.humidity) ? reading.humidity : 0).toFixed(
-                                                            1,
-                                                        ),
+                                                        value: (Number.isFinite(
+                                                            reading.humidity,
+                                                        )
+                                                            ? reading.humidity
+                                                            : 0
+                                                        ).toFixed(1),
                                                         unit: '%',
                                                     },
                                                     {
                                                         name: 'Cahaya',
-                                                        value: (Number.isFinite(reading.light) ? reading.light : 0).toFixed(
-                                                            1,
-                                                        ),
+                                                        value: (Number.isFinite(
+                                                            reading.light,
+                                                        )
+                                                            ? reading.light
+                                                            : 0
+                                                        ).toFixed(1),
                                                         unit: '%',
                                                     },
                                                 ].map((row) => (

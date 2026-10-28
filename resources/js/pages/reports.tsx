@@ -53,7 +53,14 @@ type Report = {
     daily: { date: string; weight_kg: number; records: number }[];
     batches: Batch[];
     harvests: Harvest[];
-    expenses: { id: number; date: string; batch: string | null; category: string; description: string; amount: number }[];
+    expenses: {
+        id: number;
+        date: string;
+        batch: string | null;
+        category: string;
+        description: string;
+        amount: number;
+    }[];
     sensors: { reading_count: number; metrics: Record<string, Metric> };
 };
 
@@ -95,7 +102,13 @@ export default function Reports() {
     >([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [expenseForm, setExpenseForm] = useState({ incurred_at: today, category: 'lainnya', description: '', amount: '', cultivation_batch_id: '' });
+    const [expenseForm, setExpenseForm] = useState({
+        incurred_at: today,
+        category: 'lainnya',
+        description: '',
+        amount: '',
+        cultivation_batch_id: '',
+    });
     const [expenseMessage, setExpenseMessage] = useState('');
     const [savingExpense, setSavingExpense] = useState(false);
 
@@ -564,8 +577,12 @@ export default function Reports() {
                                                 <th className="pb-3">
                                                     Catatan panen
                                                 </th>
-                                                <th className="pb-3 text-right">Total panen</th>
-                                                <th className="pb-3 text-right">kg / 100 baglog</th>
+                                                <th className="pb-3 text-right">
+                                                    Total panen
+                                                </th>
+                                                <th className="pb-3 text-right">
+                                                    kg / 100 baglog
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -609,7 +626,13 @@ export default function Reports() {
                                                         )}{' '}
                                                         kg
                                                     </td>
-                                                    <td className="py-3 text-right">{formatNumber(batch.kg_per_100_baglogs, 3)} kg</td>
+                                                    <td className="py-3 text-right">
+                                                        {formatNumber(
+                                                            batch.kg_per_100_baglogs,
+                                                            3,
+                                                        )}{' '}
+                                                        kg
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -691,26 +714,39 @@ export default function Reports() {
                                     Biaya operasional dan estimasi laba
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    Laba adalah omzet tercatat dikurangi biaya yang dicatat.
-                                    Biaya yang belum dimasukkan belum ikut dihitung.
+                                    Laba adalah omzet tercatat dikurangi biaya
+                                    yang dicatat. Biaya yang belum dimasukkan
+                                    belum ikut dihitung.
                                 </p>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Omzet tercatat</p>
+                                        <p className="text-sm text-slate-500">
+                                            Omzet tercatat
+                                        </p>
                                         <p className="mt-1 text-xl font-semibold">
-                                            {formatMoney(data.summary.revenue_recorded)}
+                                            {formatMoney(
+                                                data.summary.revenue_recorded,
+                                            )}
                                         </p>
                                     </article>
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Biaya tercatat</p>
+                                        <p className="text-sm text-slate-500">
+                                            Biaya tercatat
+                                        </p>
                                         <p className="mt-1 text-xl font-semibold">
-                                            {formatMoney(data.summary.expenses_recorded)}
+                                            {formatMoney(
+                                                data.summary.expenses_recorded,
+                                            )}
                                         </p>
                                     </article>
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Estimasi laba</p>
+                                        <p className="text-sm text-slate-500">
+                                            Estimasi laba
+                                        </p>
                                         <p className="mt-1 text-xl font-semibold">
-                                            {formatMoney(data.summary.estimated_profit)}
+                                            {formatMoney(
+                                                data.summary.estimated_profit,
+                                            )}
                                         </p>
                                     </article>
                                 </div>
@@ -728,7 +764,8 @@ export default function Reports() {
                                             onChange={(event) =>
                                                 setExpenseForm((prev) => ({
                                                     ...prev,
-                                                    incurred_at: event.target.value,
+                                                    incurred_at:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="mt-1 w-full rounded-lg border-slate-300"
@@ -741,7 +778,8 @@ export default function Reports() {
                                             onChange={(event) =>
                                                 setExpenseForm((prev) => ({
                                                     ...prev,
-                                                    category: event.target.value,
+                                                    category:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="mt-1 w-full rounded-lg border-slate-300"
@@ -751,11 +789,17 @@ export default function Reports() {
                                                 ['bibit', 'Bibit'],
                                                 ['listrik', 'Listrik'],
                                                 ['air', 'Air'],
-                                                ['tenaga_kerja', 'Tenaga kerja'],
+                                                [
+                                                    'tenaga_kerja',
+                                                    'Tenaga kerja',
+                                                ],
                                                 ['perawatan', 'Perawatan'],
                                                 ['lainnya', 'Lainnya'],
                                             ].map(([value, label]) => (
-                                                <option key={value} value={value}>
+                                                <option
+                                                    key={value}
+                                                    value={value}
+                                                >
                                                     {label}
                                                 </option>
                                             ))}
@@ -764,18 +808,26 @@ export default function Reports() {
                                     <label className="text-sm">
                                         Batch (opsional)
                                         <select
-                                            value={expenseForm.cultivation_batch_id}
+                                            value={
+                                                expenseForm.cultivation_batch_id
+                                            }
                                             onChange={(event) =>
                                                 setExpenseForm((prev) => ({
                                                     ...prev,
-                                                    cultivation_batch_id: event.target.value,
+                                                    cultivation_batch_id:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="mt-1 w-full rounded-lg border-slate-300"
                                         >
-                                            <option value="">Umum / semua batch</option>
+                                            <option value="">
+                                                Umum / semua batch
+                                            </option>
                                             {batchOptions.map((batch) => (
-                                                <option key={batch.id} value={batch.id}>
+                                                <option
+                                                    key={batch.id}
+                                                    value={batch.id}
+                                                >
                                                     {batch.name}
                                                 </option>
                                             ))}
@@ -790,7 +842,8 @@ export default function Reports() {
                                             onChange={(event) =>
                                                 setExpenseForm((prev) => ({
                                                     ...prev,
-                                                    description: event.target.value,
+                                                    description:
+                                                        event.target.value,
                                                 }))
                                             }
                                             className="mt-1 w-full rounded-lg border-slate-300"
@@ -826,7 +879,10 @@ export default function Reports() {
                                     </div>
                                 </form>
                                 {expenseMessage && (
-                                    <p role="status" className="mt-3 text-sm text-slate-600">
+                                    <p
+                                        role="status"
+                                        className="mt-3 text-sm text-slate-600"
+                                    >
                                         {expenseMessage}
                                     </p>
                                 )}
@@ -834,21 +890,50 @@ export default function Reports() {
                                     <table className="w-full min-w-[560px] text-left text-sm">
                                         <thead>
                                             <tr className="border-b text-xs text-slate-500">
-                                                <th className="pb-3">Tanggal</th>
-                                                <th className="pb-3">Kategori</th>
-                                                <th className="pb-3">Keterangan</th>
+                                                <th className="pb-3">
+                                                    Tanggal
+                                                </th>
+                                                <th className="pb-3">
+                                                    Kategori
+                                                </th>
+                                                <th className="pb-3">
+                                                    Keterangan
+                                                </th>
                                                 <th className="pb-3">Batch</th>
-                                                <th className="pb-3 text-right">Nominal</th>
+                                                <th className="pb-3 text-right">
+                                                    Nominal
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {data.expenses.map((expense) => (
-                                                <tr key={expense.id} className="border-b border-slate-50">
-                                                    <td className="py-3">{formatDate(expense.date)}</td>
-                                                    <td className="py-3">{expense.category.replace('_', ' ')}</td>
-                                                    <td className="py-3">{expense.description}</td>
-                                                    <td className="py-3">{expense.batch ?? 'Umum'}</td>
-                                                    <td className="py-3 text-right">{formatMoney(expense.amount)}</td>
+                                                <tr
+                                                    key={expense.id}
+                                                    className="border-b border-slate-50"
+                                                >
+                                                    <td className="py-3">
+                                                        {formatDate(
+                                                            expense.date,
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {expense.category.replace(
+                                                            '_',
+                                                            ' ',
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {expense.description}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {expense.batch ??
+                                                            'Umum'}
+                                                    </td>
+                                                    <td className="py-3 text-right">
+                                                        {formatMoney(
+                                                            expense.amount,
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -856,7 +941,9 @@ export default function Reports() {
                                 </div>
                             </section>
                             <p className="text-xs leading-5 text-slate-500">
-                                Laporan memakai data panen, biaya, dan sensor yang tersimpan. Simpan PDF membuka dialog cetak browser.
+                                Laporan memakai data panen, biaya, dan sensor
+                                yang tersimpan. Simpan PDF membuka dialog cetak
+                                browser.
                             </p>
                         </>
                     )}

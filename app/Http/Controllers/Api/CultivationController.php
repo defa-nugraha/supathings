@@ -246,7 +246,8 @@ class CultivationController extends Controller
         return response()->json(['message' => 'Biaya operasional berhasil dihapus.']);
     }
 
-    private function batchQuery(Request $request): Builder<CultivationBatch>
+    /** @return Builder<CultivationBatch> */
+    private function batchQuery(Request $request): Builder
     {
         $query = CultivationBatch::query();
 
@@ -257,7 +258,8 @@ class CultivationController extends Controller
         return $query;
     }
 
-    private function harvestQuery(Request $request): Builder<HarvestRecord>
+    /** @return Builder<HarvestRecord> */
+    private function harvestQuery(Request $request): Builder
     {
         $query = HarvestRecord::query();
 
@@ -268,7 +270,8 @@ class CultivationController extends Controller
         return $query;
     }
 
-    private function expenseQuery(Request $request): Builder<CultivationExpense>
+    /** @return Builder<CultivationExpense> */
+    private function expenseQuery(Request $request): Builder
     {
         $query = CultivationExpense::query();
 

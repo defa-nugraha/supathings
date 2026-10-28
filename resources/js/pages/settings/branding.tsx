@@ -56,8 +56,8 @@ export default function BrandingSettingsPage() {
                     description="Atur nama dan logo yang digunakan di seluruh halaman aplikasi."
                 />
 
-                <form onSubmit={submit} className="space-y-6">
-                    <div data-tour="settings-branding" className="grid gap-2">
+                <form data-tour="settings-branding" onSubmit={submit} className="space-y-6">
+                    <div className="grid gap-2">
                         <Label htmlFor="app_name">Nama aplikasi</Label>
                         <Input
                             id="app_name"

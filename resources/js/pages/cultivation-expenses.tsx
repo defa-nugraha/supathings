@@ -322,7 +322,7 @@ export default function CultivationExpenses() {
                         <div className="border-b border-slate-100 p-5">
                             <div className="flex items-center gap-2">
                                 <ReceiptText className="size-5 text-emerald-700" />
-                                <h2 className="font-semibold text-slate-900">
+                                <h2 data-tour="expenses-table" className="font-semibold text-slate-900">
                                     Riwayat biaya
                                 </h2>
                             </div>

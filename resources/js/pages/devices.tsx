@@ -417,7 +417,7 @@ export default function Devices() {
                         ))}
                     </div>
                     {scanning && (
-                        <section data-tour="devices-register" className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+                        <section className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
                             <div className="flex items-start gap-3">
                                 <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
                                     <Radio className="size-5 animate-pulse" />

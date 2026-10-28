@@ -58,9 +58,6 @@ export function AppSidebar() {
                 <SidebarMenu>
                     {auth.user?.role === 'admin' && (
                         <>
-                            <div className="mb-2 mt-4 px-3 text-[10px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
-                                Administrasi
-                            </div>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/dashboard')} tooltip={{ children: 'Dashboard Admin' }} className="h-10 rounded-xl">
                                     <Link href="/admin/dashboard">

@@ -82,8 +82,13 @@ export default function BrandingSettingsPage() {
                         <Label htmlFor="logo">Logo aplikasi</Label>
                         <div className="flex min-h-28 items-center gap-4 rounded-lg border border-dashed p-4">
                             <img
-                                src={brandingSettings.logoUrl ?? '/brand/supathings-logo.jpg'}
-                                alt={`Pratinjau logo ${data.app_name || brandingSettings.appName}`}
+                                src={
+                                    brandingSettings.logoUrl ??
+                                    '/brand/supathings-logo.jpg'
+                                }
+                                alt={`Pratinjau logo ${
+                                    data.app_name || brandingSettings.appName
+                                }`}
                                 className="h-20 w-32 object-contain"
                             />
                             <div className="min-w-0 flex-1 space-y-2">
@@ -94,7 +99,10 @@ export default function BrandingSettingsPage() {
                                     type="file"
                                     accept="image/jpeg,image/png,image/webp"
                                     onChange={(event) =>
-                                        setData('logo', event.target.files?.[0] ?? null)
+                                        setData(
+                                            'logo',
+                                            event.target.files?.[0] ?? null,
+                                        )
                                     }
                                 />
                                 <p className="text-xs text-muted-foreground">

@@ -26,11 +26,11 @@ class ReportController extends Controller
         $batchesQuery = CultivationBatch::query()->where('user_id', $request->user()->id)
             ->withSum(['harvests as total_harvest_kg' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])], 'weight_kg')
             ->withCount(['harvests as harvest_count' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])]);
-        if (! empty($filters['batch_id'])) {
+        if (!empty($filters['batch_id'])) {
             $batchesQuery->whereKey($filters['batch_id']);
         }
         $batches = $batchesQuery->orderBy('name')->get();
-        if (! empty($filters['batch_id']) && $batches->isEmpty()) {
+        if (!empty($filters['batch_id']) && $batches->isEmpty()) {
             throw ValidationException::withMessages(['batch_id' => 'Batch tidak ditemukan.']);
         }
         $harvests = HarvestRecord::query()->where('user_id', $request->user()->id)
@@ -41,7 +41,7 @@ class ReportController extends Controller
 
         $readingsQuery = SensorReading::query()->whereHas('device', fn ($q) => $q->where('user_id', $request->user()->id))
             ->whereBetween('measured_at', [$from, $to]);
-        if (! empty($filters['batch_id'])) {
+        if (!empty($filters['batch_id'])) {
             $deviceId = $batches->first()?->iot_device_id;
             $deviceId ? $readingsQuery->where('iot_device_id', $deviceId) : $readingsQuery->whereRaw('1 = 0');
         }

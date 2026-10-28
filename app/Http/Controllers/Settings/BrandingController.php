@@ -19,7 +19,7 @@ class BrandingController extends Controller
 
         return Inertia::render('settings/branding', [
             'brandingSettings' => [
-                'appName' => $settings?->app_name ?? config('app.name', 'Supathings'),
+                'appName' => $settings->app_name ?? config('app.name', 'Supathings'),
                 'logoUrl' => $settings?->logo_path ? Storage::disk('public')->url($settings->logo_path) : null,
             ],
         ]);

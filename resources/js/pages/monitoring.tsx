@@ -683,6 +683,7 @@ export default function Monitoring() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
                             <button
+                                data-tour="monitoring-layout"
                                 onClick={() =>
                                     setEditingLayout((value) => !value)
                                 }
@@ -736,7 +737,6 @@ export default function Monitoring() {
                             </div>
                             {editingLayout && (
                                 <button
-                                    data-tour="monitoring-add-widget"
                                     onClick={() => setShowAdd(true)}
                                     className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
                                 >

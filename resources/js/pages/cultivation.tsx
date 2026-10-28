@@ -567,9 +567,7 @@ export default function Cultivation() {
                                                         </p>
                                                         <p className="mt-1 text-sm text-slate-500">
                                                             Inokulasi{' '}
-                                                            {formatIndonesianDate(
-                                                                batch.inoculated_at,
-                                                            )}{' '}
+                                                            {formatIndonesianDate(batch.inoculated_at)}{' '}
                                                             · umur {age} hari
                                                         </p>
                                                         {batch.notes && (

@@ -158,16 +158,21 @@ export default function Cultivation() {
         setError('');
         setNotice('');
         try {
-            const response = await fetch(editingBatch ? '/api/cultivation/batches/' + editingBatch.id : '/api/cultivation/batches', {
-                method: editingBatch ? 'PATCH' : 'POST',
-                headers: csrfHeaders(),
-                body: JSON.stringify({
-                    ...batchForm,
-                    baglog_count: Number(batchForm.baglog_count),
-                    strain: batchForm.strain || null,
-                    notes: batchForm.notes || null,
-                }),
-            });
+            const response = await fetch(
+                editingBatch
+                    ? '/api/cultivation/batches/' + editingBatch.id
+                    : '/api/cultivation/batches',
+                {
+                    method: editingBatch ? 'PATCH' : 'POST',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify({
+                        ...batchForm,
+                        baglog_count: Number(batchForm.baglog_count),
+                        strain: batchForm.strain || null,
+                        notes: batchForm.notes || null,
+                    }),
+                },
+            );
             const payload = await response.json();
             if (!response.ok)
                 throw new Error(
@@ -183,7 +188,11 @@ export default function Cultivation() {
             });
             setShowBatchForm(false);
             setEditingBatch(null);
-            setNotice(editingBatch ? 'Batch budidaya berhasil diperbarui.' : 'Batch budidaya berhasil ditambahkan.');
+            setNotice(
+                editingBatch
+                    ? 'Batch budidaya berhasil diperbarui.'
+                    : 'Batch budidaya berhasil ditambahkan.',
+            );
             await refresh();
         } catch (cause) {
             setError(
@@ -197,20 +206,33 @@ export default function Cultivation() {
     };
 
     const deleteBatch = async (batch: Batch) => {
-        if (!window.confirm('Hapus batch "' + batch.name + '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.')) return;
+        if (
+            !window.confirm(
+                'Hapus batch "' +
+                    batch.name +
+                    '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.',
+            )
+        )
+            return;
         setError('');
         setNotice('');
         try {
-            const response = await fetch('/api/cultivation/batches/' + batch.id, {
-                method: 'DELETE',
-                headers: csrfHeaders(),
-            });
+            const response = await fetch(
+                '/api/cultivation/batches/' + batch.id,
+                {
+                    method: 'DELETE',
+                    headers: csrfHeaders(),
+                },
+            );
             const payload = await response.json();
-            if (!response.ok) throw new Error(payload.message ?? 'Batch gagal dihapus.');
+            if (!response.ok)
+                throw new Error(payload.message ?? 'Batch gagal dihapus.');
             setNotice(payload.message ?? 'Batch berhasil dihapus.');
             await refresh();
         } catch (cause) {
-            setError(cause instanceof Error ? cause.message : 'Batch gagal dihapus.');
+            setError(
+                cause instanceof Error ? cause.message : 'Batch gagal dihapus.',
+            );
         }
     };
 
@@ -324,7 +346,17 @@ export default function Cultivation() {
                         <div className="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => { setEditingBatch(null); setBatchForm({ name: '', strain: '', inoculated_at: today, baglog_count: '100', notes: '' }); setShowBatchForm(true); }}
+                                onClick={() => {
+                                    setEditingBatch(null);
+                                    setBatchForm({
+                                        name: '',
+                                        strain: '',
+                                        inoculated_at: today,
+                                        baglog_count: '100',
+                                        notes: '',
+                                    });
+                                    setShowBatchForm(true);
+                                }}
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"
                             >
                                 <Plus className="size-4" /> Tambah batch
@@ -443,7 +475,11 @@ export default function Cultivation() {
                     >
                         <DialogContent className="sm:max-w-3xl">
                             <DialogHeader>
-                                <DialogTitle>{editingBatch ? 'Edit batch budidaya' : 'Batch budidaya baru'}</DialogTitle>
+                                <DialogTitle>
+                                    {editingBatch
+                                        ? 'Edit batch budidaya'
+                                        : 'Batch budidaya baru'}
+                                </DialogTitle>
                                 <DialogDescription>
                                     Masukkan informasi awal kelompok baglog yang
                                     akan dipantau.
@@ -633,13 +669,91 @@ export default function Cultivation() {
                                                     </p>
                                                     <div className="flex flex-wrap items-end gap-2">
                                                         <Field label="Perbarui fase">
-                                                            <Select value={batch.phase} onValueChange={(value) => void updatePhase(batch, value)}>
-                                                                <SelectTrigger className="h-10 w-full min-w-[190px] rounded-xl border-slate-200"><SelectValue placeholder="Pilih fase" /></SelectTrigger>
-                                                                <SelectContent>{phases.map((phase) => <SelectItem key={phase.value} value={phase.value}>{phase.label}</SelectItem>)}</SelectContent>
+                                                            <Select
+                                                                value={
+                                                                    batch.phase
+                                                                }
+                                                                onValueChange={(
+                                                                    value,
+                                                                ) =>
+                                                                    void updatePhase(
+                                                                        batch,
+                                                                        value,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="h-10 w-full min-w-[190px] rounded-xl border-slate-200">
+                                                                    <SelectValue placeholder="Pilih fase" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {phases.map(
+                                                                        (
+                                                                            phase,
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    phase.value
+                                                                                }
+                                                                                value={
+                                                                                    phase.value
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    phase.label
+                                                                                }
+                                                                            </SelectItem>
+                                                                        ),
+                                                                    )}
+                                                                </SelectContent>
                                                             </Select>
                                                         </Field>
-                                                        <button type="button" title="Edit batch" onClick={() => { setEditingBatch(batch); setBatchForm({ name: batch.name, strain: batch.strain ?? '', inoculated_at: batch.inoculated_at.slice(0, 10), baglog_count: String(batch.baglog_count), notes: batch.notes ?? '' }); setShowBatchForm(true); }} className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"><Pencil className="size-4" /> Edit</button>
-                                                        <button type="button" title="Hapus batch" onClick={() => void deleteBatch(batch)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 px-3 text-sm font-medium text-rose-700 hover:bg-rose-50"><Trash2 className="size-4" /> Hapus</button>
+                                                        <button
+                                                            type="button"
+                                                            title="Edit batch"
+                                                            onClick={() => {
+                                                                setEditingBatch(
+                                                                    batch,
+                                                                );
+                                                                setBatchForm({
+                                                                    name: batch.name,
+                                                                    strain:
+                                                                        batch.strain ??
+                                                                        '',
+                                                                    inoculated_at:
+                                                                        batch.inoculated_at.slice(
+                                                                            0,
+                                                                            10,
+                                                                        ),
+                                                                    baglog_count:
+                                                                        String(
+                                                                            batch.baglog_count,
+                                                                        ),
+                                                                    notes:
+                                                                        batch.notes ??
+                                                                        '',
+                                                                });
+                                                                setShowBatchForm(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                                                        >
+                                                            <Pencil className="size-4" />{' '}
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            title="Hapus batch"
+                                                            onClick={() =>
+                                                                void deleteBatch(
+                                                                    batch,
+                                                                )
+                                                            }
+                                                            className="inline-flex h-10 items-center gap-2 rounded-xl border border-rose-200 px-3 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                                                        >
+                                                            <Trash2 className="size-4" />{' '}
+                                                            Hapus
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </article>
@@ -666,9 +780,24 @@ export default function Cultivation() {
                                     className="space-y-3"
                                 >
                                     <Field label="Batch">
-                                        <Select required value={selectedBatch} onValueChange={setSelectedBatch}>
-                                            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200"><SelectValue placeholder="Pilih batch" /></SelectTrigger>
-                                            <SelectContent>{batches.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}</SelectContent>
+                                        <Select
+                                            required
+                                            value={selectedBatch}
+                                            onValueChange={setSelectedBatch}
+                                        >
+                                            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200">
+                                                <SelectValue placeholder="Pilih batch" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {batches.map((batch) => (
+                                                    <SelectItem
+                                                        key={batch.id}
+                                                        value={String(batch.id)}
+                                                    >
+                                                        {batch.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
                                         </Select>
                                     </Field>
                                     <div className="grid grid-cols-2 gap-3">
@@ -726,13 +855,31 @@ export default function Cultivation() {
                                             />
                                         </Field>
                                         <Field label="Kualitas">
-                                            <Select value={harvestForm.quality} onValueChange={(value) => setHarvestForm({ ...harvestForm, quality: value })}>
-                                                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200"><SelectValue placeholder="Pilih kualitas" /></SelectTrigger>
+                                            <Select
+                                                value={harvestForm.quality}
+                                                onValueChange={(value) =>
+                                                    setHarvestForm({
+                                                        ...harvestForm,
+                                                        quality: value,
+                                                    })
+                                                }
+                                            >
+                                                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200">
+                                                    <SelectValue placeholder="Pilih kualitas" />
+                                                </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="premium">Premium</SelectItem>
-                                                    <SelectItem value="good">Baik</SelectItem>
-                                                    <SelectItem value="standard">Standar</SelectItem>
-                                                    <SelectItem value="reject">Afkir</SelectItem>
+                                                    <SelectItem value="premium">
+                                                        Premium
+                                                    </SelectItem>
+                                                    <SelectItem value="good">
+                                                        Baik
+                                                    </SelectItem>
+                                                    <SelectItem value="standard">
+                                                        Standar
+                                                    </SelectItem>
+                                                    <SelectItem value="reject">
+                                                        Afkir
+                                                    </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </Field>

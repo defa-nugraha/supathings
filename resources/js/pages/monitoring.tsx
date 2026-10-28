@@ -18,7 +18,13 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 type WidgetKind =
     | 'temperature'
@@ -689,14 +695,31 @@ export default function Monitoring() {
                             </button>
                             <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                                 <span className="text-slate-500">Device</span>
-                                <Select value={deviceId} onValueChange={(value) => {
-                                    const selectedDevice = availableDevices.find((item) => item.id === value);
-                                    if (!selectedDevice) return;
-                                    setDevice(selectedDevice.name);
-                                    setDeviceId(selectedDevice.id);
-                                }}>
-                                    <SelectTrigger className="h-9 w-auto min-w-[180px] border-0 bg-transparent px-2 font-medium shadow-none"><SelectValue placeholder="Pilih device" /></SelectTrigger>
-                                    <SelectContent>{availableDevices.map((item) => <SelectItem key={item.id} value={item.id}>{item.name} · {item.id}</SelectItem>)}</SelectContent>
+                                <Select
+                                    value={deviceId}
+                                    onValueChange={(value) => {
+                                        const selectedDevice =
+                                            availableDevices.find(
+                                                (item) => item.id === value,
+                                            );
+                                        if (!selectedDevice) return;
+                                        setDevice(selectedDevice.name);
+                                        setDeviceId(selectedDevice.id);
+                                    }}
+                                >
+                                    <SelectTrigger className="h-9 w-auto min-w-[180px] border-0 bg-transparent px-2 font-medium shadow-none">
+                                        <SelectValue placeholder="Pilih device" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableDevices.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={item.id}
+                                            >
+                                                {item.name} · {item.id}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
                                 </Select>
                             </label>
                             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">

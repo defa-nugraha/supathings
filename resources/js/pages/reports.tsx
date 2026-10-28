@@ -8,7 +8,13 @@ import {
     Weight,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 type Batch = {
     id: number;
@@ -255,11 +261,25 @@ export default function Reports() {
                             </label>
                             <label className="text-sm text-slate-600">
                                 Batch budidaya
-                                <Select value={batchId} onValueChange={setBatchId}>
-                                    <SelectTrigger className="mt-1.5 h-11 w-full rounded-xl border-slate-200"><SelectValue placeholder="Pilih batch" /></SelectTrigger>
+                                <Select
+                                    value={batchId}
+                                    onValueChange={setBatchId}
+                                >
+                                    <SelectTrigger className="mt-1.5 h-11 w-full rounded-xl border-slate-200">
+                                        <SelectValue placeholder="Pilih batch" />
+                                    </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Semua batch</SelectItem>
-                                        {batchOptions.map((batch) => <SelectItem key={batch.id} value={String(batch.id)}>{batch.name}</SelectItem>)}
+                                        <SelectItem value="all">
+                                            Semua batch
+                                        </SelectItem>
+                                        {batchOptions.map((batch) => (
+                                            <SelectItem
+                                                key={batch.id}
+                                                value={String(batch.id)}
+                                            >
+                                                {batch.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </label>
@@ -647,20 +667,45 @@ export default function Reports() {
                                 </div>
                             </section>
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <h2 className="text-lg font-semibold">Ringkasan keuangan budidaya</h2>
-                                <p className="mt-1 text-sm text-slate-500">Ringkasan ini memakai omzet panen dan biaya operasional yang sudah dicatat. Kelola transaksi di menu Budidaya jamur → Biaya operasional.</p>
+                                <h2 className="text-lg font-semibold">
+                                    Ringkasan keuangan budidaya
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Ringkasan ini memakai omzet panen dan biaya
+                                    operasional yang sudah dicatat. Kelola
+                                    transaksi di menu Budidaya jamur → Biaya
+                                    operasional.
+                                </p>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Omzet tercatat</p>
-                                        <p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.revenue_recorded)}</p>
+                                        <p className="text-sm text-slate-500">
+                                            Omzet tercatat
+                                        </p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(
+                                                data.summary.revenue_recorded,
+                                            )}
+                                        </p>
                                     </article>
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Biaya tercatat</p>
-                                        <p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.expenses_recorded)}</p>
+                                        <p className="text-sm text-slate-500">
+                                            Biaya tercatat
+                                        </p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(
+                                                data.summary.expenses_recorded,
+                                            )}
+                                        </p>
                                     </article>
                                     <article className="rounded-xl bg-slate-50 p-4">
-                                        <p className="text-sm text-slate-500">Estimasi laba</p>
-                                        <p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.estimated_profit)}</p>
+                                        <p className="text-sm text-slate-500">
+                                            Estimasi laba
+                                        </p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(
+                                                data.summary.estimated_profit,
+                                            )}
+                                        </p>
                                     </article>
                                 </div>
                             </section>

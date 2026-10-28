@@ -143,7 +143,7 @@ class CultivationController extends Controller
         ]);
 
         if (isset($data['cultivation_batch_id'])) {
-            $data['user_id'] = $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id;
+            $data['user_id'] = $this->batchQuery($request)->whereKey($data['cultivation_batch_id'])->firstOrFail()->user_id;
         }
 
         $record->update($data);
@@ -199,7 +199,7 @@ class CultivationController extends Controller
         ]);
 
         $ownerId = isset($data['cultivation_batch_id'])
-            ? $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id
+            ? $this->batchQuery($request)->whereKey($data['cultivation_batch_id'])->firstOrFail()->user_id
             : (int) ($data['user_id'] ?? $request->user()->id);
 
         $expense = CultivationExpense::query()->create([
@@ -229,7 +229,7 @@ class CultivationController extends Controller
         ]);
 
         if (isset($data['cultivation_batch_id'])) {
-            $data['user_id'] = $this->batchQuery($request)->findOrFail($data['cultivation_batch_id'])->user_id;
+            $data['user_id'] = $this->batchQuery($request)->whereKey($data['cultivation_batch_id'])->firstOrFail()->user_id;
         }
 
         $record->update($data);

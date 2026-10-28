@@ -303,7 +303,7 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $record->fresh()]);
     }
 
-    private function deviceQuery(Request $request): Builder
+    private function deviceQuery(Request $request): Builder<IotDevice>
     {
         $query = IotDevice::query();
 

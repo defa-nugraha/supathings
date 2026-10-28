@@ -55,6 +55,8 @@ class CultivationController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:100'],
             'strain' => ['nullable', 'string', 'max:100'],
+            'inoculated_at' => ['sometimes', 'required', 'date', 'before_or_equal:today'],
+            'baglog_count' => ['sometimes', 'required', 'integer', 'min:1', 'max:1000000'],
             'phase' => ['sometimes', Rule::in(['incubation', 'fruiting', 'harvesting', 'resting', 'completed'])],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);

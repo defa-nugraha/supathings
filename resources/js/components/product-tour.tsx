@@ -54,9 +54,9 @@ const tours: Record<string, TourStep[]> = {
             description: 'Gunakan mode manual untuk mengendalikan aktuator atau otomatis untuk mengikuti aturan yang tersedia.',
         },
         {
-            target: '[data-tour="monitoring-add-widget"]',
+            target: '[data-tour="monitoring-layout"]',
             title: 'Sesuaikan tampilan',
-            description: 'Tambahkan kartu pemantauan yang Anda perlukan, lalu atur tampilan sesuai kebutuhan.',
+            description: 'Aktifkan mode edit untuk menambah, menghapus, atau mengatur ulang kartu pemantauan.',
         },
         {
             target: '[data-tour="monitoring-controls"]',
@@ -69,11 +69,6 @@ const tours: Record<string, TourStep[]> = {
             target: '[data-tour="devices-scan"]',
             title: 'Temukan ESP32',
             description: 'Jalankan pencarian agar perangkat yang tersedia dapat ditemukan.',
-        },
-        {
-            target: '[data-tour="devices-register"]',
-            title: 'Daftarkan perangkat',
-            description: 'Periksa identitas perangkat yang ditemukan sebelum menyimpannya ke akun.',
         },
         {
             target: '[data-tour="devices-list"]',
@@ -94,8 +89,8 @@ const tours: Record<string, TourStep[]> = {
         },
         {
             target: '[data-tour="cultivation-harvests"]',
-            title: 'Tinjau hasil panen',
-            description: 'Catatan panen membantu menghitung hasil produksi dari batch yang dipilih.',
+            title: 'Catat hasil panen',
+            description: 'Masukkan tanggal, batch, gelombang, berat, dan informasi penjualan untuk mencatat hasil panen.',
         },
     ],
     '/cultivation/history': [
@@ -165,13 +160,6 @@ const tours: Record<string, TourStep[]> = {
             target: '[data-tour="settings-security"]',
             title: 'Keamanan akun',
             description: 'Kelola opsi keamanan akun seperti kata sandi dan autentikasi tambahan.',
-        },
-    ],
-    '/settings/appearance': [
-        {
-            target: '[data-tour="settings-appearance"]',
-            title: 'Tampilan aplikasi',
-            description: 'Pilih preferensi tampilan yang nyaman digunakan.',
         },
     ],
 };

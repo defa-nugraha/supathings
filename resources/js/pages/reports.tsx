@@ -7,7 +7,14 @@ import {
     Sprout,
     Weight,
 } from 'lucide-react';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 type Batch = {
     id: number;
@@ -102,16 +109,6 @@ export default function Reports() {
     >([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [expenseForm, setExpenseForm] = useState({
-        incurred_at: today,
-        category: 'lainnya',
-        description: '',
-        amount: '',
-        cultivation_batch_id: '',
-    });
-    const [expenseMessage, setExpenseMessage] = useState('');
-    const [savingExpense, setSavingExpense] = useState(false);
-
     const loadReport = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -145,53 +142,6 @@ export default function Reports() {
             setLoading(false);
         }
     }, [from, to, batchId]);
-
-    const saveExpense = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setSavingExpense(true);
-        setExpenseMessage('');
-        try {
-            const response = await fetch('/api/cultivation/expenses', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN':
-                        document.querySelector<HTMLMetaElement>(
-                            'meta[name="csrf-token"]',
-                        )?.content ?? '',
-                },
-                body: JSON.stringify({
-                    ...expenseForm,
-                    amount: Number(expenseForm.amount),
-                    cultivation_batch_id: expenseForm.cultivation_batch_id
-                        ? Number(expenseForm.cultivation_batch_id)
-                        : null,
-                }),
-            });
-            const payload = await response.json();
-            if (!response.ok) {
-                throw new Error(payload.message ?? 'Biaya gagal disimpan.');
-            }
-            setExpenseForm((prev) => ({
-                ...prev,
-                description: '',
-                amount: '',
-            }));
-            setExpenseMessage(
-                'Biaya berhasil dicatat. Ringkasan laporan diperbarui.',
-            );
-            await loadReport();
-        } catch (cause) {
-            setExpenseMessage(
-                cause instanceof Error
-                    ? cause.message
-                    : 'Biaya gagal disimpan.',
-            );
-        } finally {
-            setSavingExpense(false);
-        }
-    };
 
     useEffect(() => {
         void loadReport();
@@ -311,20 +261,27 @@ export default function Reports() {
                             </label>
                             <label className="text-sm text-slate-600">
                                 Batch budidaya
-                                <select
+                                <Select
                                     value={batchId}
-                                    onChange={(event) =>
-                                        setBatchId(event.target.value)
-                                    }
-                                    className="mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5"
+                                    onValueChange={setBatchId}
                                 >
-                                    <option value="all">Semua batch</option>
-                                    {batchOptions.map((batch) => (
-                                        <option key={batch.id} value={batch.id}>
-                                            {batch.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="mt-1.5 h-11 w-full rounded-xl border-slate-200">
+                                        <SelectValue placeholder="Pilih batch" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            Semua batch
+                                        </SelectItem>
+                                        {batchOptions.map((batch) => (
+                                            <SelectItem
+                                                key={batch.id}
+                                                value={String(batch.id)}
+                                            >
+                                                {batch.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </label>
                             <button
                                 onClick={() => void loadReport()}
@@ -711,12 +668,13 @@ export default function Reports() {
                             </section>
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                 <h2 className="text-lg font-semibold">
-                                    Biaya operasional dan estimasi laba
+                                    Ringkasan keuangan budidaya
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    Laba adalah omzet tercatat dikurangi biaya
-                                    yang dicatat. Biaya yang belum dimasukkan
-                                    belum ikut dihitung.
+                                    Ringkasan ini memakai omzet panen dan biaya
+                                    operasional yang sudah dicatat. Kelola
+                                    transaksi di menu Budidaya jamur → Biaya
+                                    operasional.
                                 </p>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                                     <article className="rounded-xl bg-slate-50 p-4">
@@ -749,195 +707,6 @@ export default function Reports() {
                                             )}
                                         </p>
                                     </article>
-                                </div>
-                                <form
-                                    onSubmit={saveExpense}
-                                    className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                                >
-                                    <label className="text-sm">
-                                        Tanggal
-                                        <input
-                                            required
-                                            type="date"
-                                            max={today}
-                                            value={expenseForm.incurred_at}
-                                            onChange={(event) =>
-                                                setExpenseForm((prev) => ({
-                                                    ...prev,
-                                                    incurred_at:
-                                                        event.target.value,
-                                                }))
-                                            }
-                                            className="mt-1 w-full rounded-lg border-slate-300"
-                                        />
-                                    </label>
-                                    <label className="text-sm">
-                                        Kategori
-                                        <select
-                                            value={expenseForm.category}
-                                            onChange={(event) =>
-                                                setExpenseForm((prev) => ({
-                                                    ...prev,
-                                                    category:
-                                                        event.target.value,
-                                                }))
-                                            }
-                                            className="mt-1 w-full rounded-lg border-slate-300"
-                                        >
-                                            {[
-                                                ['baglog', 'Baglog'],
-                                                ['bibit', 'Bibit'],
-                                                ['listrik', 'Listrik'],
-                                                ['air', 'Air'],
-                                                [
-                                                    'tenaga_kerja',
-                                                    'Tenaga kerja',
-                                                ],
-                                                ['perawatan', 'Perawatan'],
-                                                ['lainnya', 'Lainnya'],
-                                            ].map(([value, label]) => (
-                                                <option
-                                                    key={value}
-                                                    value={value}
-                                                >
-                                                    {label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                    <label className="text-sm">
-                                        Batch (opsional)
-                                        <select
-                                            value={
-                                                expenseForm.cultivation_batch_id
-                                            }
-                                            onChange={(event) =>
-                                                setExpenseForm((prev) => ({
-                                                    ...prev,
-                                                    cultivation_batch_id:
-                                                        event.target.value,
-                                                }))
-                                            }
-                                            className="mt-1 w-full rounded-lg border-slate-300"
-                                        >
-                                            <option value="">
-                                                Umum / semua batch
-                                            </option>
-                                            {batchOptions.map((batch) => (
-                                                <option
-                                                    key={batch.id}
-                                                    value={batch.id}
-                                                >
-                                                    {batch.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                    <label className="text-sm">
-                                        Keterangan
-                                        <input
-                                            required
-                                            maxLength={160}
-                                            value={expenseForm.description}
-                                            onChange={(event) =>
-                                                setExpenseForm((prev) => ({
-                                                    ...prev,
-                                                    description:
-                                                        event.target.value,
-                                                }))
-                                            }
-                                            className="mt-1 w-full rounded-lg border-slate-300"
-                                            placeholder="Contoh: listrik kumbung"
-                                        />
-                                    </label>
-                                    <label className="text-sm">
-                                        Nominal (Rp)
-                                        <input
-                                            required
-                                            min="1"
-                                            step="1"
-                                            type="number"
-                                            value={expenseForm.amount}
-                                            onChange={(event) =>
-                                                setExpenseForm((prev) => ({
-                                                    ...prev,
-                                                    amount: event.target.value,
-                                                }))
-                                            }
-                                            className="mt-1 w-full rounded-lg border-slate-300"
-                                        />
-                                    </label>
-                                    <div className="flex items-end">
-                                        <button
-                                            disabled={savingExpense}
-                                            className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                                        >
-                                            {savingExpense
-                                                ? 'Menyimpan...'
-                                                : 'Catat biaya'}
-                                        </button>
-                                    </div>
-                                </form>
-                                {expenseMessage && (
-                                    <p
-                                        role="status"
-                                        className="mt-3 text-sm text-slate-600"
-                                    >
-                                        {expenseMessage}
-                                    </p>
-                                )}
-                                <div className="mt-5 overflow-x-auto">
-                                    <table className="w-full min-w-[560px] text-left text-sm">
-                                        <thead>
-                                            <tr className="border-b text-xs text-slate-500">
-                                                <th className="pb-3">
-                                                    Tanggal
-                                                </th>
-                                                <th className="pb-3">
-                                                    Kategori
-                                                </th>
-                                                <th className="pb-3">
-                                                    Keterangan
-                                                </th>
-                                                <th className="pb-3">Batch</th>
-                                                <th className="pb-3 text-right">
-                                                    Nominal
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {data.expenses.map((expense) => (
-                                                <tr
-                                                    key={expense.id}
-                                                    className="border-b border-slate-50"
-                                                >
-                                                    <td className="py-3">
-                                                        {formatDate(
-                                                            expense.date,
-                                                        )}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {expense.category.replace(
-                                                            '_',
-                                                            ' ',
-                                                        )}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {expense.description}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {expense.batch ??
-                                                            'Umum'}
-                                                    </td>
-                                                    <td className="py-3 text-right">
-                                                        {formatMoney(
-                                                            expense.amount,
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
                                 </div>
                             </section>
                             <p className="text-xs leading-5 text-slate-500">

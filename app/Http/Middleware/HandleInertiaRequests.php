@@ -32,9 +32,9 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
-            'name' => $settings?->app_name ?? config('app.name', 'Supathings'),
+            'name' => $settings->app_name ?? config('app.name', 'Supathings'),
             'branding' => [
-                'name' => $settings?->app_name ?? config('app.name', 'Supathings'),
+                'name' => $settings->app_name ?? config('app.name', 'Supathings'),
                 'logoUrl' => $settings?->logo_path ? Storage::disk('public')->url($settings->logo_path) : null,
             ],
             'auth' => [

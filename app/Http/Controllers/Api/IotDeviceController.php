@@ -83,7 +83,6 @@ class IotDeviceController extends Controller
     public function destroy(Request $request, string $device): JsonResponse
     {
         $record = IotDevice::query()
-            ->where('user_id', $request->user()->id)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -124,7 +123,7 @@ class IotDeviceController extends Controller
             'device_id' => ['required'],
             'rules' => ['required', 'array'],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));
@@ -160,7 +159,7 @@ class IotDeviceController extends Controller
             'device_id' => ['required'],
             'mode' => ['required', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));
@@ -175,7 +174,6 @@ class IotDeviceController extends Controller
     {
         $data = $request->validate(['device_id' => ['required']]);
         $device = IotDevice::query()
-            ->where('user_id', $request->user()->id)
             ->where(function ($query) use ($data): void {
                 $query->where('id', $data['device_id']);
                 if (is_string($data['device_id'])) {
@@ -215,7 +213,7 @@ class IotDeviceController extends Controller
             'state' => ['required', Rule::in(['on', 'off'])],
             'mode' => ['sometimes', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));

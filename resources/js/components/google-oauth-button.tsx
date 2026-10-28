@@ -23,13 +23,7 @@ export default function GoogleOAuthButton({ mode }: Props) {
             >
                 <span
                     aria-hidden="true"
-                    className="font-bold text-lg"
-                    style={{
-                        background:
-                            'conic-gradient(from -45deg, #4285F4 0deg 90deg, #34A853 90deg 180deg, #FBBC05 180deg 270deg, #EA4335 270deg)',
-                        backgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                    }}
+                    className="text-lg font-bold text-[#4285F4]"
                 >
                     G
                 </span>

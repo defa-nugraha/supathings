@@ -26,7 +26,9 @@ class ReportController extends Controller
         $batchesQuery = CultivationBatch::query()->where('user_id', $request->user()->id)
             ->withSum(['harvests as total_harvest_kg' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])], 'weight_kg')
             ->withCount(['harvests as harvest_count' => fn ($q) => $q->whereBetween('harvested_at', [$from, $to])]);
-        if (! empty($filters['batch_id'])) $batchesQuery->whereKey($filters['batch_id']);
+        if (! empty($filters['batch_id'])) {
+            $batchesQuery->whereKey($filters['batch_id']);
+        }
         $batches = $batchesQuery->orderBy('name')->get();
         if (! empty($filters['batch_id']) && $batches->isEmpty()) {
             throw ValidationException::withMessages(['batch_id' => 'Batch tidak ditemukan.']);

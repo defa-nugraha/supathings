@@ -83,7 +83,7 @@ class IotDeviceController extends Controller
 
     public function destroy(Request $request, string $device): JsonResponse
     {
-        $record = IotDevice::query()
+        $record = $this->deviceQuery($request)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -174,7 +174,7 @@ class IotDeviceController extends Controller
     public function actuatorStatus(Request $request): JsonResponse
     {
         $data = $request->validate(['device_id' => ['required']]);
-        $device = IotDevice::query()
+        $device = $this->deviceQuery($request)
             ->where(function ($query) use ($data): void {
                 $query->where('id', $data['device_id']);
                 if (is_string($data['device_id'])) {

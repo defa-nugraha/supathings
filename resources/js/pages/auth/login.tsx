@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import GoogleOAuthButton from '@/components/google-oauth-button';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -10,7 +11,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
@@ -22,7 +22,7 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Log in" />
 
-            <PasskeyVerify />
+            <GoogleOAuthButton mode="login" />
 
             <Form
                 {...store.form()}

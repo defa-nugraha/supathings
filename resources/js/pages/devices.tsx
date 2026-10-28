@@ -149,22 +149,30 @@ export default function Devices() {
         if (!selected || !deviceName.trim()) return;
         let token = '';
         try {
-            const response = await fetch('/api/devices', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN':
-                        document.querySelector<HTMLMetaElement>(
-                            'meta[name="csrf-token"]',
-                        )?.content ?? '',
+            const isRegistered = devices.some((device) => device.id === selected.id);
+            const response = await fetch(
+                isRegistered ? '/api/devices/' + encodeURIComponent(selected.id) : '/api/devices',
+                {
+                    method: isRegistered ? 'PATCH' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                    body: JSON.stringify(
+                        isRegistered
+                            ? { name: deviceName.trim() }
+                            : {
+                                  device_id: selected.id,
+                                  name: deviceName.trim(),
+                                  sensors: selected.sensors,
+                              },
+                    ),
                 },
-                body: JSON.stringify({
-                    device_id: selected.id,
-                    name: deviceName.trim(),
-                    sensors: selected.sensors,
-                }),
-            });
+            );
             const payload = await response.json();
             if (!response.ok)
                 throw new Error(payload.message || 'Registrasi device gagal.');
@@ -573,8 +581,7 @@ export default function Devices() {
                         </h2>
                         <p className="mt-2 text-sm leading-relaxed text-slate-600">
                             Apakah Anda yakin ingin menghapus “
-                            {pendingDelete.name}” dari daftar perangkat pada
-                            tampilan ini?
+                            {pendingDelete.name}” dari server? Jika perangkat masih digunakan oleh batch budidaya, server akan menolak penghapusan.
                         </p>
                         <div className="mt-6 flex justify-end gap-2">
                             <button
@@ -584,17 +591,28 @@ export default function Devices() {
                                 Batal
                             </button>
                             <button
-                                onClick={() => {
-                                    setDevices((prev) =>
-                                        prev.filter(
-                                            (item) =>
-                                                item.id !== pendingDelete.id,
-                                        ),
-                                    );
-                                    setPendingDelete(null);
-                                    setNotice(
-                                        'Device berhasil dihapus dari daftar tampilan. Data server tidak dihapus.',
-                                    );
+                                onClick={async () => {
+                                    try {
+                                        const response = await fetch(
+                                            '/api/devices/' + encodeURIComponent(pendingDelete.id),
+                                            {
+                                                method: 'DELETE',
+                                                headers: {
+                                                    Accept: 'application/json',
+                                                    'X-CSRF-TOKEN':
+                                                        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+                                                },
+                                            },
+                                        );
+                                        const payload = await response.json();
+                                        if (!response.ok) throw new Error(payload.message ?? 'Device gagal dihapus.');
+                                        setDevices((prev) => prev.filter((item) => item.id !== pendingDelete.id));
+                                        setPendingDelete(null);
+                                        setNotice('Perangkat berhasil dihapus dari server.');
+                                    } catch (cause) {
+                                        setPendingDelete(null);
+                                        setNotice(cause instanceof Error ? cause.message : 'Device gagal dihapus.');
+                                    }
                                 }}
                                 className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
                             >

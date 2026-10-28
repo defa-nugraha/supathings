@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     Activity,
+    ChartNoAxesColumn,
     ChevronDown,
     Cpu,
     History,
@@ -30,6 +31,7 @@ const mainNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { title: 'Monitoring & kontrol', href: '/monitoring', icon: Activity },
     { title: 'Kelola device', href: '/devices', icon: Cpu },
+    { title: 'Laporan budidaya', href: '/reports', icon: ChartNoAxesColumn },
 ];
 
 export function AppSidebar() {

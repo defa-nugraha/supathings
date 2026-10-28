@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property-read int $harvest_count
+ * @property-read float|null $total_harvest_kg
+ */
 #[Fillable(['user_id', 'iot_device_id', 'name', 'strain', 'inoculated_at', 'baglog_count', 'phase', 'notes'])]
 class CultivationBatch extends Model
 {

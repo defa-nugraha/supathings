@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\AdminAuditLog;
+use App\Models\CultivationBatch;
+use App\Models\IotDevice;
 use App\Models\User;
 
 test('regular users cannot access administrator pages or global branding settings', function () {
@@ -74,4 +76,58 @@ test('inactive users are logged out and cannot access protected pages', function
 
     $this->actingAs($user)->get(route('dashboard'))->assertRedirect(route('login'));
     $this->assertGuest();
+});
+
+test('administrators can inspect and update devices owned by other users', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $owner = User::factory()->create(['role' => 'user']);
+    $device = IotDevice::query()->create([
+        'user_id' => $owner->id,
+        'mac_address' => 'AA:BB:CC:DD:EE:91',
+        'name' => 'Kumbung Pemilik',
+        'status' => 'offline',
+        'control_mode' => 'manual',
+        'device_token_hash' => hash('sha256', 'device-token'),
+    ]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/devices')
+        ->assertOk()
+        ->assertJsonFragment(['mac_address' => 'AA:BB:CC:DD:EE:91']);
+
+    $this->actingAs($admin)
+        ->patchJson('/api/devices/'.$device->id, ['name' => 'Kumbung Diperbarui'])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Kumbung Diperbarui');
+
+    expect($device->fresh()->user_id)->toBe($owner->id);
+});
+
+test('administrators can view cultivation records across user accounts while regular users remain isolated', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $owner = User::factory()->create(['role' => 'user']);
+    $batch = CultivationBatch::query()->create([
+        'user_id' => $owner->id,
+        'name' => 'Batch milik user',
+        'inoculated_at' => now()->subDays(10)->toDateString(),
+        'baglog_count' => 100,
+        'phase' => 'incubation',
+    ]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/cultivation/batches')
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'Batch milik user']);
+
+    $this->actingAs($admin)
+        ->patchJson('/api/cultivation/batches/'.$batch->id, ['name' => 'Batch diperbarui'])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Batch diperbarui');
+
+    $this->actingAs($owner)
+        ->getJson('/api/cultivation/batches')
+        ->assertOk()
+        ->assertJsonMissing(['name' => 'Batch milik user']);
+
+    expect($batch->fresh()->user_id)->toBe($owner->id);
 });

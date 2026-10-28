@@ -2,8 +2,19 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+
+test('passkey authentication and management routes are not registered', function () {
+    expect(Route::has('passkey.login-options'))->toBeFalse()
+        ->and(Route::has('passkey.login'))->toBeFalse()
+        ->and(Route::has('passkey.confirm-options'))->toBeFalse()
+        ->and(Route::has('passkey.confirm'))->toBeFalse()
+        ->and(Route::has('passkey.registration-options'))->toBeFalse()
+        ->and(Route::has('passkey.store'))->toBeFalse()
+        ->and(Route::has('passkey.destroy'))->toBeFalse();
+});
 
 test('security page is displayed', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());

@@ -354,6 +354,7 @@ export function ProductTour() {
                     />
                     <section
                         role="dialog"
+                        aria-keyshortcuts="Escape"
                         aria-modal="true"
                         aria-labelledby="product-tour-title"
                         aria-describedby="product-tour-description"

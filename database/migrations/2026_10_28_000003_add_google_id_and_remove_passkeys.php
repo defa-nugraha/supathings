@@ -6,11 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('google_id')->nullable()->unique();
+        });
+
+        Schema::dropIfExists('passkeys');
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropUnique(['google_id']);
+            $table->dropColumn('google_id');
+        });
+
         Schema::create('passkeys', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -22,13 +33,5 @@ return new class extends Migration
 
             $table->index('user_id');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('passkeys');
     }
 };

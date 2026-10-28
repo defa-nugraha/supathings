@@ -2,17 +2,25 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+
+test('passkey authentication and management routes are not registered', function () {
+    expect(Route::has('passkey.login-options'))->toBeFalse()
+        ->and(Route::has('passkey.login'))->toBeFalse()
+        ->and(Route::has('passkey.confirm-options'))->toBeFalse()
+        ->and(Route::has('passkey.confirm'))->toBeFalse()
+        ->and(Route::has('passkey.registration-options'))->toBeFalse()
+        ->and(Route::has('passkey.store'))->toBeFalse()
+        ->and(Route::has('passkey.destroy'))->toBeFalse();
+});
 
 test('security page is displayed', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 
     Features::twoFactorAuthentication([
         'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-    Features::passkeys([
         'confirmPassword' => true,
     ]);
 
@@ -23,8 +31,8 @@ test('security page is displayed', function () {
         ->get(route('security.edit'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/security')
-            ->where('canManagePasskeys', true)
-            ->where('passkeys', [])
+            ->missing('canManagePasskeys')
+            ->missing('passkeys')
             ->where('canManageTwoFactor', true)
             ->where('twoFactorEnabled', false),
         );
@@ -59,9 +67,9 @@ test('security page renders without two factor when feature is disabled', functi
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/security')
-            ->where('canManagePasskeys', false)
-            ->where('passkeys', [])
             ->where('canManageTwoFactor', false)
+            ->missing('canManagePasskeys')
+            ->missing('passkeys')
             ->missing('twoFactorEnabled')
             ->missing('requiresConfirmation'),
         );

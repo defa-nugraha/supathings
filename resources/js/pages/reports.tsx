@@ -7,7 +7,7 @@ import {
     Sprout,
     Weight,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 type Batch = {
     id: number;
@@ -133,24 +133,51 @@ export default function Reports() {
         }
     }, [from, to, batchId]);
 
-    const saveExpense = async (event: React.FormEvent<HTMLFormElement>) => {
+    const saveExpense = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setSavingExpense(true);
         setExpenseMessage('');
         try {
             const response = await fetch('/api/cultivation/expenses', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '' },
-                body: JSON.stringify({ ...expenseForm, amount: Number(expenseForm.amount), cultivation_batch_id: expenseForm.cultivation_batch_id ? Number(expenseForm.cultivation_batch_id) : null }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN':
+                        document.querySelector<HTMLMetaElement>(
+                            'meta[name="csrf-token"]',
+                        )?.content ?? '',
+                },
+                body: JSON.stringify({
+                    ...expenseForm,
+                    amount: Number(expenseForm.amount),
+                    cultivation_batch_id: expenseForm.cultivation_batch_id
+                        ? Number(expenseForm.cultivation_batch_id)
+                        : null,
+                }),
             });
             const payload = await response.json();
-            if (!response.ok) throw new Error(payload.message ?? 'Biaya gagal disimpan.');
-            setExpenseForm(prev => ({ ...prev, description: '', amount: '' }));
-            setExpenseMessage('Biaya berhasil dicatat. Ringkasan laporan diperbarui.');
+            if (!response.ok) {
+                throw new Error(payload.message ?? 'Biaya gagal disimpan.');
+            }
+            setExpenseForm((prev) => ({
+                ...prev,
+                description: '',
+                amount: '',
+            }));
+            setExpenseMessage(
+                'Biaya berhasil dicatat. Ringkasan laporan diperbarui.',
+            );
             await loadReport();
         } catch (cause) {
-            setExpenseMessage(cause instanceof Error ? cause.message : 'Biaya gagal disimpan.');
-        } finally { setSavingExpense(false); }
+            setExpenseMessage(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Biaya gagal disimpan.',
+            );
+        } finally {
+            setSavingExpense(false);
+        }
     };
 
     useEffect(() => {
@@ -592,91 +619,172 @@ export default function Reports() {
 
                             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                 <h2 className="text-lg font-semibold">
-                                    Rincian catatan panen
+                                    Biaya operasional dan estimasi laba
                                 </h2>
-                                <p className="mt-1 mb-4 text-sm text-slate-500">
-                                    Omzet dihitung hanya jika harga jual per
-                                    kilogram tersedia.
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Laba adalah omzet tercatat dikurangi biaya yang dicatat.
+                                    Biaya yang belum dimasukkan belum ikut dihitung.
                                 </p>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[650px] text-left text-sm">
+                                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                                    <article className="rounded-xl bg-slate-50 p-4">
+                                        <p className="text-sm text-slate-500">Omzet tercatat</p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(data.summary.revenue_recorded)}
+                                        </p>
+                                    </article>
+                                    <article className="rounded-xl bg-slate-50 p-4">
+                                        <p className="text-sm text-slate-500">Biaya tercatat</p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(data.summary.expenses_recorded)}
+                                        </p>
+                                    </article>
+                                    <article className="rounded-xl bg-slate-50 p-4">
+                                        <p className="text-sm text-slate-500">Estimasi laba</p>
+                                        <p className="mt-1 text-xl font-semibold">
+                                            {formatMoney(data.summary.estimated_profit)}
+                                        </p>
+                                    </article>
+                                </div>
+                                <form
+                                    onSubmit={saveExpense}
+                                    className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                                >
+                                    <label className="text-sm">
+                                        Tanggal
+                                        <input
+                                            required
+                                            type="date"
+                                            max={today}
+                                            value={expenseForm.incurred_at}
+                                            onChange={(event) =>
+                                                setExpenseForm((prev) => ({
+                                                    ...prev,
+                                                    incurred_at: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 w-full rounded-lg border-slate-300"
+                                        />
+                                    </label>
+                                    <label className="text-sm">
+                                        Kategori
+                                        <select
+                                            value={expenseForm.category}
+                                            onChange={(event) =>
+                                                setExpenseForm((prev) => ({
+                                                    ...prev,
+                                                    category: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 w-full rounded-lg border-slate-300"
+                                        >
+                                            {[
+                                                ['baglog', 'Baglog'],
+                                                ['bibit', 'Bibit'],
+                                                ['listrik', 'Listrik'],
+                                                ['air', 'Air'],
+                                                ['tenaga_kerja', 'Tenaga kerja'],
+                                                ['perawatan', 'Perawatan'],
+                                                ['lainnya', 'Lainnya'],
+                                            ].map(([value, label]) => (
+                                                <option key={value} value={value}>
+                                                    {label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="text-sm">
+                                        Batch (opsional)
+                                        <select
+                                            value={expenseForm.cultivation_batch_id}
+                                            onChange={(event) =>
+                                                setExpenseForm((prev) => ({
+                                                    ...prev,
+                                                    cultivation_batch_id: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 w-full rounded-lg border-slate-300"
+                                        >
+                                            <option value="">Umum / semua batch</option>
+                                            {batchOptions.map((batch) => (
+                                                <option key={batch.id} value={batch.id}>
+                                                    {batch.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="text-sm">
+                                        Keterangan
+                                        <input
+                                            required
+                                            maxLength={160}
+                                            value={expenseForm.description}
+                                            onChange={(event) =>
+                                                setExpenseForm((prev) => ({
+                                                    ...prev,
+                                                    description: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 w-full rounded-lg border-slate-300"
+                                            placeholder="Contoh: listrik kumbung"
+                                        />
+                                    </label>
+                                    <label className="text-sm">
+                                        Nominal (Rp)
+                                        <input
+                                            required
+                                            min="1"
+                                            step="1"
+                                            type="number"
+                                            value={expenseForm.amount}
+                                            onChange={(event) =>
+                                                setExpenseForm((prev) => ({
+                                                    ...prev,
+                                                    amount: event.target.value,
+                                                }))
+                                            }
+                                            className="mt-1 w-full rounded-lg border-slate-300"
+                                        />
+                                    </label>
+                                    <div className="flex items-end">
+                                        <button
+                                            disabled={savingExpense}
+                                            className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                                        >
+                                            {savingExpense
+                                                ? 'Menyimpan...'
+                                                : 'Catat biaya'}
+                                        </button>
+                                    </div>
+                                </form>
+                                {expenseMessage && (
+                                    <p role="status" className="mt-3 text-sm text-slate-600">
+                                        {expenseMessage}
+                                    </p>
+                                )}
+                                <div className="mt-5 overflow-x-auto">
+                                    <table className="w-full min-w-[560px] text-left text-sm">
                                         <thead>
                                             <tr className="border-b text-xs text-slate-500">
-                                                <th className="pb-3">
-                                                    Tanggal
-                                                </th>
+                                                <th className="pb-3">Tanggal</th>
+                                                <th className="pb-3">Kategori</th>
+                                                <th className="pb-3">Keterangan</th>
                                                 <th className="pb-3">Batch</th>
-                                                <th className="pb-3">
-                                                    Gelombang
-                                                </th>
-                                                <th className="pb-3">Berat</th>
-                                                <th className="pb-3">
-                                                    Kualitas
-                                                </th>
-                                                <th className="pb-3 text-right">
-                                                    Harga/kg
-                                                </th>
+                                                <th className="pb-3 text-right">Nominal</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {data.harvests.map((harvest) => (
-                                                <tr
-                                                    key={harvest.id}
-                                                    className="border-b border-slate-50"
-                                                >
-                                                    <td className="py-3">
-                                                        {formatDate(
-                                                            harvest.date,
-                                                        )}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {harvest.batch}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {harvest.flush_number}
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {formatNumber(
-                                                            harvest.weight_kg,
-                                                            3,
-                                                        )}{' '}
-                                                        kg
-                                                    </td>
-                                                    <td className="py-3">
-                                                        {harvest.quality ?? '—'}
-                                                    </td>
-                                                    <td className="py-3 text-right">
-                                                        {harvest.sale_price_per_kg ===
-                                                        null
-                                                            ? 'Belum diisi'
-                                                            : formatMoney(
-                                                                  harvest.sale_price_per_kg,
-                                                              )}
-                                                    </td>
+                                            {data.expenses.map((expense) => (
+                                                <tr key={expense.id} className="border-b border-slate-50">
+                                                    <td className="py-3">{formatDate(expense.date)}</td>
+                                                    <td className="py-3">{expense.category.replace('_', ' ')}</td>
+                                                    <td className="py-3">{expense.description}</td>
+                                                    <td className="py-3">{expense.batch ?? 'Umum'}</td>
+                                                    <td className="py-3 text-right">{formatMoney(expense.amount)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
-                            </section>
-                            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <h2 className="text-lg font-semibold">Biaya operasional dan estimasi laba</h2>
-                                <p className="mt-1 text-sm text-slate-500">Laba adalah omzet tercatat dikurangi biaya yang dicatat. Biaya yang belum dimasukkan belum ikut dihitung.</p>
-                                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                                    <article className="rounded-xl bg-slate-50 p-4"><p className="text-sm text-slate-500">Omzet tercatat</p><p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.revenue_recorded)}</p></article>
-                                    <article className="rounded-xl bg-slate-50 p-4"><p className="text-sm text-slate-500">Biaya tercatat</p><p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.expenses_recorded)}</p></article>
-                                    <article className="rounded-xl bg-slate-50 p-4"><p className="text-sm text-slate-500">Estimasi laba</p><p className="mt-1 text-xl font-semibold">{formatMoney(data.summary.estimated_profit)}</p></article>
-                                </div>
-                                <form onSubmit={saveExpense} className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <label className="text-sm">Tanggal<input required type="date" max={today} value={expenseForm.incurred_at} onChange={e => setExpenseForm(p => ({...p, incurred_at:e.target.value}))} className="mt-1 w-full rounded-lg border-slate-300" /></label>
-                                    <label className="text-sm">Kategori<select value={expenseForm.category} onChange={e => setExpenseForm(p => ({...p, category:e.target.value}))} className="mt-1 w-full rounded-lg border-slate-300">{[['baglog','Baglog'],['bibit','Bibit'],['listrik','Listrik'],['air','Air'],['tenaga_kerja','Tenaga kerja'],['perawatan','Perawatan'],['lainnya','Lainnya']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                                    <label className="text-sm">Batch (opsional)<select value={expenseForm.cultivation_batch_id} onChange={e => setExpenseForm(p => ({...p, cultivation_batch_id:e.target.value}))} className="mt-1 w-full rounded-lg border-slate-300"><option value="">Umum / semua batch</option>{batchOptions.map(batch => <option key={batch.id} value={batch.id}>{batch.name}</option>)}</select></label>
-                                    <label className="text-sm">Keterangan<input required maxLength={160} value={expenseForm.description} onChange={e => setExpenseForm(p => ({...p, description:e.target.value}))} className="mt-1 w-full rounded-lg border-slate-300" placeholder="Contoh: listrik kumbung" /></label>
-                                    <label className="text-sm">Nominal (Rp)<input required min="1" step="1" type="number" value={expenseForm.amount} onChange={e => setExpenseForm(p => ({...p, amount:e.target.value}))} className="mt-1 w-full rounded-lg border-slate-300" /></label>
-                                    <div className="flex items-end"><button disabled={savingExpense} className="w-full rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{savingExpense ? 'Menyimpan...' : 'Catat biaya'}</button></div>
-                                </form>
-                                {expenseMessage && <p role="status" className="mt-3 text-sm text-slate-600">{expenseMessage}</p>}
-                                <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="pb-3">Tanggal</th><th className="pb-3">Kategori</th><th className="pb-3">Keterangan</th><th className="pb-3">Batch</th><th className="pb-3 text-right">Nominal</th></tr></thead><tbody>{data.expenses.map(expense => <tr key={expense.id} className="border-b border-slate-50"><td className="py-3">{formatDate(expense.date)}</td><td className="py-3">{expense.category.replace('_',' ')}</td><td className="py-3">{expense.description}</td><td className="py-3">{expense.batch ?? 'Umum'}</td><td className="py-3 text-right">{formatMoney(expense.amount)}</td></tr>)}</tbody></table></div>
                             </section>
                             <p className="text-xs leading-5 text-slate-500">
                                 Laporan memakai data panen, biaya, dan sensor yang tersimpan. Simpan PDF membuka dialog cetak browser.

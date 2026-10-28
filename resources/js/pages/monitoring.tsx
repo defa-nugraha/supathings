@@ -70,10 +70,10 @@ const initialWidgets: Widget[] = [
     { id: 'thresholds', kind: 'thresholds', title: 'Ambang batas' },
 ];
 const initialReading: Reading = {
-    temperature: 27.4,
-    humidity: 86,
-    light: 42,
-    at: new Date().toISOString(),
+    temperature: Number.NaN,
+    humidity: Number.NaN,
+    light: Number.NaN,
+    at: '',
 };
 const kinds: { kind: WidgetKind; label: string; hint: string }[] = [
     { kind: 'temperature', label: 'Gauge suhu', hint: 'Suhu °C' },
@@ -104,10 +104,9 @@ function GaugeCard({
     color: string;
     label: string;
 }) {
-    const percentage = Math.max(
-        0,
-        Math.min(100, ((value - min) / (max - min || 1)) * 100),
-    );
+    const percentage = Number.isFinite(value)
+        ? Math.max(0, Math.min(100, ((value - min) / (max - min || 1)) * 100))
+        : 0;
     return (
         <div className="flex flex-col items-center py-2">
             <div
@@ -119,7 +118,7 @@ function GaugeCard({
                 <div className="grid size-[116px] place-items-center rounded-full bg-white">
                     <div className="text-center">
                         <div className="text-3xl font-semibold tracking-tight text-slate-900">
-                            {value.toFixed(1)}
+                            {Number.isFinite(value) ? value.toFixed(1) : '—'}
                             <span className="ml-1 text-sm font-medium text-slate-500">
                                 {unit}
                             </span>
@@ -211,20 +210,11 @@ function TrendChart({ readings }: { readings: Reading[] }) {
 }
 
 export default function Monitoring() {
-    const [device, setDevice] = useState('Kumbung Utama');
-    const [deviceId, setDeviceId] = useState('AA:BB:CC:DD:EE:FF');
-    const [availableDevices, setAvailableDevices] = useState<DeviceOption[]>([
-        { id: 'AA:BB:CC:DD:EE:FF', name: 'Kumbung Utama' },
-    ]);
+    const [device, setDevice] = useState('');
+    const [deviceId, setDeviceId] = useState('');
+    const [availableDevices, setAvailableDevices] = useState<DeviceOption[]>([]);
     const [reading, setReading] = useState(initialReading);
-    const [readings, setReadings] = useState<Reading[]>(
-        Array.from({ length: 12 }, (_, i) => ({
-            temperature: 26.1 + i * 0.11,
-            humidity: 82 + i * 0.35,
-            light: 35 + i * 0.6,
-            at: new Date(Date.now() - (11 - i) * 5 * 60_000).toISOString(),
-        })),
-    );
+    const [readings, setReadings] = useState<Reading[]>([]);
     const [connection, setConnection] = useState<
         'connecting' | 'connected' | 'offline'
     >('connecting');
@@ -424,17 +414,6 @@ export default function Monitoring() {
         key: keyof typeof actuators,
         enabled: boolean,
     ) => {
-        if (socket.current?.readyState === WebSocket.OPEN) {
-            socket.current.send(
-                JSON.stringify({
-                    type: 'actuator_command',
-                    device_id: deviceId || null,
-                    actuator: key,
-                    state: enabled ? 'on' : 'off',
-                    mode: 'manual',
-                }),
-            );
-        }
         try {
             const response = await fetch('/api/actuator-commands', {
                 method: 'POST',
@@ -743,14 +722,13 @@ export default function Monitoring() {
                                 </p>
                                 <p className="text-xs text-slate-500">
                                     ESP32 · DHT22 + LDR · Data terakhir{' '}
-                                    {new Date(reading.at).toLocaleTimeString(
-                                        'id-ID',
-                                        {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                            second: '2-digit',
-                                        },
-                                    )}
+                                    {reading.at
+                                        ? new Date(reading.at).toLocaleTimeString('id-ID', {
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                              second: '2-digit',
+                                          })
+                                        : 'Belum ada data'}
                                 </p>
                             </div>
                         </div>
@@ -1042,21 +1020,21 @@ export default function Monitoring() {
                                                 {[
                                                     {
                                                         name: 'Suhu',
-                                                        value: reading.temperature.toFixed(
+                                                        value: (Number.isFinite(reading.temperature) ? reading.temperature : 0).toFixed(
                                                             1,
                                                         ),
                                                         unit: '°C',
                                                     },
                                                     {
                                                         name: 'Kelembapan',
-                                                        value: reading.humidity.toFixed(
+                                                        value: (Number.isFinite(reading.humidity) ? reading.humidity : 0).toFixed(
                                                             1,
                                                         ),
                                                         unit: '%',
                                                     },
                                                     {
                                                         name: 'Cahaya',
-                                                        value: reading.light.toFixed(
+                                                        value: (Number.isFinite(reading.light) ? reading.light : 0).toFixed(
                                                             1,
                                                         ),
                                                         unit: '%',

@@ -187,7 +187,14 @@ class IotDeviceController extends Controller
             $command->forceFill(['status' => 'sent'])->save();
         }
 
-        return response()->json(['data' => $commands]);
+        return response()->json([
+            'data' => $commands,
+            'device' => [
+                'id' => $device->id,
+                'control_mode' => $device->control_mode,
+                'rules' => $device->controlRules()->where('enabled', true)->get(['parameter', 'minimum', 'maximum']),
+            ],
+        ]);
     }
 
     /** Record device acknowledgement; this is not independent proof of electrical state. */

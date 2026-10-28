@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\IotDeviceController;
 use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'auth'])->group(function (): void {
+Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function (): void {
     Route::get('/devices', [IotDeviceController::class, 'index']);
     Route::get('/devices/{device}/readings', [IotDeviceController::class, 'readings']);
     Route::post('/devices', [IotDeviceController::class, 'store']);

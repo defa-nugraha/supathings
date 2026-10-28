@@ -11,6 +11,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('cultivation', 'cultivation')->name('cultivation');
     Route::inertia('cultivation/history', 'cultivation-history')->name('cultivation.history');
     Route::inertia('cultivation/journal', 'cultivation-journal')->name('cultivation.journal');
+    Route::inertia('cultivation/expenses', 'cultivation-expenses')->name('cultivation.expenses');
     Route::inertia('reports', 'reports')->name('reports');
 });
 

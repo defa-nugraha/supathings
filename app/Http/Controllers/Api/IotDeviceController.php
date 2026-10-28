@@ -64,6 +64,37 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $device, 'device_token' => $token], 201);
     }
 
+    public function update(Request $request, string $device): JsonResponse
+    {
+        $record = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+        ]);
+        $record->update(['name' => $data['name']]);
+
+        return response()->json(['data' => $record->fresh()]);
+    }
+
+    public function destroy(Request $request, string $device): JsonResponse
+    {
+        $record = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        $record->delete();
+
+        return response()->json(['message' => 'Perangkat berhasil dihapus dari akun.']);
+    }
+
     public function telemetry(Request $request): JsonResponse
     {
         $device = $this->deviceFromToken($request);

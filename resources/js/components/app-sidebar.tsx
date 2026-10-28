@@ -72,7 +72,8 @@ export function AppSidebar() {
                         defaultOpen={
                             isCurrentUrl('/cultivation') ||
                             isCurrentUrl('/cultivation/history') ||
-                            isCurrentUrl('/cultivation/journal')
+                            isCurrentUrl('/cultivation/journal') ||
+                            isCurrentUrl('/cultivation/expenses')
                         }
                         className="group/cultivation"
                     >
@@ -82,7 +83,8 @@ export function AppSidebar() {
                                     isActive={
                                         isCurrentUrl('/cultivation') ||
                                         isCurrentUrl('/cultivation/history') ||
-                                        isCurrentUrl('/cultivation/journal')
+                                        isCurrentUrl('/cultivation/journal') ||
+                                        isCurrentUrl('/cultivation/expenses')
                                     }
                                     tooltip={{ children: 'Budidaya jamur' }}
                                     className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
@@ -132,6 +134,21 @@ export function AppSidebar() {
                                         >
                                             <NotebookPen className="size-4" />
                                             <span>Jurnal budidaya</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                    <SidebarMenuButton
+                                        asChild
+                                        isActive={isCurrentUrl(
+                                            '/cultivation/expenses',
+                                        )}
+                                        className="h-9 rounded-lg text-sm"
+                                    >
+                                        <Link
+                                            href="/cultivation/expenses"
+                                            prefetch
+                                        >
+                                            <ChartNoAxesColumn className="size-4" />
+                                            <span>Biaya operasional</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </div>

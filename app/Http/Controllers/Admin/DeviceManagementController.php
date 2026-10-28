@@ -46,7 +46,7 @@ class DeviceManagementController extends Controller
             'user_id' => ['required', 'integer', 'exists:users,id'],
         ]);
 
-        $newOwner = User::query()->where('is_active', true)->find($validated['user_id']);
+        $newOwner = User::query()->where('is_active', true)->whereKey($validated['user_id'])->first();
         if (! $newOwner) {
             throw ValidationException::withMessages(['user_id' => 'Pemilik baru harus merupakan akun aktif.']);
         }

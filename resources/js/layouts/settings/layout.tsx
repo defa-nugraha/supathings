@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { Palette } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,11 @@ const sidebarNavItems: NavItem[] = [
         title: 'Security',
         href: editSecurity(),
         icon: null,
+    },
+    {
+        title: 'Identitas aplikasi',
+        href: '/settings/branding',
+        icon: Palette,
     },
 ];
 

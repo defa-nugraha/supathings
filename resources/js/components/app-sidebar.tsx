@@ -59,7 +59,12 @@ export function AppSidebar() {
                     {auth.user?.role === 'admin' && (
                         <>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/dashboard')} tooltip={{ children: 'Dashboard Admin' }} className="h-10 rounded-xl">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl('/admin/dashboard')}
+                                    tooltip={{ children: 'Dashboard Admin' }}
+                                    className="h-10 rounded-xl"
+                                >
                                     <Link href="/admin/dashboard">
                                         <ShieldCheck className="size-[18px]" />
                                         <span>Dashboard Admin</span>
@@ -67,7 +72,12 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/users')} tooltip={{ children: 'Kelola pengguna' }} className="h-10 rounded-xl">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl('/admin/users')}
+                                    tooltip={{ children: 'Kelola pengguna' }}
+                                    className="h-10 rounded-xl"
+                                >
                                     <Link href="/admin/users">
                                         <Users className="size-[18px]" />
                                         <span>Kelola pengguna</span>
@@ -75,7 +85,12 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={isCurrentUrl('/admin/devices')} tooltip={{ children: 'Kelola perangkat' }} className="h-10 rounded-xl">
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl('/admin/devices')}
+                                    tooltip={{ children: 'Kelola perangkat' }}
+                                    className="h-10 rounded-xl"
+                                >
                                     <Link href="/admin/devices">
                                         <Cpu className="size-[18px]" />
                                         <span>Kelola perangkat</span>

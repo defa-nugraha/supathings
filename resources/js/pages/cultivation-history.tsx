@@ -84,9 +84,7 @@ export default function CultivationHistory() {
                                                 className="border-t border-slate-100"
                                             >
                                                 <td className="py-3">
-                                                    {formatIndonesianDate(
-                                                        x.harvested_at,
-                                                    )}
+                                                    {formatIndonesianDate(x.harvested_at)}
                                                 </td>
                                                 <td>{x.batch?.name ?? '—'}</td>
                                                 <td>{x.flush_number}</td>

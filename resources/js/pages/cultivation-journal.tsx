@@ -6,7 +6,9 @@ function formatIndonesianDate(value: string): string {
     const dateOnly = value.slice(0, 10);
     const date = new Date(`${dateOnly}T00:00:00`);
 
-    if (Number.isNaN(date.getTime())) return value;
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
 
     return date.toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -14,12 +16,14 @@ function formatIndonesianDate(value: string): string {
         year: 'numeric',
     });
 }
+
 type B = {
     id: number;
     name: string;
     inoculated_at: string;
     notes: string | null;
 };
+
 type H = {
     id: number;
     harvested_at: string;
@@ -27,11 +31,13 @@ type H = {
     notes: string | null;
     batch?: { name: string };
 };
+
 export default function CultivationJournal() {
     const [entries, setEntries] = useState<
         { id: string; date: string; title: string; note: string }[]
     >([]);
     const [error, setError] = useState('');
+
     useEffect(() => {
         Promise.all([
             fetch('/api/cultivation/batches', {
@@ -41,43 +47,51 @@ export default function CultivationJournal() {
                 headers: { Accept: 'application/json' },
             }),
         ])
-            .then(async ([br, hr]) => {
-                if (!br.ok || !hr.ok)
+            .then(async ([batchResponse, harvestResponse]) => {
+                if (!batchResponse.ok || !harvestResponse.ok) {
                     throw new Error('Jurnal budidaya gagal dimuat.');
-                const [b, h] = await Promise.all([br.json(), hr.json()]);
-                const be = (b.data as B[])
-                    .filter((x) => x.notes?.trim())
-                    .map((x) => ({
-                        id: 'b' + x.id,
-                        date: x.inoculated_at,
-                        title: x.name + ' · catatan batch',
-                        note: x.notes as string,
+                }
+
+                const [batchData, harvestData] = await Promise.all([
+                    batchResponse.json(),
+                    harvestResponse.json(),
+                ]);
+                const batchEntries = (batchData.data as B[])
+                    .filter((batch) => batch.notes?.trim())
+                    .map((batch) => ({
+                        id: `b${batch.id}`,
+                        date: batch.inoculated_at,
+                        title: `${batch.name} · catatan batch`,
+                        note: batch.notes as string,
                     }));
-                const he = (h.data as H[])
-                    .filter((x) => x.notes?.trim())
-                    .map((x) => ({
-                        id: 'h' + x.id,
-                        date: x.harvested_at,
-                        title:
-                            (x.batch?.name ?? 'Batch') +
-                            ' · panen gelombang ' +
-                            x.flush_number,
-                        note: x.notes as string,
+                const harvestEntries = (harvestData.data as H[])
+                    .filter((harvest) => harvest.notes?.trim())
+                    .map((harvest) => ({
+                        id: `h${harvest.id}`,
+                        date: harvest.harvested_at,
+                        title: `${harvest.batch?.name ?? 'Batch'} · panen gelombang ${harvest.flush_number}`,
+                        note: harvest.notes as string,
                     }));
+
                 setEntries(
-                    [...be, ...he].sort((a, b) => b.date.localeCompare(a.date)),
+                    [...batchEntries, ...harvestEntries].sort((a, b) =>
+                        b.date.localeCompare(a.date),
+                    ),
                 );
             })
-            .catch((e) =>
-                setError(e instanceof Error ? e.message : 'Terjadi kesalahan.'),
-            );
+            .catch((caughtError) => {
+                setError(
+                    caughtError instanceof Error
+                        ? caughtError.message
+                        : 'Terjadi kesalahan.',
+                );
+            });
     }, []);
+
     return (
         <>
             <Head title="Jurnal budidaya" />
-            <main
-                className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 md:p-8"
-            >
+            <main className="min-h-full bg-[#f6f8fb] p-4 sm:p-6 md:p-8">
                 <div className="mx-auto max-w-[1100px] space-y-6">
                     <header data-tour="cultivation-journal">
                         <h1 className="text-3xl font-semibold text-slate-900">
@@ -94,22 +108,22 @@ export default function CultivationJournal() {
                             saat mencatat panen.
                         </p>
                     ) : (
-                        entries.map((e) => (
+                        entries.map((entry) => (
                             <article
-                                key={e.id}
+                                key={entry.id}
                                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                             >
                                 <div className="flex gap-3">
                                     <NotebookPen className="size-5 text-emerald-700" />
                                     <div>
                                         <p className="font-semibold">
-                                            {e.title}
+                                            {entry.title}
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            {formatIndonesianDate(e.date)}
+                                            {formatIndonesianDate(entry.date)}
                                         </p>
                                         <p className="mt-3 text-sm leading-6 whitespace-pre-wrap">
-                                            {e.note}
+                                            {entry.note}
                                         </p>
                                     </div>
                                 </div>

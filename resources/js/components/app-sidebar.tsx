@@ -31,7 +31,6 @@ const mainNavItems = [
     { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { title: 'Monitoring & kontrol', href: '/monitoring', icon: Activity },
     { title: 'Kelola device', href: '/devices', icon: Cpu },
-    { title: 'Laporan budidaya', href: '/reports', icon: ChartNoAxesColumn },
 ];
 
 export function AppSidebar() {
@@ -139,6 +138,19 @@ export function AppSidebar() {
                             </CollapsibleContent>
                         </SidebarMenuItem>
                     </Collapsible>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={isCurrentUrl('/reports')}
+                            tooltip={{ children: 'Laporan budidaya' }}
+                            className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
+                        >
+                            <Link href="/reports" prefetch>
+                                <ChartNoAxesColumn className="size-[18px]" />
+                                <span>Laporan budidaya</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="border-t border-slate-100 px-2 py-3">

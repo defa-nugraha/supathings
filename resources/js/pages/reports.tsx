@@ -567,7 +567,7 @@ export default function Reports() {
                                 <h2 className="text-lg font-semibold">
                                     Rincian catatan panen
                                 </h2>
-                                <p className="mb-4 mt-1 text-sm text-slate-500">
+                                <p className="mt-1 mb-4 text-sm text-slate-500">
                                     Omzet dihitung hanya jika harga jual per
                                     kilogram tersedia.
                                 </p>

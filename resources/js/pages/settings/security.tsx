@@ -59,7 +59,10 @@ export default function Security(props: Props) {
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div data-tour="settings-security" className="grid gap-2">
+                            <div
+                                data-tour="settings-security"
+                                className="grid gap-2"
+                            >
                                 <Label htmlFor="current_password">
                                     Current password
                                 </Label>

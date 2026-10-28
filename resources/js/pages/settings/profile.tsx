@@ -46,7 +46,10 @@ export default function Profile({
                 >
                     {({ processing, errors }) => (
                         <>
-                            <div data-tour="settings-profile" className="grid gap-2">
+                            <div
+                                data-tour="settings-profile"
+                                className="grid gap-2"
+                            >
                                 <Label htmlFor="name">Name</Label>
 
                                 <Input

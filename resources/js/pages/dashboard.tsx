@@ -288,7 +288,10 @@ export default function Dashboard() {
                     >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h2 data-tour="dashboard-device-status" className="text-lg font-semibold">
+                                <h2
+                                    data-tour="dashboard-device-status"
+                                    className="text-lg font-semibold"
+                                >
                                     Status perangkat
                                 </h2>
                                 <p className="text-sm text-slate-500">
@@ -350,7 +353,10 @@ export default function Dashboard() {
                         data-tour="dashboard-alerts"
                         className="rounded-2xl border bg-white p-5"
                     >
-                        <h2 data-tour="dashboard-alerts" className="text-lg font-semibold">
+                        <h2
+                            data-tour="dashboard-alerts"
+                            className="text-lg font-semibold"
+                        >
                             Peringatan terbaru
                         </h2>
                         {alerts.length ? (

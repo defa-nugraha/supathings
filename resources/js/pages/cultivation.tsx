@@ -585,7 +585,10 @@ export default function Cultivation() {
                         >
                             <div className="mb-4 flex items-center justify-between">
                                 <div>
-                                    <h2 data-tour="cultivation-batches" className="text-lg font-semibold text-slate-900">
+                                    <h2
+                                        data-tour="cultivation-batches"
+                                        className="text-lg font-semibold text-slate-900"
+                                    >
                                         Batch dan masa tanam
                                     </h2>
                                     <p className="mt-1 text-sm text-slate-500">

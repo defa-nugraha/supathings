@@ -398,7 +398,10 @@ export function ProductTour() {
                     >
                         <div className="flex items-start justify-between gap-3">
                             <div>
-                                <p aria-live="polite" className="text-xs font-semibold tracking-wide text-blue-700 uppercase">
+                                <p
+                                    aria-live="polite"
+                                    className="text-xs font-semibold tracking-wide text-blue-700 uppercase"
+                                >
                                     Panduan {stepIndex + 1} dari {steps.length}
                                 </p>
                                 <h2

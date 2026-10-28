@@ -74,9 +74,9 @@ const tours: Record<string, TourStep[]> = {
     '/devices': [
         {
             target: '[data-tour="devices-scan"]',
-            title: 'Temukan ESP32',
+            title: 'Tambah perangkat',
             description:
-                'Jalankan pencarian agar perangkat yang tersedia dapat ditemukan.',
+                'Buka alur tambah perangkat untuk mencari dan mendaftarkan ESP32 ke akun Anda.',
         },
         {
             target: '[data-tour="devices-list"]',
@@ -88,9 +88,9 @@ const tours: Record<string, TourStep[]> = {
     '/cultivation': [
         {
             target: '[data-tour="cultivation-actions"]',
-            title: 'Catat aktivitas utama',
+            title: 'Mulai batch budidaya',
             description:
-                'Tambah batch saat memulai siklus budidaya atau catat panen saat hasil sudah siap dipetik.',
+                'Gunakan tombol ini untuk memulai batch baru. Tombol Catat panen di sebelahnya digunakan saat hasil siap dipetik.',
         },
         {
             target: '[data-tour="cultivation-batches"]',
@@ -100,9 +100,9 @@ const tours: Record<string, TourStep[]> = {
         },
         {
             target: '[data-tour="cultivation-harvests"]',
-            title: 'Catat hasil panen',
+            title: 'Buka pencatatan panen',
             description:
-                'Masukkan tanggal, batch, gelombang, berat, dan informasi penjualan untuk mencatat hasil panen.',
+                'Pilih Catat panen untuk membuka formulir, lalu isi batch, tanggal, gelombang, berat, dan informasi hasil panen.',
         },
     ],
     '/cultivation/history': [

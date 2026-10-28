@@ -152,7 +152,7 @@ function DashboardMobile({
                                     <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
                                         <Icon className="size-5" />
                                     </span>
-                                    <p className="text-xs font-medium leading-4">
+                                    <p className="text-xs leading-4 font-medium">
                                         {label}
                                     </p>
                                 </div>
@@ -462,213 +462,217 @@ export default function Dashboard() {
                 measuredAt={latest?.measured_at}
             />
             <div className="hidden lg:block">
-            <main className="min-h-full bg-slate-50 px-4 py-6 md:px-8 md:py-8">
-                <div className="mx-auto max-w-7xl space-y-6">
-                    <header className="flex flex-wrap items-end justify-between gap-4">
-                        <div>
-                            <p className="text-sm text-slate-500">
-                                Supathings / Dashboard
-                            </p>
-                            <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-                                Ringkasan kumbung
-                            </h1>
-                            <p className="mt-1 text-sm text-slate-500">
-                                Data berasal dari sensor dan catatan budidaya,
-                                bukan nilai contoh.
-                            </p>
-                        </div>
-                        <Link
-                            href="/devices"
-                            className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
-                        >
-                            <Plus className="size-4" />
-                            Hubungkan perangkat
-                        </Link>
-                    </header>
-
-                    {error && (
-                        <div
-                            role="alert"
-                            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-                        >
-                            {error}
-                        </div>
-                    )}
-
-                    <section className="grid gap-4 sm:grid-cols-3">
-                        {metrics.map(({ label, value, unit, Icon }) => (
-                            <article
-                                key={label}
-                                className="rounded-2xl border bg-white p-5 shadow-sm"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm text-slate-500">
-                                        {label}
-                                    </p>
-                                    <Icon className="size-5 text-blue-700" />
-                                </div>
-                                <p className="mt-4 text-3xl font-semibold">
-                                    {value}{' '}
-                                    <span className="text-sm font-normal text-slate-500">
-                                        {unit}
-                                    </span>
+                <main className="min-h-full bg-slate-50 px-4 py-6 md:px-8 md:py-8">
+                    <div className="mx-auto max-w-7xl space-y-6">
+                        <header className="flex flex-wrap items-end justify-between gap-4">
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Supathings / Dashboard
                                 </p>
-                                <p className="mt-2 text-xs text-slate-500">
-                                    {fresh
-                                        ? 'Pembacaan ' +
-                                          dateTime(latest?.measured_at)
-                                        : 'Data belum tersedia atau lebih dari 5 menit'}
+                                <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+                                    Ringkasan kumbung
+                                </h1>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Data berasal dari sensor dan catatan
+                                    budidaya, bukan nilai contoh.
                                 </p>
-                            </article>
-                        ))}
-                    </section>
-
-                    <section className="grid gap-4 md:grid-cols-3">
-                        <article className="rounded-2xl border bg-white p-5">
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <Wifi className="size-4" />
-                                Perangkat online
                             </div>
-                            <p className="mt-3 text-3xl font-semibold">
-                                {
-                                    devices.filter(
-                                        (device) => device.status === 'online',
-                                    ).length
-                                }{' '}
-                                <span className="text-sm font-normal text-slate-500">
-                                    / {devices.length}
-                                </span>
-                            </p>
                             <Link
                                 href="/devices"
-                                className="mt-3 inline-block text-sm font-semibold text-blue-700"
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
                             >
-                                Kelola perangkat →
+                                <Plus className="size-4" />
+                                Hubungkan perangkat
                             </Link>
-                        </article>
-                        <article className="rounded-2xl border bg-white p-5">
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <Activity className="size-4" />
-                                Batch aktif
-                            </div>
-                            <p className="mt-3 text-3xl font-semibold">
-                                {
-                                    batches.filter(
-                                        (batch) => batch.phase !== 'completed',
-                                    ).length
-                                }
-                            </p>
-                            <Link
-                                href="/cultivation"
-                                className="mt-3 inline-block text-sm font-semibold text-blue-700"
-                            >
-                                Buka budidaya →
-                            </Link>
-                        </article>
-                        <article className="rounded-2xl border bg-white p-5">
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <AlertTriangle className="size-4" />
-                                Peringatan aktif
-                            </div>
-                            <p className="mt-3 text-3xl font-semibold">
-                                {alerts.length}
-                            </p>
-                            <p className="mt-2 text-xs text-slate-500">
-                                Perangkat offline atau sensor di luar ambang
-                            </p>
-                        </article>
-                    </section>
+                        </header>
 
-                    <section className="rounded-2xl border bg-white p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <h2 className="text-lg font-semibold">
-                                    Status perangkat
-                                </h2>
-                                <p className="text-sm text-slate-500">
-                                    Pembaruan otomatis setiap 30 detik.
-                                </p>
-                            </div>
-                            <Link
-                                href="/monitoring"
-                                className="text-sm font-semibold text-blue-700"
+                        {error && (
+                            <div
+                                role="alert"
+                                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
                             >
-                                Buka monitoring →
-                            </Link>
-                        </div>
-                        {loading ? (
-                            <p className="py-8 text-sm text-slate-500">
-                                Memuat data...
-                            </p>
-                        ) : devices.length === 0 ? (
-                            <p className="py-8 text-sm text-slate-500">
-                                Belum ada perangkat. Hubungkan ESP32 untuk mulai
-                                memantau kumbung.
-                            </p>
-                        ) : (
-                            <div className="mt-4 divide-y">
-                                {devices.map((device) => (
-                                    <div
-                                        key={device.id}
-                                        className="flex flex-wrap items-center justify-between gap-3 py-3"
-                                    >
-                                        <div>
-                                            <p className="font-medium">
-                                                {device.name}
-                                            </p>
-                                            <p className="text-xs text-slate-500">
-                                                {device.mac_address} · Terakhir
-                                                aktif:{' '}
-                                                {dateTime(device.last_seen_at)}
-                                            </p>
-                                        </div>
-                                        <span
-                                            className={
-                                                'rounded-full px-3 py-1 text-xs font-semibold ' +
-                                                (device.status === 'online'
-                                                    ? 'bg-emerald-50 text-emerald-700'
-                                                    : 'bg-amber-50 text-amber-700')
-                                            }
-                                        >
-                                            {device.status === 'online'
-                                                ? 'Online'
-                                                : 'Offline'}
-                                        </span>
+                                {error}
+                            </div>
+                        )}
+
+                        <section className="grid gap-4 sm:grid-cols-3">
+                            {metrics.map(({ label, value, unit, Icon }) => (
+                                <article
+                                    key={label}
+                                    className="rounded-2xl border bg-white p-5 shadow-sm"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm text-slate-500">
+                                            {label}
+                                        </p>
+                                        <Icon className="size-5 text-blue-700" />
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </section>
+                                    <p className="mt-4 text-3xl font-semibold">
+                                        {value}{' '}
+                                        <span className="text-sm font-normal text-slate-500">
+                                            {unit}
+                                        </span>
+                                    </p>
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        {fresh
+                                            ? 'Pembacaan ' +
+                                              dateTime(latest?.measured_at)
+                                            : 'Data belum tersedia atau lebih dari 5 menit'}
+                                    </p>
+                                </article>
+                            ))}
+                        </section>
 
-                    <section className="rounded-2xl border bg-white p-5">
-                        <h2 className="text-lg font-semibold">
-                            Peringatan terbaru
-                        </h2>
-                        {alerts.length ? (
-                            <ul className="mt-3 space-y-2">
-                                {alerts.slice(0, 5).map((alert) => (
-                                    <li
-                                        key={alert.key}
-                                        className="rounded-xl bg-amber-50 p-3"
-                                    >
-                                        <p className="font-medium text-amber-900">
-                                            {alert.title}
-                                        </p>
-                                        <p className="text-sm text-amber-800">
-                                            {alert.message}
-                                        </p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="mt-2 text-sm text-slate-500">
-                                Tidak ada peringatan aktif berdasarkan data yang
-                                tersimpan.
-                            </p>
-                        )}
-                    </section>
-                </div>
-            </main>
+                        <section className="grid gap-4 md:grid-cols-3">
+                            <article className="rounded-2xl border bg-white p-5">
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Wifi className="size-4" />
+                                    Perangkat online
+                                </div>
+                                <p className="mt-3 text-3xl font-semibold">
+                                    {
+                                        devices.filter(
+                                            (device) =>
+                                                device.status === 'online',
+                                        ).length
+                                    }{' '}
+                                    <span className="text-sm font-normal text-slate-500">
+                                        / {devices.length}
+                                    </span>
+                                </p>
+                                <Link
+                                    href="/devices"
+                                    className="mt-3 inline-block text-sm font-semibold text-blue-700"
+                                >
+                                    Kelola perangkat →
+                                </Link>
+                            </article>
+                            <article className="rounded-2xl border bg-white p-5">
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <Activity className="size-4" />
+                                    Batch aktif
+                                </div>
+                                <p className="mt-3 text-3xl font-semibold">
+                                    {
+                                        batches.filter(
+                                            (batch) =>
+                                                batch.phase !== 'completed',
+                                        ).length
+                                    }
+                                </p>
+                                <Link
+                                    href="/cultivation"
+                                    className="mt-3 inline-block text-sm font-semibold text-blue-700"
+                                >
+                                    Buka budidaya →
+                                </Link>
+                            </article>
+                            <article className="rounded-2xl border bg-white p-5">
+                                <div className="flex items-center gap-2 text-slate-500">
+                                    <AlertTriangle className="size-4" />
+                                    Peringatan aktif
+                                </div>
+                                <p className="mt-3 text-3xl font-semibold">
+                                    {alerts.length}
+                                </p>
+                                <p className="mt-2 text-xs text-slate-500">
+                                    Perangkat offline atau sensor di luar ambang
+                                </p>
+                            </article>
+                        </section>
+
+                        <section className="rounded-2xl border bg-white p-5">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h2 className="text-lg font-semibold">
+                                        Status perangkat
+                                    </h2>
+                                    <p className="text-sm text-slate-500">
+                                        Pembaruan otomatis setiap 30 detik.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/monitoring"
+                                    className="text-sm font-semibold text-blue-700"
+                                >
+                                    Buka monitoring →
+                                </Link>
+                            </div>
+                            {loading ? (
+                                <p className="py-8 text-sm text-slate-500">
+                                    Memuat data...
+                                </p>
+                            ) : devices.length === 0 ? (
+                                <p className="py-8 text-sm text-slate-500">
+                                    Belum ada perangkat. Hubungkan ESP32 untuk
+                                    mulai memantau kumbung.
+                                </p>
+                            ) : (
+                                <div className="mt-4 divide-y">
+                                    {devices.map((device) => (
+                                        <div
+                                            key={device.id}
+                                            className="flex flex-wrap items-center justify-between gap-3 py-3"
+                                        >
+                                            <div>
+                                                <p className="font-medium">
+                                                    {device.name}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {device.mac_address} ·
+                                                    Terakhir aktif:{' '}
+                                                    {dateTime(
+                                                        device.last_seen_at,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={
+                                                    'rounded-full px-3 py-1 text-xs font-semibold ' +
+                                                    (device.status === 'online'
+                                                        ? 'bg-emerald-50 text-emerald-700'
+                                                        : 'bg-amber-50 text-amber-700')
+                                                }
+                                            >
+                                                {device.status === 'online'
+                                                    ? 'Online'
+                                                    : 'Offline'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+
+                        <section className="rounded-2xl border bg-white p-5">
+                            <h2 className="text-lg font-semibold">
+                                Peringatan terbaru
+                            </h2>
+                            {alerts.length ? (
+                                <ul className="mt-3 space-y-2">
+                                    {alerts.slice(0, 5).map((alert) => (
+                                        <li
+                                            key={alert.key}
+                                            className="rounded-xl bg-amber-50 p-3"
+                                        >
+                                            <p className="font-medium text-amber-900">
+                                                {alert.title}
+                                            </p>
+                                            <p className="text-sm text-amber-800">
+                                                {alert.message}
+                                            </p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="mt-2 text-sm text-slate-500">
+                                    Tidak ada peringatan aktif berdasarkan data
+                                    yang tersimpan.
+                                </p>
+                            )}
+                        </section>
+                    </div>
+                </main>
             </div>
         </>
     );

@@ -43,7 +43,7 @@ export function MobileBottomNav() {
                                 prefetch
                                 aria-current={active ? 'page' : undefined}
                                 className={
-                                    'flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ' +
+                                    'flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] leading-none font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ' +
                                     (active
                                         ? 'bg-blue-50 text-blue-700'
                                         : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800')

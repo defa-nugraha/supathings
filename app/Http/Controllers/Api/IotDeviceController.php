@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\EvaluateControlRules;
 use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
+use App\Models\CultivationBatch;
 use App\Models\ControlRule;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +63,42 @@ class IotDeviceController extends Controller
         );
 
         return response()->json(['data' => $device, 'device_token' => $token], 201);
+    }
+
+
+    public function updateDevice(Request $request, string $device): JsonResponse
+    {
+        $record = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        $data = $request->validate(['name' => ['required', 'string', 'max:100']]);
+        $record->update(['name' => $data['name']]);
+
+        return response()->json(['data' => $record->fresh()]);
+    }
+
+    public function deleteDevice(Request $request, string $device): JsonResponse
+    {
+        $record = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        if (CultivationBatch::query()->where('iot_device_id', $record->id)->exists()) {
+            return response()->json([
+                'message' => 'Perangkat masih terhubung ke batch budidaya. Lepaskan perangkat dari batch terlebih dahulu.',
+            ], 409);
+        }
+
+        $record->delete();
+
+        return response()->json(['message' => 'Perangkat berhasil dihapus.']);
     }
 
     public function telemetry(Request $request): JsonResponse

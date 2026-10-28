@@ -4,7 +4,6 @@ import {
     AlertTriangle,
     ArrowDownToLine,
     ArrowUpRight,
-    ChevronDown,
     Droplets,
     Gauge,
     GripVertical,
@@ -699,7 +698,6 @@ export default function Monitoring() {
                                     <SelectTrigger className="h-9 w-auto min-w-[180px] border-0 bg-transparent px-2 font-medium shadow-none"><SelectValue placeholder="Pilih device" /></SelectTrigger>
                                     <SelectContent>{availableDevices.map((item) => <SelectItem key={item.id} value={item.id}>{item.name} · {item.id}</SelectItem>)}</SelectContent>
                                 </Select>
-                                <ChevronDown className="size-4 text-slate-400" />
                             </label>
                             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                                 <span

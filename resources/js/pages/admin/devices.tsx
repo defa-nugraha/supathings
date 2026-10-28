@@ -134,11 +134,9 @@ export default function AdminDevices({ devices, users, filters }: Props) {
                     <section className="overflow-hidden rounded-2xl border bg-white">
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[850px] text-left text-sm">
-                                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                                <thead className="bg-slate-50 text-xs tracking-wide text-slate-500 uppercase">
                                     <tr>
-                                        <th className="px-4 py-3">
-                                            Perangkat
-                                        </th>
+                                        <th className="px-4 py-3">Perangkat</th>
                                         <th className="px-4 py-3">Pemilik</th>
                                         <th className="px-4 py-3">Status</th>
                                         <th className="px-4 py-3">

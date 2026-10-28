@@ -37,7 +37,9 @@ const mainNavItems = [
 
 export function AppSidebar() {
     const { isCurrentUrl } = useCurrentUrl();
-    const { auth } = usePage().props as { auth: { user: { role: string } | null } };
+    const { auth } = usePage().props as {
+        auth: { user: { role: string } | null };
+    };
     return (
         <Sidebar collapsible="icon" variant="inset" className="border-0">
             <SidebarHeader className="px-3 pt-4">

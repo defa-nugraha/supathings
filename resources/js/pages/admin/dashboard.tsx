@@ -80,9 +80,7 @@ export default function AdminDashboard({ stats }: { stats: Stats }) {
                     </section>
 
                     <section className="rounded-2xl border bg-white p-5">
-                        <h2 className="text-lg font-semibold">
-                            Administrasi
-                        </h2>
+                        <h2 className="text-lg font-semibold">Administrasi</h2>
                         <p className="mt-1 text-sm text-slate-500">
                             Kelola akses pengguna dengan prinsip least
                             privilege.

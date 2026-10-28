@@ -152,7 +152,7 @@ export default function AdminUsers({
                     <section className="overflow-hidden rounded-2xl border bg-white">
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[760px] text-left text-sm">
-                                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                                <thead className="bg-slate-50 text-xs tracking-wide text-slate-500 uppercase">
                                     <tr>
                                         <th className="px-4 py-3">Pengguna</th>
                                         <th className="px-4 py-3">Role</th>
@@ -160,9 +160,7 @@ export default function AdminUsers({
                                         <th className="px-4 py-3">
                                             Verifikasi email
                                         </th>
-                                        <th className="px-4 py-3">
-                                            Terdaftar
-                                        </th>
+                                        <th className="px-4 py-3">Terdaftar</th>
                                         <th className="px-4 py-3">Aksi</th>
                                     </tr>
                                 </thead>

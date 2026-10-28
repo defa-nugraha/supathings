@@ -35,8 +35,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     };
     const visibleNavItems = sidebarNavItems.filter(
         (item) =>
-            item.href !== '/settings/branding' ||
-            auth.user?.role === 'admin',
+            item.href !== '/settings/branding' || auth.user?.role === 'admin',
     );
 
     return (

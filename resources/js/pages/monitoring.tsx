@@ -866,12 +866,10 @@ export default function Monitoring() {
                             </button>
                         </div>
                     </div>
-                    <div
-                        data-tour="monitoring-controls"
-                        className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3"
-                    >
-                        {widgets.map((widget) => (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                        {widgets.map((widget, index) => (
                             <section
+                                data-tour={index === 0 ? "monitoring-controls" : undefined}
                                 key={widget.id}
                                 draggable={editingLayout}
                                 onDragStart={() =>

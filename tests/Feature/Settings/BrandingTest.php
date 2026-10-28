@@ -5,8 +5,8 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-test('authenticated users can view application branding settings', function () {
-    $user = User::factory()->create();
+test('administrators can view application branding settings', function () {
+    $user = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($user)
         ->get(route('branding.edit'))
@@ -17,8 +17,8 @@ test('authenticated users can view application branding settings', function () {
             ->where('branding.logoUrl', null));
 });
 
-test('authenticated users can update the application name', function () {
-    $user = User::factory()->create();
+test('administrators can update the application name', function () {
+    $user = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($user)
         ->post(route('branding.update'), [
@@ -29,9 +29,9 @@ test('authenticated users can update the application name', function () {
     expect(AppSetting::query()->firstOrFail()->app_name)->toBe('Jamur Pintar');
 });
 
-test('authenticated users can upload a new application logo', function () {
+test('administrators can upload a new application logo', function () {
     Storage::fake('public');
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($user)
         ->post(route('branding.update'), [
@@ -47,7 +47,7 @@ test('authenticated users can upload a new application logo', function () {
 });
 
 test('application name is required and limited to sixty characters', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($user)
         ->from(route('branding.edit'))

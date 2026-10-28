@@ -139,7 +139,6 @@ class CultivationController extends Controller
         return response()->json(['data' => $expense->load('batch:id,name')], 201);
     }
 
-
     public function deleteBatch(Request $request, string $batch): JsonResponse
     {
         $record = CultivationBatch::query()

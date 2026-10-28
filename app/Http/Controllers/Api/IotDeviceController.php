@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Jobs\EvaluateControlRules;
 use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
-use App\Models\CultivationBatch;
 use App\Models\ControlRule;
+use App\Models\CultivationBatch;
 use App\Models\IotDevice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,7 +64,6 @@ class IotDeviceController extends Controller
 
         return response()->json(['data' => $device, 'device_token' => $token], 201);
     }
-
 
     public function updateDevice(Request $request, string $device): JsonResponse
     {

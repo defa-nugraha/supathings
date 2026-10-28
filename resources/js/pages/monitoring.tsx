@@ -239,6 +239,11 @@ export default function Monitoring() {
         water: false,
         blower: false,
     });
+    const [actuatorConfirmed, setActuatorConfirmed] = useState({
+        mist: false,
+        water: false,
+        blower: false,
+    });
     const [manualMode, setManualMode] = useState(true);
     const [notice, setNotice] = useState('');
     const socket = useRef<WebSocket | null>(null);
@@ -348,8 +353,15 @@ export default function Monitoring() {
                         message.device_id
                     )
                         setNotice(`Perangkat terdeteksi: ${message.device_id}`);
-                    if (message.type === 'actuator_state' && message.state)
+                    if (message.type === 'actuator_state' && message.state) {
                         setActuators((prev) => ({ ...prev, ...message.state }));
+                        setActuatorConfirmed((prev) => ({
+                            ...prev,
+                            ...Object.fromEntries(
+                                Object.keys(message.state).map((key) => [key, true]),
+                            ),
+                        }));
+                    }
                 } catch {
                     /* Ignore malformed messages without interrupting the live dashboard. */
                 }
@@ -552,6 +564,55 @@ export default function Monitoring() {
     };
 
     useEffect(() => {
+        if (!deviceId) {
+            setActuators({ mist: false, water: false, blower: false });
+            setActuatorConfirmed({ mist: false, water: false, blower: false });
+            return;
+        }
+
+        let active = true;
+        const refreshActuatorStatus = async () => {
+            try {
+                const response = await fetch(
+                    '/api/actuator-status?device_id=' + encodeURIComponent(deviceId),
+                    { headers: { Accept: 'application/json' } },
+                );
+                if (!response.ok) return;
+                const payload = await response.json();
+                if (!active || !payload.data) return;
+
+                setActuators((previous) => {
+                    const next = { ...previous };
+                    for (const key of ['mist', 'water', 'blower'] as const) {
+                        const state = payload.data[key]?.actual_state;
+                        if (state === 'on' || state === 'off') {
+                            next[key] = state === 'on';
+                        }
+                    }
+                    return next;
+                });
+                setActuatorConfirmed((previous) => {
+                    const next = { ...previous };
+                    for (const key of ['mist', 'water', 'blower'] as const) {
+                        const state = payload.data[key]?.actual_state;
+                        next[key] = state === 'on' || state === 'off';
+                    }
+                    return next;
+                });
+            } catch {
+                // Keep the last confirmed state when status polling fails.
+            }
+        };
+
+        void refreshActuatorStatus();
+        const timer = window.setInterval(() => void refreshActuatorStatus(), 5000);
+        return () => {
+            active = false;
+            window.clearInterval(timer);
+        };
+    }, [deviceId]);
+
+    useEffect(() => {
         try {
             const savedThresholds = window.localStorage.getItem(
                 `supathings:${deviceId}:thresholds`,
@@ -561,9 +622,6 @@ export default function Monitoring() {
             );
             const savedWidgets = window.localStorage.getItem(
                 `supathings:${deviceId}:widgets`,
-            );
-            const savedActuators = window.localStorage.getItem(
-                `supathings:${deviceId}:actuators`,
             );
             setThresholds(
                 savedThresholds
@@ -578,11 +636,6 @@ export default function Monitoring() {
                       },
             );
             setManualMode(savedMode !== 'automatic');
-            setActuators(
-                savedActuators
-                    ? (JSON.parse(savedActuators) as typeof actuators)
-                    : { mist: false, water: false, blower: false },
-            );
             if (savedWidgets) {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
                 if (widgetIds.length > 0) setWidgets(widgetIds);
@@ -943,9 +996,9 @@ export default function Monitoring() {
                                                     onClick={() =>
                                                         void sendActuator(
                                                             item.key,
-                                                            !actuators[
-                                                                item.key
-                                                            ],
+                                                            actuatorConfirmed[item.key]
+                                                                ? !actuators[item.key]
+                                                                : true,
                                                         )
                                                     }
                                                     className={`relative h-6 w-11 rounded-full transition ${actuators[item.key] ? 'bg-emerald-500' : 'bg-slate-200'}`}

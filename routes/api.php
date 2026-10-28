@@ -12,6 +12,7 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/control-rules', [IotDeviceController::class, 'rules']);
     Route::post('/control-mode', [IotDeviceController::class, 'mode']);
     Route::post('/actuator-commands', [IotDeviceController::class, 'command']);
+    Route::get('/actuator-status', [IotDeviceController::class, 'actuatorStatus']);
 
     Route::get('/cultivation/batches', [CultivationController::class, 'batches']);
     Route::post('/cultivation/batches', [CultivationController::class, 'storeBatch']);

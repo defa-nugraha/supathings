@@ -141,6 +141,42 @@ class IotDeviceController extends Controller
         return response()->json(['data' => $device->only(['id', 'mac_address', 'control_mode'])]);
     }
 
+    public function actuatorStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate(['device_id' => ['required']]);
+        $device = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($data): void {
+                $query->where('id', $data['device_id']);
+                if (is_string($data['device_id'])) {
+                    $query->orWhere('mac_address', Str::upper($data['device_id']));
+                }
+            })
+            ->firstOrFail();
+
+        $commands = $device->actuatorCommands()->latest('id')->limit(100)->get();
+        $status = [];
+        foreach (['mist', 'water', 'blower'] as $actuator) {
+            $latest = $commands->first(fn ($command) => $command->actuator === $actuator);
+            $acknowledged = $commands->first(
+                fn ($command) => $command->actuator === $actuator && $command->status === 'acknowledged',
+            );
+            $metadata = $acknowledged
+                ? json_decode((string) $acknowledged->getRawOriginal('metadata'), true)
+                : null;
+            $actualState = is_array($metadata) ? ($metadata['actual_state'] ?? null) : null;
+
+            $status[$actuator] = [
+                'actual_state' => in_array($actualState, ['on', 'off'], true) ? $actualState : null,
+                'command_status' => $latest?->status ?? 'unknown',
+                'requested_state' => $latest?->state,
+                'updated_at' => $latest?->updated_at,
+            ];
+        }
+
+        return response()->json(['data' => $status]);
+    }
+
     public function command(Request $request): JsonResponse
     {
         $data = $request->validate([

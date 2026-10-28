@@ -7,6 +7,7 @@ use App\Models\CultivationBatch;
 use App\Models\CultivationExpense;
 use App\Models\HarvestRecord;
 use App\Models\IotDevice;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -245,7 +246,7 @@ class CultivationController extends Controller
         return response()->json(['message' => 'Biaya operasional berhasil dihapus.']);
     }
 
-    private function batchQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    private function batchQuery(Request $request): Builder
     {
         $query = CultivationBatch::query();
 
@@ -256,7 +257,7 @@ class CultivationController extends Controller
         return $query;
     }
 
-    private function harvestQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    private function harvestQuery(Request $request): Builder
     {
         $query = HarvestRecord::query();
 
@@ -267,7 +268,7 @@ class CultivationController extends Controller
         return $query;
     }
 
-    private function expenseQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    private function expenseQuery(Request $request): Builder
     {
         $query = CultivationExpense::query();
 

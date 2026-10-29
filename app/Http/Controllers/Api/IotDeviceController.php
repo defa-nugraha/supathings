@@ -8,6 +8,7 @@ use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
 use App\Models\ControlRule;
 use App\Models\IotDevice;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,7 @@ class IotDeviceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $devices = $request->user()->iotDevices()->with('controlRules')->latest()->get();
+        $devices = $this->deviceQuery($request)->with('controlRules')->latest()->get();
         foreach ($devices as $device) {
             if (! $device->last_seen_at || Carbon::parse($device->last_seen_at)->lt(now()->subMinutes(5))) {
                 if ($device->status !== 'offline') {
@@ -32,7 +33,7 @@ class IotDeviceController extends Controller
 
     public function readings(Request $request, string $device): JsonResponse
     {
-        $iotDevice = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($device): void {
+        $iotDevice = $this->deviceQuery($request)->where(function ($query) use ($device): void {
             $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
         })->firstOrFail();
 
@@ -66,8 +67,7 @@ class IotDeviceController extends Controller
 
     public function update(Request $request, string $device): JsonResponse
     {
-        $record = IotDevice::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->deviceQuery($request)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -83,8 +83,7 @@ class IotDeviceController extends Controller
 
     public function destroy(Request $request, string $device): JsonResponse
     {
-        $record = IotDevice::query()
-            ->where('user_id', $request->user()->id)
+        $record = $this->deviceQuery($request)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -125,7 +124,7 @@ class IotDeviceController extends Controller
             'device_id' => ['required'],
             'rules' => ['required', 'array'],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));
@@ -161,7 +160,7 @@ class IotDeviceController extends Controller
             'device_id' => ['required'],
             'mode' => ['required', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));
@@ -175,8 +174,7 @@ class IotDeviceController extends Controller
     public function actuatorStatus(Request $request): JsonResponse
     {
         $data = $request->validate(['device_id' => ['required']]);
-        $device = IotDevice::query()
-            ->where('user_id', $request->user()->id)
+        $device = $this->deviceQuery($request)
             ->where(function ($query) use ($data): void {
                 $query->where('id', $data['device_id']);
                 if (is_string($data['device_id'])) {
@@ -216,7 +214,7 @@ class IotDeviceController extends Controller
             'state' => ['required', Rule::in(['on', 'off'])],
             'mode' => ['sometimes', Rule::in(['manual', 'automatic'])],
         ]);
-        $device = IotDevice::query()->where('user_id', $request->user()->id)->where(function ($query) use ($data): void {
+        $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
             if (is_string($data['device_id'])) {
                 $query->orWhere('mac_address', Str::upper($data['device_id']));
@@ -303,6 +301,18 @@ class IotDeviceController extends Controller
         ])->save();
 
         return response()->json(['data' => $record->fresh()]);
+    }
+
+    /** @return Builder<IotDevice> */
+    private function deviceQuery(Request $request): Builder
+    {
+        $query = IotDevice::query();
+
+        if (! $request->user()->isAdmin()) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return $query;
     }
 
     private function deviceFromToken(Request $request): ?IotDevice

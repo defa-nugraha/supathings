@@ -38,7 +38,16 @@ class HandleInertiaRequests extends Middleware
                 'logoUrl' => $settings?->logo_path ? Storage::disk('public')->url($settings->logo_path) : null,
             ],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'email_verified_at' => $request->user()->email_verified_at,
+                    'role' => $request->user()->role,
+                    'is_active' => $request->user()->is_active,
+                    'created_at' => $request->user()->created_at,
+                    'updated_at' => $request->user()->updated_at,
+                ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

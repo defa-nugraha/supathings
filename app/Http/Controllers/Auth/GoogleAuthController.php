@@ -91,6 +91,12 @@ class GoogleAuthController extends Controller
             ],
         );
 
+        if (! $user->isActive()) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Akun Anda dinonaktifkan. Hubungi administrator.',
+            ]);
+        }
+
         if (! $user->hasVerifiedEmail()) {
             $user->forceFill(['email_verified_at' => now()])->save();
         }
@@ -98,6 +104,6 @@ class GoogleAuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->intended(config('fortify.home', '/dashboard'));
+        return redirect()->intended($user->isAdmin() ? route('admin.dashboard') : config('fortify.home', '/dashboard'));
     }
 }

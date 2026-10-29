@@ -101,21 +101,27 @@ export function AppSidebar() {
                             </SidebarMenuItem>
                         </>
                     )}
-                    {mainNavItems.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={isCurrentUrl(item.href)}
-                                tooltip={{ children: item.title }}
-                                className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
-                            >
-                                <Link href={item.href} prefetch>
-                                    <item.icon className="size-[18px]" />
-                                    <span>{item.title}</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    ))}
+                    {mainNavItems
+                        .filter(
+                            (item) =>
+                                auth.user?.role !== 'admin' ||
+                                item.href !== '/dashboard',
+                        )
+                        .map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(item.href)}
+                                    tooltip={{ children: item.title }}
+                                    className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
+                                >
+                                    <Link href={item.href} prefetch>
+                                        <item.icon className="size-[18px]" />
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
                     <Collapsible
                         defaultOpen={
                             isCurrentUrl('/cultivation') ||

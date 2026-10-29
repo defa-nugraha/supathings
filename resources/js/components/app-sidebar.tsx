@@ -101,7 +101,13 @@ export function AppSidebar() {
                             </SidebarMenuItem>
                         </>
                     )}
-                    {mainNavItems.map((item) => (
+                    {mainNavItems
+                        .filter(
+                            (item) =>
+                                auth.user?.role !== 'admin' ||
+                                item.href !== '/dashboard',
+                        )
+                        .map((item) => (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild

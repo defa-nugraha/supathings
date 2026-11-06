@@ -808,7 +808,7 @@ export default function Devices() {
                                         disabled={scanning}
                                         className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
                                     >
-                                        <RefreshCw className={\`size-3.5 \${scanning ? 'animate-spin' : ''}\`} />
+                                        <RefreshCw className={`size-3.5 ${scanning ? 'animate-spin' : ''}`} />
                                         Cari lagi
                                     </button>
                                 </div>
@@ -821,7 +821,7 @@ export default function Devices() {
                                                 type="button"
                                                 onClick={() => setSelectedDiscovered(item)}
                                                 aria-pressed={selectedDiscovered?.id === item.id}
-                                                className={\`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition \${selectedDiscovered?.id === item.id ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}\`}
+                                                className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition ${selectedDiscovered?.id === item.id ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                                             >
                                                 <span className="min-w-0">
                                                     <span className="block text-sm font-semibold text-slate-800">

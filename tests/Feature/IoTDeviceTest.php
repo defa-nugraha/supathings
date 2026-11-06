@@ -81,8 +81,14 @@ test('device token can be displayed by its owner but not by another user', funct
         ->assertOk()
         ->assertJsonPath('device_token', 'saved-device-token');
 
-    $this->actingAs(User::factory()->create())
+    $otherUser = User::factory()->create();
+
+    $this->actingAs($otherUser)
         ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertNotFound();
+
+    $this->actingAs($otherUser)
+        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token/rotate')
         ->assertNotFound();
 });
 

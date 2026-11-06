@@ -1,18 +1,34 @@
-# Supathings IoT transport contract
+# Supathings IoT connection contract
 
-The browser and ESP32 use a WebSocket endpoint configured with `VITE_WS_URL`. The WebSocket server is a separate runtime and must be deployed/configured before realtime status is considered live. This application intentionally does not fake a connected status when that endpoint is missing.
+The browser and ESP32 use the WebSocket endpoint configured with \`VITE_WS_URL\`. The WebSocket server is a separate runtime and must be deployed/configured before discovery and realtime presence can work.
 
-## Messages
+## Pairing and identity
 
-- ESP32 → server: `{ "type": "device_discovered", "device_id": "AA:BB:CC:DD:EE:FF", "sensors": ["DHT22", "LDR"] }`
-- Browser → server: `{ "type": "discover_devices" }`
-- ESP32 → server: `{ "type": "telemetry", "device_id": "...", "temperature": 27.4, "humidity": 86, "light_raw": 420, "light_percent": 42, "timestamp": "2026-10-27T10:00:00Z" }`
-- Browser → server: `{ "type": "actuator_command", "device_id": "...", "actuator": "mist|water|blower", "state": "on|off", "mode": "manual" }`
-- Browser → server: `{ "type": "thresholds_update", "device_id": "...", "thresholds": { "temperatureMin": "24", "temperatureMax": "30" } }`
-- Server → browser: `{ "type": "actuator_state", "device_id": "...", "state": { "mist": true, "water": false, "blower": false } }`
+1. ESP32 joins the configured Wi-Fi network and reads its hardware MAC address.
+2. ESP32 sends \`device_discovered\` to the WebSocket server with its MAC address and supported sensors.
+3. The browser receives the discovery event. The MAC is displayed as the device identity; users do not type or edit it.
+4. In **Tambah device**, the user selects one discovered ESP32 and only enters its display name.
+5. The authenticated application registers the selected MAC and issues a random device token.
+6. The user copies the token into the ESP32 firmware configuration. Only then can that ESP32 authenticate to the data and command APIs.
 
-## Persistence and safety
+Discovery is not registration and is not authorization. A MAC address is an identifier, not a secret or proof of ownership. An unregistered ESP32, or one without a valid device bearer token, cannot submit telemetry, poll actuator commands, or acknowledge commands.
 
-Telemetry is accepted at `POST /api/telemetry` with the per-device bearer token returned during registration. The HTTP handler acknowledges quickly and queues the reading with `afterResponse()`; run a real queue worker in production and configure a non-sync queue driver for durable background processing. Reading history is indexed by device and measurement time.
+## WebSocket messages
 
-The WebSocket broker is not bundled in this initial application commit. Configure a production WebSocket server and set `VITE_WS_URL` before connecting ESP32 devices. Never expose a device token in logs. Firmware must fail safe when commands expire, the network is lost, or sensor readings are invalid. Use actuator maximum-on timers and hysteresis in the server control service/firmware as appropriate.
+- ESP32 → server: \`{ "type": "device_discovered", "device_id": "AA:BB:CC:DD:EE:FF", "sensors": ["DHT22", "LDR"] }\`
+- Browser → server: \`{ "type": "discover_devices" }\`
+- Server → browser: \`{ "type": "device_presence", "device_id": "AA:BB:CC:DD:EE:FF", "online": true }\`
+
+The WebSocket broker is not bundled in this Laravel repository. Configure and secure the production WebSocket service and set \`VITE_WS_URL\`.
+
+## Authenticated HTTP API
+
+The following requests use \`Authorization: Bearer <device_token>\`:
+
+- \`POST /api/telemetry\` — submit sensor readings.
+- \`GET /api/device/commands\` — retrieve pending actuator commands.
+- \`POST /api/device/commands/{command}/ack\` — acknowledge command execution.
+
+The application stores a SHA-256 hash for token validation and an encrypted copy so the authenticated owner can reveal the token again from **Token & Hubungkan**. Both token fields are hidden from ordinary device API serialization. Token reveal and rotation are restricted to the owning account. Never print tokens to Serial Monitor in production, application logs, or WebSocket messages.
+
+Firmware must fail safe when commands expire, the network is lost, or sensor readings are invalid. Use actuator maximum-on timers and hysteresis in firmware/control rules as appropriate.

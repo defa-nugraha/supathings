@@ -88,7 +88,7 @@ class IotDeviceController extends Controller
      */
     public function showToken(Request $request, string $device): JsonResponse
     {
-        $record = $this->deviceQuery($request)
+        $record = IotDevice::query()->where('user_id', $request->user()->id)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })
@@ -118,7 +118,7 @@ class IotDeviceController extends Controller
      */
     public function rotateToken(Request $request, string $device): JsonResponse
     {
-        $record = $this->deviceQuery($request)
+        $record = IotDevice::query()->where('user_id', $request->user()->id)
             ->where(function ($query) use ($device): void {
                 $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
             })

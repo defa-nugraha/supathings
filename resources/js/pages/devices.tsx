@@ -36,7 +36,7 @@ export default function Devices() {
     const [query, setQuery] = useState('');
     const [notice, setNotice] = useState('');
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [deviceMac, setDeviceMac] = useState('');
+    const [selectedDiscovered, setSelectedDiscovered] = useState<Device | null>(null);
     const [formError, setFormError] = useState('');
     const [registering, setRegistering] = useState(false);
     const [connectionDevice, setConnectionDevice] = useState<Device | null>(
@@ -51,6 +51,16 @@ export default function Devices() {
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
     );
+
+    useEffect(() => {
+        if (!isAddOpen || selectedDiscovered) return;
+
+        const candidate = discovered.find(
+            (item) => !devices.some((device) => device.id === item.id),
+        );
+
+        if (candidate) setSelectedDiscovered(candidate);
+    }, [isAddOpen, discovered, devices, selectedDiscovered]);
 
     useEffect(() => {
         void fetch('/api/devices', { headers: { Accept: 'application/json' } })
@@ -106,12 +116,12 @@ export default function Devices() {
                             lastSeen: 'Baru saja',
                             sensors: message.sensors || ['DHT22', 'LDR'],
                         };
+                        if (!/^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/.test(item.id)) return;
                         setDiscovered((prev) =>
                             prev.some((d) => d.id === item.id)
                                 ? prev.map((d) => (d.id === item.id ? item : d))
                                 : [...prev, item],
                         );
-                        setDeviceMac((current) => current || item.id);
                     }
                     if (
                         message.type === 'device_presence' &&
@@ -146,17 +156,28 @@ export default function Devices() {
     }, []);
 
     const scan = () => {
-        setScanning(true);
-        if (socket.current?.readyState === WebSocket.OPEN) {
-            socket.current.send(JSON.stringify({ type: 'discover_devices' }));
+        if (socket.current?.readyState !== WebSocket.OPEN) {
+            setWsStatus('offline');
+            setFormError(
+                'Koneksi WebSocket belum tersedia. Periksa VITE_WS_URL dan server discovery.',
+            );
+            return;
         }
+
+        setFormError('');
+        setScanning(true);
+        socket.current.send(JSON.stringify({ type: 'discover_devices' }));
         window.setTimeout(() => setScanning(false), 5000);
     };
 
     const openAddDeviceModal = () => {
         setSelected(null);
+        setSelectedDiscovered(
+            discovered.find(
+                (item) => !devices.some((device) => device.id === item.id),
+            ) ?? null,
+        );
         setDeviceName('');
-        setDeviceMac('');
         setFormError('');
         setIsAddOpen(true);
         scan();
@@ -164,7 +185,9 @@ export default function Devices() {
 
     const register = async () => {
         const isEditing = selected !== null;
-        const targetMac = (selected?.id ?? deviceMac).trim().toUpperCase();
+        const targetMac = (selected?.id ?? selectedDiscovered?.id ?? '')
+            .trim()
+            .toUpperCase();
 
         if (!deviceName.trim()) {
             setFormError('Nama device wajib diisi.');
@@ -172,7 +195,7 @@ export default function Devices() {
         }
         if (!isEditing && !targetMac) {
             setFormError(
-                'Masukkan MAC address ESP32 atau pilih perangkat yang ditemukan.',
+                'Belum ada ESP32 yang terdeteksi. Hubungkan ESP32 ke jaringan lalu cari perangkat lagi.',
             );
             return;
         }
@@ -201,9 +224,7 @@ export default function Devices() {
                             : {
                                   device_id: targetMac,
                                   name: deviceName.trim(),
-                                  sensors: discovered.find(
-                                      (item) => item.id === targetMac,
-                                  )?.sensors ?? ['DHT22', 'LDR'],
+                                  sensors: selectedDiscovered?.sensors ?? ['DHT22', 'LDR'],
                               },
                     ),
                 },
@@ -221,9 +242,7 @@ export default function Devices() {
                 lastSeen: isEditing
                     ? selected.lastSeen
                     : 'Belum pernah terhubung',
-                sensors: discovered.find((item) => item.id === targetMac)
-                    ?.sensors ??
-                    selected?.sensors ?? ['DHT22', 'LDR'],
+                sensors: selectedDiscovered?.sensors ?? selected?.sensors ?? ['DHT22', 'LDR'],
             };
 
             setDevices((prev) =>
@@ -249,7 +268,7 @@ export default function Devices() {
 
                 setIsAddOpen(false);
                 setDeviceName('');
-                setDeviceMac('');
+                setSelectedDiscovered(null);
                 setDiscovered((prev) =>
                     prev.filter((item) => item.id !== targetMac),
                 );
@@ -403,6 +422,9 @@ export default function Devices() {
 
     const visibleDevices = devices.filter((d) =>
         `${d.name} ${d.id}`.toLowerCase().includes(query.toLowerCase()),
+    );
+    const availableDiscovered = discovered.filter(
+        (item) => !devices.some((device) => device.id === item.id),
     );
 
     return (
@@ -742,8 +764,7 @@ export default function Devices() {
                                     Tambah device
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    Beri nama perangkat dan hubungkan identitas
-                                    ESP32.
+                                    Pilih ESP32 yang sudah mengirim MAC address, lalu berikan nama perangkat.
                                 </p>
                             </div>
                             <button
@@ -771,75 +792,82 @@ export default function Devices() {
                                 />
                             </label>
 
-                            <div>
+                            <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-3">
-                                    <label
-                                        htmlFor="new-device-mac"
-                                        className="text-sm font-medium text-slate-700"
-                                    >
-                                        MAC address ESP32
-                                    </label>
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-700">
+                                            ESP32 terdeteksi
+                                        </p>
+                                        <p className="mt-1 text-xs text-slate-500">
+                                            MAC address dikirim otomatis oleh ESP32. Pilih perangkat yang akan didaftarkan.
+                                        </p>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={scan}
                                         disabled={scanning}
-                                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
+                                        className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
                                     >
-                                        <RefreshCw className="size-3.5" />
-                                        Cari ESP32
+                                        <RefreshCw className={\`size-3.5 \${scanning ? 'animate-spin' : ''}\`} />
+                                        Cari lagi
                                     </button>
                                 </div>
-                                {discovered.length > 0 && (
-                                    <select
-                                        value={deviceMac}
-                                        onChange={(event) =>
-                                            setDeviceMac(event.target.value)
-                                        }
-                                        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                                    >
-                                        <option value="">
-                                            Pilih perangkat yang ditemukan
-                                            (opsional)
-                                        </option>
-                                        {discovered.map((item) => (
-                                            <option
+
+                                {availableDiscovered.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {availableDiscovered.map((item) => (
+                                            <button
                                                 key={item.id}
-                                                value={item.id}
+                                                type="button"
+                                                onClick={() => setSelectedDiscovered(item)}
+                                                aria-pressed={selectedDiscovered?.id === item.id}
+                                                className={\`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition \${selectedDiscovered?.id === item.id ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}\`}
                                             >
-                                                {item.name} — {item.id}
-                                            </option>
+                                                <span className="min-w-0">
+                                                    <span className="block text-sm font-semibold text-slate-800">
+                                                        ESP32
+                                                    </span>
+                                                    <span className="mt-1 block font-mono text-xs text-slate-500">
+                                                        {item.id}
+                                                    </span>
+                                                    <span className="mt-1 block text-xs text-slate-400">
+                                                        Sensor: {item.sensors.join(', ')}
+                                                    </span>
+                                                </span>
+                                                {selectedDiscovered?.id === item.id ? (
+                                                    <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1.5 text-xs font-semibold text-white">
+                                                        <Check className="size-3.5" />
+                                                        Dipilih
+                                                    </span>
+                                                ) : (
+                                                    <span className="shrink-0 text-xs font-medium text-blue-700">
+                                                        Pilih
+                                                    </span>
+                                                )}
+                                            </button>
                                         ))}
-                                    </select>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                                            {scanning ? (
+                                                <RefreshCw className="size-4 animate-spin text-blue-700" />
+                                            ) : (
+                                                <Wifi className="size-4 text-slate-400" />
+                                            )}
+                                            {scanning ? 'Mencari ESP32…' : 'Belum ada ESP32 terdeteksi'}
+                                        </div>
+                                        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                                            Hubungkan ESP32 ke Wi-Fi dan pastikan firmware mengirim pesan device_discovered ke server WebSocket.
+                                        </p>
+                                        <p className="mt-2 text-xs text-slate-400">
+                                            WebSocket: {wsStatus === 'connected' ? 'Terhubung' : 'Tidak terhubung'}
+                                        </p>
+                                    </div>
                                 )}
-                                <input
-                                    id="new-device-mac"
-                                    value={deviceMac}
-                                    onChange={(event) =>
-                                        setDeviceMac(
-                                            event.target.value.toUpperCase(),
-                                        )
-                                    }
-                                    placeholder="AA:BB:CC:DD:EE:FF"
-                                    maxLength={17}
-                                    required
-                                    className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                />
-                                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-                                    MAC otomatis diisi jika ESP32 ditemukan
-                                    melalui WebSocket. Jika tidak, isi MAC dari
-                                    Serial Monitor Arduino melalui
-                                    WiFi.macAddress().
-                                </p>
-                                <p className="mt-1 text-xs text-slate-400">
-                                    Status pencarian:{' '}
-                                    {wsStatus === 'connected'
-                                        ? 'WebSocket terhubung'
-                                        : 'WebSocket tidak terhubung'}
-                                    {scanning
-                                        ? ' · Sedang mencari perangkat…'
-                                        : ''}
-                                </p>
                             </div>
+
+
 
                             {formError && (
                                 <div
@@ -864,7 +892,7 @@ export default function Devices() {
                                 disabled={
                                     registering ||
                                     !deviceName.trim() ||
-                                    !deviceMac.trim()
+                                    !selectedDiscovered
                                 }
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                             >

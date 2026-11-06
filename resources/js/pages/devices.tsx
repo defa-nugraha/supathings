@@ -39,7 +39,9 @@ export default function Devices() {
     const [deviceMac, setDeviceMac] = useState('');
     const [formError, setFormError] = useState('');
     const [registering, setRegistering] = useState(false);
-    const [connectionDevice, setConnectionDevice] = useState<Device | null>(null);
+    const [connectionDevice, setConnectionDevice] = useState<Device | null>(
+        null,
+    );
     const [connectionToken, setConnectionToken] = useState('');
     const [tokenLoading, setTokenLoading] = useState(false);
     const [tokenNeedsRotation, setTokenNeedsRotation] = useState(false);
@@ -169,7 +171,9 @@ export default function Devices() {
             return;
         }
         if (!isEditing && !targetMac) {
-            setFormError('Masukkan MAC address ESP32 atau pilih perangkat yang ditemukan.');
+            setFormError(
+                'Masukkan MAC address ESP32 atau pilih perangkat yang ditemukan.',
+            );
             return;
         }
 
@@ -197,9 +201,9 @@ export default function Devices() {
                             : {
                                   device_id: targetMac,
                                   name: deviceName.trim(),
-                                  sensors:
-                                      discovered.find((item) => item.id === targetMac)?.sensors ??
-                                      ['DHT22', 'LDR'],
+                                  sensors: discovered.find(
+                                      (item) => item.id === targetMac,
+                                  )?.sensors ?? ['DHT22', 'LDR'],
                               },
                     ),
                 },
@@ -217,15 +221,16 @@ export default function Devices() {
                 lastSeen: isEditing
                     ? selected.lastSeen
                     : 'Belum pernah terhubung',
-                sensors:
-                    discovered.find((item) => item.id === targetMac)?.sensors ??
-                    selected?.sensors ??
-                    ['DHT22', 'LDR'],
+                sensors: discovered.find((item) => item.id === targetMac)
+                    ?.sensors ??
+                    selected?.sensors ?? ['DHT22', 'LDR'],
             };
 
             setDevices((prev) =>
                 prev.some((item) => item.id === targetMac)
-                    ? prev.map((item) => (item.id === targetMac ? savedDevice : item))
+                    ? prev.map((item) =>
+                          item.id === targetMac ? savedDevice : item,
+                      )
                     : [savedDevice, ...prev],
             );
 
@@ -233,14 +238,21 @@ export default function Devices() {
                 setSelected(null);
                 setNotice('Nama perangkat berhasil diperbarui.');
             } else {
-                if (typeof payload.device_token !== 'string' || !payload.device_token) {
-                    throw new Error('Device tersimpan, tetapi token tidak diterima. Muat ulang daftar device lalu buka Token & Hubungkan.');
+                if (
+                    typeof payload.device_token !== 'string' ||
+                    !payload.device_token
+                ) {
+                    throw new Error(
+                        'Device tersimpan, tetapi token tidak diterima. Muat ulang daftar device lalu buka Token & Hubungkan.',
+                    );
                 }
 
                 setIsAddOpen(false);
                 setDeviceName('');
                 setDeviceMac('');
-                setDiscovered((prev) => prev.filter((item) => item.id !== targetMac));
+                setDiscovered((prev) =>
+                    prev.filter((item) => item.id !== targetMac),
+                );
                 setConnectionDevice(savedDevice);
                 setConnectionToken(payload.device_token);
                 setTokenNeedsRotation(false);
@@ -279,7 +291,9 @@ export default function Devices() {
                 return;
             }
             if (!response.ok) {
-                throw new Error(payload.message || 'Token device tidak dapat dimuat.');
+                throw new Error(
+                    payload.message || 'Token device tidak dapat dimuat.',
+                );
             }
             setConnectionToken(payload.device_token);
         } catch (error) {
@@ -304,7 +318,9 @@ export default function Devices() {
         setRotatingToken(true);
         try {
             const response = await fetch(
-                '/api/devices/' + encodeURIComponent(connectionDevice.id) + '/token/rotate',
+                '/api/devices/' +
+                    encodeURIComponent(connectionDevice.id) +
+                    '/token/rotate',
                 {
                     method: 'POST',
                     headers: {
@@ -322,7 +338,9 @@ export default function Devices() {
             }
             setConnectionToken(payload.device_token);
             setTokenNeedsRotation(false);
-            setCopyStatus('Token baru berhasil dibuat. Perbarui token pada ESP32.');
+            setCopyStatus(
+                'Token baru berhasil dibuat. Perbarui token pada ESP32.',
+            );
         } catch (error) {
             setNotice(
                 error instanceof Error
@@ -340,7 +358,9 @@ export default function Devices() {
             await navigator.clipboard.writeText(connectionToken);
             setCopyStatus('Token berhasil disalin.');
         } catch {
-            setCopyStatus('Clipboard tidak tersedia. Salin token secara manual.');
+            setCopyStatus(
+                'Clipboard tidak tersedia. Salin token secara manual.',
+            );
         }
     };
 
@@ -595,7 +615,11 @@ export default function Devices() {
                                             {device.lastSeen}
                                         </div>
                                         <button
-                                            onClick={() => void openDeviceConnection(device)}
+                                            onClick={() =>
+                                                void openDeviceConnection(
+                                                    device,
+                                                )
+                                            }
                                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                                         >
                                             <Eye className="size-4" />
@@ -695,7 +719,10 @@ export default function Devices() {
                     className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"
                     role="presentation"
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget && !registering) {
+                        if (
+                            event.target === event.currentTarget &&
+                            !registering
+                        ) {
                             setIsAddOpen(false);
                         }
                     }}
@@ -708,11 +735,15 @@ export default function Devices() {
                     >
                         <div className="mb-5 flex items-start justify-between gap-3">
                             <div>
-                                <h2 id="add-device-title" className="text-lg font-semibold text-slate-900">
+                                <h2
+                                    id="add-device-title"
+                                    className="text-lg font-semibold text-slate-900"
+                                >
                                     Tambah device
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    Beri nama perangkat dan hubungkan identitas ESP32.
+                                    Beri nama perangkat dan hubungkan identitas
+                                    ESP32.
                                 </p>
                             </div>
                             <button
@@ -731,7 +762,9 @@ export default function Devices() {
                                 <input
                                     autoFocus
                                     value={deviceName}
-                                    onChange={(event) => setDeviceName(event.target.value)}
+                                    onChange={(event) =>
+                                        setDeviceName(event.target.value)
+                                    }
                                     placeholder="Contoh: Kumbung Utama"
                                     maxLength={100}
                                     className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -740,7 +773,10 @@ export default function Devices() {
 
                             <div>
                                 <div className="flex items-center justify-between gap-3">
-                                    <label htmlFor="new-device-mac" className="text-sm font-medium text-slate-700">
+                                    <label
+                                        htmlFor="new-device-mac"
+                                        className="text-sm font-medium text-slate-700"
+                                    >
                                         MAC address ESP32
                                     </label>
                                     <button
@@ -756,12 +792,20 @@ export default function Devices() {
                                 {discovered.length > 0 && (
                                     <select
                                         value={deviceMac}
-                                        onChange={(event) => setDeviceMac(event.target.value)}
+                                        onChange={(event) =>
+                                            setDeviceMac(event.target.value)
+                                        }
                                         className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                                     >
-                                        <option value="">Pilih perangkat yang ditemukan (opsional)</option>
+                                        <option value="">
+                                            Pilih perangkat yang ditemukan
+                                            (opsional)
+                                        </option>
                                         {discovered.map((item) => (
-                                            <option key={item.id} value={item.id}>
+                                            <option
+                                                key={item.id}
+                                                value={item.id}
+                                            >
                                                 {item.name} — {item.id}
                                             </option>
                                         ))}
@@ -770,23 +814,38 @@ export default function Devices() {
                                 <input
                                     id="new-device-mac"
                                     value={deviceMac}
-                                    onChange={(event) => setDeviceMac(event.target.value.toUpperCase())}
+                                    onChange={(event) =>
+                                        setDeviceMac(
+                                            event.target.value.toUpperCase(),
+                                        )
+                                    }
                                     placeholder="AA:BB:CC:DD:EE:FF"
                                     maxLength={17}
                                     required
                                     className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                                 />
                                 <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-                                    MAC otomatis diisi jika ESP32 ditemukan melalui WebSocket. Jika tidak, isi MAC dari Serial Monitor Arduino melalui WiFi.macAddress().
+                                    MAC otomatis diisi jika ESP32 ditemukan
+                                    melalui WebSocket. Jika tidak, isi MAC dari
+                                    Serial Monitor Arduino melalui
+                                    WiFi.macAddress().
                                 </p>
                                 <p className="mt-1 text-xs text-slate-400">
-                                    Status pencarian: {wsStatus === 'connected' ? 'WebSocket terhubung' : 'WebSocket tidak terhubung'}
-                                    {scanning ? ' · Sedang mencari perangkat…' : ''}
+                                    Status pencarian:{' '}
+                                    {wsStatus === 'connected'
+                                        ? 'WebSocket terhubung'
+                                        : 'WebSocket tidak terhubung'}
+                                    {scanning
+                                        ? ' · Sedang mencari perangkat…'
+                                        : ''}
                                 </p>
                             </div>
 
                             {formError && (
-                                <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                                <div
+                                    role="alert"
+                                    className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"
+                                >
                                     {formError}
                                 </div>
                             )}
@@ -802,11 +861,21 @@ export default function Devices() {
                             </button>
                             <button
                                 onClick={() => void register()}
-                                disabled={registering || !deviceName.trim() || !deviceMac.trim()}
+                                disabled={
+                                    registering ||
+                                    !deviceName.trim() ||
+                                    !deviceMac.trim()
+                                }
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                             >
-                                {registering ? <RefreshCw className="size-4 animate-spin" /> : <Check className="size-4" />}
-                                {registering ? 'Menyimpan…' : 'Simpan & buat token'}
+                                {registering ? (
+                                    <RefreshCw className="size-4 animate-spin" />
+                                ) : (
+                                    <Check className="size-4" />
+                                )}
+                                {registering
+                                    ? 'Menyimpan…'
+                                    : 'Simpan & buat token'}
                             </button>
                         </div>
                     </section>
@@ -834,11 +903,17 @@ export default function Devices() {
                                 <div className="mb-2 inline-flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                                     <Link2 className="size-5" />
                                 </div>
-                                <h2 id="device-connection-title" className="text-lg font-semibold text-slate-900">
+                                <h2
+                                    id="device-connection-title"
+                                    className="text-lg font-semibold text-slate-900"
+                                >
                                     Token & Hubungkan device
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    {connectionDevice.name} · <span className="font-mono">{connectionDevice.id}</span>
+                                    {connectionDevice.name} ·{' '}
+                                    <span className="font-mono">
+                                        {connectionDevice.id}
+                                    </span>
                                 </p>
                             </div>
                             <button
@@ -864,15 +939,26 @@ export default function Devices() {
                                     Token lama belum dapat ditampilkan
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                                    Token ini dibuat sebelum penyimpanan terenkripsi tersedia. Server hanya memiliki hash-nya, sehingga token lama tidak dapat dipulihkan. Buat token baru untuk menghubungkan ESP32; token lama akan dinonaktifkan.
+                                    Token ini dibuat sebelum penyimpanan
+                                    terenkripsi tersedia. Server hanya memiliki
+                                    hash-nya, sehingga token lama tidak dapat
+                                    dipulihkan. Buat token baru untuk
+                                    menghubungkan ESP32; token lama akan
+                                    dinonaktifkan.
                                 </p>
                                 <button
                                     onClick={() => void rotateDeviceToken()}
                                     disabled={rotatingToken}
                                     className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                                 >
-                                    {rotatingToken ? <RefreshCw className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
-                                    {rotatingToken ? 'Membuat token…' : 'Buat token baru'}
+                                    {rotatingToken ? (
+                                        <RefreshCw className="size-4 animate-spin" />
+                                    ) : (
+                                        <KeyRound className="size-4" />
+                                    )}
+                                    {rotatingToken
+                                        ? 'Membuat token…'
+                                        : 'Buat token baru'}
                                 </button>
                             </div>
                         ) : connectionToken ? (
@@ -882,20 +968,32 @@ export default function Devices() {
                                         Token device siap digunakan
                                     </p>
                                     <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-                                        Tempel token ini pada variabel DEVICE_TOKEN di sketch ESP32. Token hanya dapat diakses oleh akun yang memiliki perangkat ini.
+                                        Tempel token ini pada variabel
+                                        DEVICE_TOKEN di sketch ESP32. Token
+                                        hanya dapat diakses oleh akun yang
+                                        memiliki perangkat ini.
                                     </p>
-                                    <code className="mt-3 block break-all rounded-lg border border-emerald-100 bg-white p-3 text-xs text-slate-800">
+                                    <code className="mt-3 block rounded-lg border border-emerald-100 bg-white p-3 text-xs break-all text-slate-800">
                                         {connectionToken}
                                     </code>
                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                         <button
-                                            onClick={() => void copyDeviceToken()}
+                                            onClick={() =>
+                                                void copyDeviceToken()
+                                            }
                                             className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
                                         >
                                             <Copy className="size-3.5" />
                                             Salin token
                                         </button>
-                                        {copyStatus && <span role="status" className="text-xs text-emerald-800">{copyStatus}</span>}
+                                        {copyStatus && (
+                                            <span
+                                                role="status"
+                                                className="text-xs text-emerald-800"
+                                            >
+                                                {copyStatus}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -905,29 +1003,64 @@ export default function Devices() {
                                     </p>
                                     <div className="mt-3 space-y-2">
                                         <div>
-                                            <p className="text-xs text-slate-500">Alamat aplikasi</p>
-                                            <code className="mt-1 block break-all rounded-lg bg-slate-50 p-2 text-xs text-slate-700">
+                                            <p className="text-xs text-slate-500">
+                                                Alamat aplikasi
+                                            </p>
+                                            <code className="mt-1 block rounded-lg bg-slate-50 p-2 text-xs break-all text-slate-700">
                                                 {window.location.origin}
                                             </code>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-slate-500">Baris konfigurasi pada file .ino</p>
+                                            <p className="text-xs text-slate-500">
+                                                Baris konfigurasi pada file .ino
+                                            </p>
                                             <pre className="mt-1 overflow-x-auto rounded-lg bg-slate-950 p-3 text-xs leading-relaxed text-slate-100">
-                                                {'const char* SUPATHINGS_URL = "' + window.location.origin + '";\n' +
-                                                    'const char* DEVICE_TOKEN = "' + connectionToken + '";'}
+                                                {'const char* SUPATHINGS_URL = "' +
+                                                    window.location.origin +
+                                                    '";\n' +
+                                                    'const char* DEVICE_TOKEN = "' +
+                                                    connectionToken +
+                                                    '";'}
                                             </pre>
                                         </div>
                                     </div>
                                     <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
-                                        <li>Masukkan SSID dan password Wi-Fi pada sketch ESP32.</li>
-                                        <li>Salin alamat aplikasi dan token ke konfigurasi sketch, lalu upload ke ESP32.</li>
-                                        <li>ESP32 mengirim telemetry ke <code className="rounded bg-slate-100 px-1">/api/telemetry</code> dan mengambil perintah dari <code className="rounded bg-slate-100 px-1">/api/device/commands</code>.</li>
+                                        <li>
+                                            Masukkan SSID dan password Wi-Fi
+                                            pada sketch ESP32.
+                                        </li>
+                                        <li>
+                                            Salin alamat aplikasi dan token ke
+                                            konfigurasi sketch, lalu upload ke
+                                            ESP32.
+                                        </li>
+                                        <li>
+                                            ESP32 mengirim telemetry ke{' '}
+                                            <code className="rounded bg-slate-100 px-1">
+                                                /api/telemetry
+                                            </code>{' '}
+                                            dan mengambil perintah dari{' '}
+                                            <code className="rounded bg-slate-100 px-1">
+                                                /api/device/commands
+                                            </code>
+                                            .
+                                        </li>
                                     </ol>
                                 </div>
                                 <p className="text-xs leading-relaxed text-slate-500">
-                                    Status device akan berubah menjadi Online setelah server menerima telemetry yang valid dari ESP32. Membuka modal ini tidak otomatis menghubungkan perangkat.
+                                    Status device akan berubah menjadi Online
+                                    setelah server menerima telemetry yang valid
+                                    dari ESP32. Membuka modal ini tidak otomatis
+                                    menghubungkan perangkat.
                                 </p>
-                                {copyStatus && <p role="status" className="text-xs text-slate-500">{copyStatus}</p>}
+                                {copyStatus && (
+                                    <p
+                                        role="status"
+                                        className="text-xs text-slate-500"
+                                    >
+                                        {copyStatus}
+                                    </p>
+                                )}
                             </div>
                         ) : null}
 
@@ -996,8 +1129,14 @@ export default function Devices() {
                                 onClick={() => void register()}
                                 className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                             >
-                                {registering ? <RefreshCw className="size-4 animate-spin" /> : <Check className="size-4" />}
-                                {registering ? 'Menyimpan…' : 'Simpan perubahan'}
+                                {registering ? (
+                                    <RefreshCw className="size-4 animate-spin" />
+                                ) : (
+                                    <Check className="size-4" />
+                                )}
+                                {registering
+                                    ? 'Menyimpan…'
+                                    : 'Simpan perubahan'}
                             </button>
                         </div>
                     </div>

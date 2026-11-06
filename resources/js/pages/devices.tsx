@@ -36,7 +36,9 @@ export default function Devices() {
     const [query, setQuery] = useState('');
     const [notice, setNotice] = useState('');
     const [isAddOpen, setIsAddOpen] = useState(false);
-    const [selectedDiscovered, setSelectedDiscovered] = useState<Device | null>(null);
+    const [selectedDiscovered, setSelectedDiscovered] = useState<Device | null>(
+        null,
+    );
     const [formError, setFormError] = useState('');
     const [registering, setRegistering] = useState(false);
     const [connectionDevice, setConnectionDevice] = useState<Device | null>(
@@ -116,7 +118,8 @@ export default function Devices() {
                             lastSeen: 'Baru saja',
                             sensors: message.sensors || ['DHT22', 'LDR'],
                         };
-                        if (!/^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/.test(item.id)) return;
+                        if (!/^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/.test(item.id))
+                            return;
                         setDiscovered((prev) =>
                             prev.some((d) => d.id === item.id)
                                 ? prev.map((d) => (d.id === item.id ? item : d))
@@ -224,7 +227,10 @@ export default function Devices() {
                             : {
                                   device_id: targetMac,
                                   name: deviceName.trim(),
-                                  sensors: selectedDiscovered?.sensors ?? ['DHT22', 'LDR'],
+                                  sensors: selectedDiscovered?.sensors ?? [
+                                      'DHT22',
+                                      'LDR',
+                                  ],
                               },
                     ),
                 },
@@ -242,7 +248,8 @@ export default function Devices() {
                 lastSeen: isEditing
                     ? selected.lastSeen
                     : 'Belum pernah terhubung',
-                sensors: selectedDiscovered?.sensors ?? selected?.sensors ?? ['DHT22', 'LDR'],
+                sensors: selectedDiscovered?.sensors ??
+                    selected?.sensors ?? ['DHT22', 'LDR'],
             };
 
             setDevices((prev) =>
@@ -764,7 +771,8 @@ export default function Devices() {
                                     Tambah device
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
-                                    Pilih ESP32 yang sudah mengirim MAC address, lalu berikan nama perangkat.
+                                    Pilih ESP32 yang sudah mengirim MAC address,
+                                    lalu berikan nama perangkat.
                                 </p>
                             </div>
                             <button
@@ -799,7 +807,9 @@ export default function Devices() {
                                             ESP32 terdeteksi
                                         </p>
                                         <p className="mt-1 text-xs text-slate-500">
-                                            MAC address dikirim otomatis oleh ESP32. Pilih perangkat yang akan didaftarkan.
+                                            MAC address dikirim otomatis oleh
+                                            ESP32. Pilih perangkat yang akan
+                                            didaftarkan.
                                         </p>
                                     </div>
                                     <button
@@ -808,7 +818,9 @@ export default function Devices() {
                                         disabled={scanning}
                                         className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
                                     >
-                                        <RefreshCw className={`size-3.5 ${scanning ? 'animate-spin' : ''}`} />
+                                        <RefreshCw
+                                            className={`size-3.5 ${scanning ? 'animate-spin' : ''}`}
+                                        />
                                         Cari lagi
                                     </button>
                                 </div>
@@ -819,8 +831,13 @@ export default function Devices() {
                                             <button
                                                 key={item.id}
                                                 type="button"
-                                                onClick={() => setSelectedDiscovered(item)}
-                                                aria-pressed={selectedDiscovered?.id === item.id}
+                                                onClick={() =>
+                                                    setSelectedDiscovered(item)
+                                                }
+                                                aria-pressed={
+                                                    selectedDiscovered?.id ===
+                                                    item.id
+                                                }
                                                 className={`flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition ${selectedDiscovered?.id === item.id ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
                                             >
                                                 <span className="min-w-0">
@@ -831,10 +848,14 @@ export default function Devices() {
                                                         {item.id}
                                                     </span>
                                                     <span className="mt-1 block text-xs text-slate-400">
-                                                        Sensor: {item.sensors.join(', ')}
+                                                        Sensor:{' '}
+                                                        {item.sensors.join(
+                                                            ', ',
+                                                        )}
                                                     </span>
                                                 </span>
-                                                {selectedDiscovered?.id === item.id ? (
+                                                {selectedDiscovered?.id ===
+                                                item.id ? (
                                                     <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-blue-700 px-2.5 py-1.5 text-xs font-semibold text-white">
                                                         <Check className="size-3.5" />
                                                         Dipilih
@@ -855,19 +876,25 @@ export default function Devices() {
                                             ) : (
                                                 <Wifi className="size-4 text-slate-400" />
                                             )}
-                                            {scanning ? 'Mencari ESP32…' : 'Belum ada ESP32 terdeteksi'}
+                                            {scanning
+                                                ? 'Mencari ESP32…'
+                                                : 'Belum ada ESP32 terdeteksi'}
                                         </div>
                                         <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                                            Hubungkan ESP32 ke Wi-Fi dan pastikan firmware mengirim pesan device_discovered ke server WebSocket.
+                                            Hubungkan ESP32 ke Wi-Fi dan
+                                            pastikan firmware mengirim pesan
+                                            device_discovered ke server
+                                            WebSocket.
                                         </p>
                                         <p className="mt-2 text-xs text-slate-400">
-                                            WebSocket: {wsStatus === 'connected' ? 'Terhubung' : 'Tidak terhubung'}
+                                            WebSocket:{' '}
+                                            {wsStatus === 'connected'
+                                                ? 'Terhubung'
+                                                : 'Tidak terhubung'}
                                         </p>
                                     </div>
                                 )}
                             </div>
-
-
 
                             {formError && (
                                 <div

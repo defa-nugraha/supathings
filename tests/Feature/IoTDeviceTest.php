@@ -7,6 +7,7 @@ use App\Models\ControlRule;
 use App\Models\IotDevice;
 use App\Models\SensorReading;
 use App\Models\User;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 function createIotDevice(User $user, array $attributes = []): IotDevice
@@ -29,7 +30,11 @@ test('authenticated users can list only their own devices', function () {
 
     $response = $this->actingAs($user)->getJson('/api/devices');
 
-    $response->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $owned->id);
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $owned->id)
+        ->assertJsonMissingPath('data.0.device_token_hash')
+        ->assertJsonMissingPath('data.0.device_token_encrypted');
 });
 
 test('guests cannot access device management endpoints', function () {
@@ -56,6 +61,56 @@ test('users can register an ESP32 by MAC address and receive a one-time token', 
         'device_token_hash' => hash('sha256', $response->json('device_token')),
     ]);
     expect($response->json('device_token'))->not->toBe('test-device-token');
+
+    $storedEncryptedToken = (string) IotDevice::query()
+        ->where('mac_address', 'A1:B2:C3:D4:E5:F6')
+        ->value('device_token_encrypted');
+
+    expect($storedEncryptedToken)->not->toBe('');
+    expect(Crypt::decryptString($storedEncryptedToken))->toBe($response->json('device_token'));
+});
+
+test('device token can be displayed by its owner but not by another user', function () {
+    $owner = User::factory()->create();
+    $device = createIotDevice($owner, [
+        'device_token_encrypted' => Crypt::encryptString('saved-device-token'),
+    ]);
+
+    $this->actingAs($owner)
+        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertOk()
+        ->assertJsonPath('device_token', 'saved-device-token');
+
+    $this->actingAs(User::factory()->create())
+        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertNotFound();
+});
+
+test('legacy device tokens can be rotated when only the one-way hash exists', function () {
+    $owner = User::factory()->create();
+    $device = createIotDevice($owner);
+
+    $this->actingAs($owner)
+        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'token_not_recoverable');
+
+    $response = $this->actingAs($owner)
+        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token/rotate')
+        ->assertOk()
+        ->assertJsonStructure(['device_token']);
+
+    $newToken = $response->json('device_token');
+    expect($newToken)->not->toBe('test-device-token');
+    expect(Crypt::decryptString((string) $device->fresh()->device_token_encrypted))->toBe($newToken);
+
+    $this->withToken('test-device-token')->postJson('/api/telemetry', [
+        'temperature' => 28,
+    ])->assertUnauthorized();
+
+    $this->withToken($newToken)->postJson('/api/telemetry', [
+        'temperature' => 28,
+    ])->assertStatus(202);
 });
 
 test('device registration rejects malformed MAC addresses', function () {

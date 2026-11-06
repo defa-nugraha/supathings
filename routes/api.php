@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function (): void {
     Route::get('/devices', [IotDeviceController::class, 'index']);
     Route::get('/devices/{device}/readings', [IotDeviceController::class, 'readings']);
+    Route::get('/devices/{device}/token', [IotDeviceController::class, 'showToken'])->middleware('throttle:10,1');
+    Route::post('/devices/{device}/token/rotate', [IotDeviceController::class, 'rotateToken'])->middleware('throttle:5,1');
     Route::post('/devices', [IotDeviceController::class, 'store']);
     Route::patch('/devices/{device}', [IotDeviceController::class, 'update']);
     Route::delete('/devices/{device}', [IotDeviceController::class, 'destroy']);

@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'mac_address', 'name', 'status', 'control_mode', 'last_seen_at', 'device_token_hash', 'metadata'])]
+#[Fillable(['user_id', 'mac_address', 'name', 'status', 'control_mode', 'last_seen_at', 'device_token_hash', 'device_token_encrypted', 'metadata'])]
 class IotDevice extends Model
 {
+    protected $hidden = ['device_token_hash', 'device_token_encrypted'];
+
     protected function casts(): array
     {
         return ['last_seen_at' => 'datetime', 'metadata' => 'array'];

@@ -2,7 +2,10 @@ import { Head } from '@inertiajs/react';
 import {
     Check,
     Clock3,
+    Copy,
     Cpu,
+    Eye,
+    KeyRound,
     Link2,
     Plus,
     Radio,
@@ -33,7 +36,16 @@ export default function Devices() {
     const [deviceName, setDeviceName] = useState('');
     const [query, setQuery] = useState('');
     const [notice, setNotice] = useState('');
-    const [issuedToken, setIssuedToken] = useState('');
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [deviceMac, setDeviceMac] = useState('');
+    const [formError, setFormError] = useState('');
+    const [registering, setRegistering] = useState(false);
+    const [connectionDevice, setConnectionDevice] = useState<Device | null>(null);
+    const [connectionToken, setConnectionToken] = useState('');
+    const [tokenLoading, setTokenLoading] = useState(false);
+    const [tokenNeedsRotation, setTokenNeedsRotation] = useState(false);
+    const [rotatingToken, setRotatingToken] = useState(false);
+    const [copyStatus, setCopyStatus] = useState('');
     const socket = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
@@ -98,6 +110,7 @@ export default function Devices() {
                                 ? prev.map((d) => (d.id === item.id ? item : d))
                                 : [...prev, item],
                         );
+                        setDeviceMac((current) => current || item.id);
                     }
                     if (
                         message.type === 'device_presence' &&
@@ -133,31 +146,44 @@ export default function Devices() {
 
     const scan = () => {
         setScanning(true);
-        setNotice('');
         if (socket.current?.readyState === WebSocket.OPEN) {
             socket.current.send(JSON.stringify({ type: 'discover_devices' }));
         }
-        window.setTimeout(() => {
-            setScanning(false);
-            if (discovered.length === 0)
-                setNotice(
-                    'Belum ada perangkat yang mengumumkan diri. Pastikan ESP32 terhubung ke jaringan dan endpoint WebSocket aktif.',
-                );
-        }, 5000);
+        window.setTimeout(() => setScanning(false), 5000);
     };
+
+    const openAddDeviceModal = () => {
+        setSelected(null);
+        setDeviceName('');
+        setDeviceMac('');
+        setFormError('');
+        setIsAddOpen(true);
+        scan();
+    };
+
     const register = async () => {
-        if (!selected || !deviceName.trim()) return;
-        let token = '';
-        const isRegistered = devices.some(
-            (device) => device.id === selected.id,
-        );
+        const isEditing = selected !== null;
+        const targetMac = (selected?.id ?? deviceMac).trim().toUpperCase();
+
+        if (!deviceName.trim()) {
+            setFormError('Nama device wajib diisi.');
+            return;
+        }
+        if (!isEditing && !targetMac) {
+            setFormError('Masukkan MAC address ESP32 atau pilih perangkat yang ditemukan.');
+            return;
+        }
+
+        setRegistering(true);
+        setFormError('');
+
         try {
             const response = await fetch(
-                isRegistered
-                    ? '/api/devices/' + encodeURIComponent(selected.id)
+                isEditing
+                    ? '/api/devices/' + encodeURIComponent(targetMac)
                     : '/api/devices',
                 {
-                    method: isRegistered ? 'PATCH' : 'POST',
+                    method: isEditing ? 'PATCH' : 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',
@@ -167,47 +193,158 @@ export default function Devices() {
                             )?.content ?? '',
                     },
                     body: JSON.stringify(
-                        isRegistered
+                        isEditing
                             ? { name: deviceName.trim() }
                             : {
-                                  device_id: selected.id,
+                                  device_id: targetMac,
                                   name: deviceName.trim(),
-                                  sensors: selected.sensors,
+                                  sensors:
+                                      discovered.find((item) => item.id === targetMac)?.sensors ??
+                                      ['DHT22', 'LDR'],
                               },
                     ),
                 },
             );
             const payload = await response.json();
-            if (!response.ok)
+
+            if (!response.ok) {
                 throw new Error(payload.message || 'Registrasi device gagal.');
-            token = payload.device_token || '';
+            }
+
+            const savedDevice: Device = {
+                id: targetMac,
+                name: deviceName.trim(),
+                status: isEditing ? selected.status : 'offline',
+                lastSeen: isEditing
+                    ? selected.lastSeen
+                    : 'Belum pernah terhubung',
+                sensors:
+                    discovered.find((item) => item.id === targetMac)?.sensors ??
+                    selected?.sensors ??
+                    ['DHT22', 'LDR'],
+            };
+
+            setDevices((prev) =>
+                prev.some((item) => item.id === targetMac)
+                    ? prev.map((item) => (item.id === targetMac ? savedDevice : item))
+                    : [savedDevice, ...prev],
+            );
+
+            if (isEditing) {
+                setSelected(null);
+                setNotice('Nama perangkat berhasil diperbarui.');
+            } else {
+                if (typeof payload.device_token !== 'string' || !payload.device_token) {
+                    throw new Error('Device tersimpan, tetapi token tidak diterima. Muat ulang daftar device lalu buka Token & Hubungkan.');
+                }
+
+                setIsAddOpen(false);
+                setDeviceName('');
+                setDeviceMac('');
+                setDiscovered((prev) => prev.filter((item) => item.id !== targetMac));
+                setConnectionDevice(savedDevice);
+                setConnectionToken(payload.device_token);
+                setTokenNeedsRotation(false);
+                setCopyStatus('');
+            }
         } catch (error) {
-            setNotice(
+            setFormError(
                 error instanceof Error
                     ? error.message
                     : 'Tidak dapat menyimpan device. Coba lagi.',
             );
-            return;
+        } finally {
+            setRegistering(false);
         }
-        if (token) setIssuedToken(token);
-        setDevices((prev) =>
-            prev.some((d) => d.id === selected.id)
-                ? prev.map((d) =>
-                      d.id === selected.id
-                          ? { ...selected, name: deviceName.trim() }
-                          : d,
-                  )
-                : [{ ...selected, name: deviceName.trim() }, ...prev],
-        );
-        setDiscovered((prev) => prev.filter((d) => d.id !== selected.id));
-        setSelected(null);
-        setDeviceName('');
-        setNotice(
-            isRegistered
-                ? 'Nama perangkat berhasil diperbarui.'
-                : 'Perangkat berhasil didaftarkan. Simpan token device yang baru diterbitkan untuk konfigurasi ESP32.',
-        );
     };
+
+    const openDeviceConnection = async (device: Device) => {
+        setConnectionDevice(device);
+        setConnectionToken('');
+        setTokenNeedsRotation(false);
+        setCopyStatus('');
+        setTokenLoading(true);
+
+        try {
+            const response = await fetch(
+                '/api/devices/' + encodeURIComponent(device.id) + '/token',
+                { headers: { Accept: 'application/json' } },
+            );
+            const payload = await response.json();
+
+            if (
+                response.status === 409 &&
+                payload.code === 'token_not_recoverable'
+            ) {
+                setTokenNeedsRotation(true);
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(payload.message || 'Token device tidak dapat dimuat.');
+            }
+            setConnectionToken(payload.device_token);
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Token device tidak dapat dimuat.',
+            );
+            setConnectionDevice(null);
+        } finally {
+            setTokenLoading(false);
+        }
+    };
+
+    const rotateDeviceToken = async () => {
+        if (!connectionDevice) return;
+        const confirmed = window.confirm(
+            'Buat token baru? Token lama akan langsung tidak berlaku dan konfigurasi ESP32 harus diperbarui.',
+        );
+        if (!confirmed) return;
+
+        setRotatingToken(true);
+        try {
+            const response = await fetch(
+                '/api/devices/' + encodeURIComponent(connectionDevice.id) + '/token/rotate',
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(payload.message || 'Token baru gagal dibuat.');
+            }
+            setConnectionToken(payload.device_token);
+            setTokenNeedsRotation(false);
+            setCopyStatus('Token baru berhasil dibuat. Perbarui token pada ESP32.');
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Token baru gagal dibuat.',
+            );
+        } finally {
+            setRotatingToken(false);
+        }
+    };
+
+    const copyDeviceToken = async () => {
+        if (!connectionToken) return;
+        try {
+            await navigator.clipboard.writeText(connectionToken);
+            setCopyStatus('Token berhasil disalin.');
+        } catch {
+            setCopyStatus('Clipboard tidak tersedia. Salin token secara manual.');
+        }
+    };
+
     const deletePendingDevice = async () => {
         if (!pendingDelete) return;
 
@@ -271,8 +408,8 @@ export default function Devices() {
                         </div>
                         <button
                             data-tour="devices-scan"
-                            onClick={scan}
-                            disabled={scanning}
+                            onClick={openAddDeviceModal}
+                            disabled={registering}
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:opacity-60"
                         >
                             {scanning ? (
@@ -321,56 +458,6 @@ export default function Devices() {
                             </section>
                         </div>
                     )}
-                    {issuedToken && (
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                            <div className="flex items-start gap-3">
-                                <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-white text-amber-700">
-                                    <Link2 className="size-4" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-semibold text-slate-800">
-                                        Token device — tampil sekali
-                                    </p>
-                                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                                        Salin token ini ke konfigurasi ESP32
-                                        untuk autentikasi pengiriman telemetry.
-                                        Token tidak disimpan dalam bentuk teks
-                                        biasa oleh server.
-                                    </p>
-                                    <code className="mt-3 block rounded-lg border border-amber-100 bg-white p-3 text-xs break-all text-slate-700">
-                                        {issuedToken}
-                                    </code>
-                                    <div className="mt-3 flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                void navigator.clipboard
-                                                    ?.writeText(issuedToken)
-                                                    .then(() =>
-                                                        setNotice(
-                                                            'Token berhasil disalin ke clipboard.',
-                                                        ),
-                                                    )
-                                                    .catch(() =>
-                                                        setNotice(
-                                                            'Token gagal disalin. Silakan salin token secara manual.',
-                                                        ),
-                                                    );
-                                            }}
-                                            className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
-                                        >
-                                            Salin token
-                                        </button>
-                                        <button
-                                            onClick={() => setIssuedToken('')}
-                                            className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600"
-                                        >
-                                            Sembunyikan
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                     <div className="grid gap-4 md:grid-cols-3">
                         {[
                             {
@@ -416,61 +503,6 @@ export default function Devices() {
                             </div>
                         ))}
                     </div>
-                    {scanning && (
-                        <section className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                                    <Radio className="size-5 animate-pulse" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <h2 className="font-semibold text-slate-900">
-                                        Mencari ESP32 di jaringan
-                                    </h2>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Halaman menunggu pengumuman perangkat
-                                        melalui WebSocket. Pastikan ESP32 dan
-                                        server menggunakan endpoint yang sama.
-                                    </p>
-                                    {discovered.length > 0 && (
-                                        <div className="mt-4 space-y-2">
-                                            {discovered.map((d) => (
-                                                <div
-                                                    key={d.id}
-                                                    className="flex flex-col gap-3 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center"
-                                                >
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="font-semibold text-slate-800">
-                                                            {d.name}
-                                                        </p>
-                                                        <p className="mt-1 font-mono text-xs text-slate-500">
-                                                            {d.id}
-                                                        </p>
-                                                    </div>
-                                                    <span className="text-xs text-emerald-700">
-                                                        Terdeteksi
-                                                    </span>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelected(d);
-                                                            setDeviceName(
-                                                                d.name ===
-                                                                    'ESP32 belum diberi nama'
-                                                                    ? ''
-                                                                    : d.name,
-                                                            );
-                                                        }}
-                                                        className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
-                                                    >
-                                                        Pilih device
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </section>
-                    )}
                     <section
                         data-tour="devices-list"
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -511,10 +543,10 @@ export default function Devices() {
                                     sedang terhubung.
                                 </p>
                                 <button
-                                    onClick={scan}
+                                    onClick={openAddDeviceModal}
                                     className="mt-4 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
                                 >
-                                    Cari device
+                                    Tambah device
                                 </button>
                             </div>
                         ) : (
@@ -563,6 +595,13 @@ export default function Devices() {
                                             <Clock3 className="size-4" />
                                             {device.lastSeen}
                                         </div>
+                                        <button
+                                            onClick={() => void openDeviceConnection(device)}
+                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+                                        >
+                                            <Eye className="size-4" />
+                                            Token & Hubungkan
+                                        </button>
                                         <button
                                             onClick={() => {
                                                 setSelected(device);
@@ -652,6 +691,261 @@ export default function Devices() {
                     </section>
                 </div>
             )}
+            {isAddOpen && (
+                <div
+                    className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget && !registering) {
+                            setIsAddOpen(false);
+                        }
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="add-device-title"
+                        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+                    >
+                        <div className="mb-5 flex items-start justify-between gap-3">
+                            <div>
+                                <h2 id="add-device-title" className="text-lg font-semibold text-slate-900">
+                                    Tambah device
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Beri nama perangkat dan hubungkan identitas ESP32.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsAddOpen(false)}
+                                disabled={registering}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 disabled:opacity-50"
+                                aria-label="Tutup modal"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="block text-sm font-medium text-slate-700">
+                                Nama device
+                                <input
+                                    autoFocus
+                                    value={deviceName}
+                                    onChange={(event) => setDeviceName(event.target.value)}
+                                    placeholder="Contoh: Kumbung Utama"
+                                    maxLength={100}
+                                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                            </label>
+
+                            <div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <label htmlFor="new-device-mac" className="text-sm font-medium text-slate-700">
+                                        MAC address ESP32
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={scan}
+                                        disabled={scanning}
+                                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 disabled:opacity-50"
+                                    >
+                                        <RefreshCw className="size-3.5" />
+                                        Cari ESP32
+                                    </button>
+                                </div>
+                                {discovered.length > 0 && (
+                                    <select
+                                        value={deviceMac}
+                                        onChange={(event) => setDeviceMac(event.target.value)}
+                                        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                                    >
+                                        <option value="">Pilih perangkat yang ditemukan (opsional)</option>
+                                        {discovered.map((item) => (
+                                            <option key={item.id} value={item.id}>
+                                                {item.name} — {item.id}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                                <input
+                                    id="new-device-mac"
+                                    value={deviceMac}
+                                    onChange={(event) => setDeviceMac(event.target.value.toUpperCase())}
+                                    placeholder="AA:BB:CC:DD:EE:FF"
+                                    maxLength={17}
+                                    required
+                                    className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2.5 font-mono text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                />
+                                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                                    MAC otomatis diisi jika ESP32 ditemukan melalui WebSocket. Jika tidak, isi MAC dari Serial Monitor Arduino melalui WiFi.macAddress().
+                                </p>
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Status pencarian: {wsStatus === 'connected' ? 'WebSocket terhubung' : 'WebSocket tidak terhubung'}
+                                    {scanning ? ' · Sedang mencari perangkat…' : ''}
+                                </p>
+                            </div>
+
+                            {formError && (
+                                <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                                    {formError}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                            <button
+                                onClick={() => setIsAddOpen(false)}
+                                disabled={registering}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={() => void register()}
+                                disabled={registering || !deviceName.trim() || !deviceMac.trim()}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                            >
+                                {registering ? <RefreshCw className="size-4 animate-spin" /> : <Check className="size-4" />}
+                                {registering ? 'Menyimpan…' : 'Simpan & buat token'}
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
+            {connectionDevice && (
+                <div
+                    className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/50 p-4"
+                    role="presentation"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setConnectionDevice(null);
+                            setConnectionToken('');
+                        }
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="device-connection-title"
+                        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <div className="mb-2 inline-flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                                    <Link2 className="size-5" />
+                                </div>
+                                <h2 id="device-connection-title" className="text-lg font-semibold text-slate-900">
+                                    Token & Hubungkan device
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    {connectionDevice.name} · <span className="font-mono">{connectionDevice.id}</span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setConnectionDevice(null);
+                                    setConnectionToken('');
+                                }}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                                aria-label="Tutup modal token"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        {tokenLoading ? (
+                            <div className="mt-6 flex items-center gap-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+                                <RefreshCw className="size-4 animate-spin" />
+                                Mengambil token device…
+                            </div>
+                        ) : tokenNeedsRotation ? (
+                            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                <p className="text-sm font-semibold text-amber-900">
+                                    Token lama belum dapat ditampilkan
+                                </p>
+                                <p className="mt-1 text-sm leading-relaxed text-amber-800">
+                                    Token ini dibuat sebelum penyimpanan terenkripsi tersedia. Server hanya memiliki hash-nya, sehingga token lama tidak dapat dipulihkan. Buat token baru untuk menghubungkan ESP32; token lama akan dinonaktifkan.
+                                </p>
+                                <button
+                                    onClick={() => void rotateDeviceToken()}
+                                    disabled={rotatingToken}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                                >
+                                    {rotatingToken ? <RefreshCw className="size-4 animate-spin" /> : <KeyRound className="size-4" />}
+                                    {rotatingToken ? 'Membuat token…' : 'Buat token baru'}
+                                </button>
+                            </div>
+                        ) : connectionToken ? (
+                            <div className="mt-6 space-y-4">
+                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                    <p className="text-sm font-semibold text-emerald-900">
+                                        Token device siap digunakan
+                                    </p>
+                                    <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+                                        Tempel token ini pada variabel DEVICE_TOKEN di sketch ESP32. Token hanya dapat diakses oleh akun yang memiliki perangkat ini.
+                                    </p>
+                                    <code className="mt-3 block break-all rounded-lg border border-emerald-100 bg-white p-3 text-xs text-slate-800">
+                                        {connectionToken}
+                                    </code>
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                        <button
+                                            onClick={() => void copyDeviceToken()}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
+                                        >
+                                            <Copy className="size-3.5" />
+                                            Salin token
+                                        </button>
+                                        {copyStatus && <span role="status" className="text-xs text-emerald-800">{copyStatus}</span>}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border border-slate-200 p-4">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Konfigurasi koneksi ESP32
+                                    </p>
+                                    <div className="mt-3 space-y-2">
+                                        <div>
+                                            <p className="text-xs text-slate-500">Alamat aplikasi</p>
+                                            <code className="mt-1 block break-all rounded-lg bg-slate-50 p-2 text-xs text-slate-700">
+                                                {window.location.origin}
+                                            </code>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-500">Baris konfigurasi pada file .ino</p>
+                                            <pre className="mt-1 overflow-x-auto rounded-lg bg-slate-950 p-3 text-xs leading-relaxed text-slate-100">
+                                                {'const char* SUPATHINGS_URL = "' + window.location.origin + '";\n' +
+                                                    'const char* DEVICE_TOKEN = "' + connectionToken + '";'}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                    <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
+                                        <li>Masukkan SSID dan password Wi-Fi pada sketch ESP32.</li>
+                                        <li>Salin alamat aplikasi dan token ke konfigurasi sketch, lalu upload ke ESP32.</li>
+                                        <li>ESP32 mengirim telemetry ke <code className="rounded bg-slate-100 px-1">/api/telemetry</code> dan mengambil perintah dari <code className="rounded bg-slate-100 px-1">/api/device/commands</code>.</li>
+                                    </ol>
+                                </div>
+                                <p className="text-xs leading-relaxed text-slate-500">
+                                    Status device akan berubah menjadi Online setelah server menerima telemetry yang valid dari ESP32. Membuka modal ini tidak otomatis menghubungkan perangkat.
+                                </p>
+                                {copyStatus && <p role="status" className="text-xs text-slate-500">{copyStatus}</p>}
+                            </div>
+                        ) : null}
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setConnectionDevice(null);
+                                    setConnectionToken('');
+                                }}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+                            >
+                                Selesai
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
             {selected && (
                 <div
                     className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
@@ -699,12 +993,12 @@ export default function Devices() {
                                 Batal
                             </button>
                             <button
-                                disabled={!deviceName.trim()}
+                                disabled={!deviceName.trim() || registering}
                                 onClick={() => void register()}
                                 className="inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                             >
-                                <Check className="size-4" />
-                                Simpan device
+                                {registering ? <RefreshCw className="size-4 animate-spin" /> : <Check className="size-4" />}
+                                {registering ? 'Menyimpan…' : 'Simpan perubahan'}
                             </button>
                         </div>
                     </div>

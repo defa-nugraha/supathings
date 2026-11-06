@@ -8,10 +8,12 @@ use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
 use App\Models\ControlRule;
 use App\Models\IotDevice;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -59,7 +61,7 @@ class IotDeviceController extends Controller
         $token = Str::random(64);
         $device = IotDevice::query()->updateOrCreate(
             ['mac_address' => $mac, 'user_id' => $request->user()->id],
-            ['name' => $data['name'], 'status' => 'offline', 'last_seen_at' => null, 'device_token_hash' => hash('sha256', $token), 'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']]],
+            ['name' => $data['name'], 'status' => 'offline', 'last_seen_at' => null, 'device_token_hash' => hash('sha256', $token), 'device_token_encrypted' => Crypt::encryptString($token), 'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']]],
         );
 
         return response()->json(['data' => $device, 'device_token' => $token], 201);
@@ -79,6 +81,56 @@ class IotDeviceController extends Controller
         $record->update(['name' => $data['name']]);
 
         return response()->json(['data' => $record->fresh()]);
+    }
+
+    /**
+     * Reveal the current device token only to an authenticated account that owns the device.
+     */
+    public function showToken(Request $request, string $device): JsonResponse
+    {
+        $record = $this->deviceQuery($request)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        if (! $record->device_token_encrypted) {
+            return response()->json([
+                'code' => 'token_not_recoverable',
+                'message' => 'Token lama tidak dapat dipulihkan. Buat token baru untuk perangkat ini.',
+            ], 409);
+        }
+
+        try {
+            $token = Crypt::decryptString($record->device_token_encrypted);
+        } catch (DecryptException) {
+            return response()->json([
+                'code' => 'token_not_recoverable',
+                'message' => 'Token tidak dapat didekripsi. Buat token baru untuk perangkat ini.',
+            ], 409);
+        }
+
+        return response()->json(['device_token' => $token]);
+    }
+
+    /**
+     * Rotate a device token when the existing plaintext token is unavailable or compromised.
+     */
+    public function rotateToken(Request $request, string $device): JsonResponse
+    {
+        $record = $this->deviceQuery($request)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        $token = Str::random(64);
+        $record->forceFill([
+            'device_token_hash' => hash('sha256', $token),
+            'device_token_encrypted' => Crypt::encryptString($token),
+        ])->save();
+
+        return response()->json(['device_token' => $token]);
     }
 
     public function destroy(Request $request, string $device): JsonResponse

@@ -1000,7 +1000,7 @@ export default function Devices() {
                                     )}
                                     {rotatingToken
                                         ? 'Membuat token…'
-                                        : 'Buat token baru'}
+                                        : 'Buat token'}
                                 </button>
                             </div>
                         ) : connectionToken ? (
@@ -1027,6 +1027,20 @@ export default function Devices() {
                                         >
                                             <Copy className="size-3.5" />
                                             Salin token
+                                        </button>
+                                        <button
+                                            onClick={() => void rotateDeviceToken()}
+                                            disabled={rotatingToken}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
+                                        >
+                                            {rotatingToken ? (
+                                                <RefreshCw className="size-3.5 animate-spin" />
+                                            ) : (
+                                                <KeyRound className="size-3.5" />
+                                            )}
+                                            {rotatingToken
+                                                ? 'Membuat token…'
+                                                : 'Regenerate token'}
                                         </button>
                                         {copyStatus && (
                                             <span

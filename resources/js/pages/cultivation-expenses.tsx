@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import ActionModal from '@/components/action-modal';
 import { Pencil, Plus, ReceiptText, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
@@ -255,22 +256,18 @@ export default function CultivationExpenses() {
                         </button>
                     </header>
 
-                    {error && (
-                        <p
-                            role="alert"
-                            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
-                        >
-                            {error}
-                        </p>
-                    )}
-                    {notice && (
-                        <p
-                            role="status"
-                            className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
-                        >
-                            {notice}
-                        </p>
-                    )}
+                    <ActionModal
+                        open={Boolean(error || notice)}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                setError('');
+                                setNotice('');
+                            }
+                        }}
+                        variant={error ? 'error' : 'success'}
+                        title={error ? 'Aksi gagal' : 'Aksi berhasil'}
+                        description={error || notice}
+                    />
 
                     <section
                         data-tour="expenses-summary"

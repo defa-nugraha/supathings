@@ -23,7 +23,9 @@ class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function analyze(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $context = $this->context($user, $from, $to);
@@ -63,7 +65,9 @@ class AiCultivationService
         }
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function chat(User $user, string $question): array
     {
         $to = now();
@@ -76,7 +80,9 @@ class AiCultivationService
         );
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function context(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $devices = IotDevice::query()->where('user_id', $user->id)->with('controlRules')->get();
@@ -312,7 +318,9 @@ class AiCultivationService
         );
     }
 
-    /** @param array<string, mixed> $credentials */
+    /**
+     * @param array<string, mixed> $credentials
+     */
     private function exchangeToken(array $credentials): string
     {
         $now = time();
@@ -345,7 +353,9 @@ class AiCultivationService
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function analysisSchema(): array
     {
         return [
@@ -393,7 +403,9 @@ class AiCultivationService
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function chatSchema(): array
     {
         return [

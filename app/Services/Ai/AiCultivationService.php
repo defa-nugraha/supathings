@@ -66,8 +66,7 @@ class AiCultivationService
 
         return $this->generate(
             'Anda adalah SupaThings AI. Jawab hanya berdasarkan konteks SupaThings akun ini. Jangan mengarang data dan jangan memberi perintah langsung untuk aktuator. Jawab ringkas dalam Bahasa Indonesia.',
-            'Pertanyaan operator: '.$question."
-Konteks: ".json_encode($this->context($user, $from, $to), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'Pertanyaan operator: '.$question.PHP_EOL.'Konteks: '.json_encode($this->context($user, $from, $to), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             $this->chatSchema(),
         );
     }

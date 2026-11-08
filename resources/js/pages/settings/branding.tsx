@@ -19,7 +19,11 @@ type PageProps = {
 export default function BrandingSettingsPage() {
     const { brandingSettings } = usePage<PageProps>().props;
     const logoInput = useRef<HTMLInputElement>(null);
-    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
+    const [result, setResult] = useState<{
+        variant: 'success' | 'error';
+        title: string;
+        description: string;
+    } | null>(null);
     const { data, setData, post, processing, errors, progress } = useForm<{
         app_name: string;
         logo: File | null;
@@ -33,8 +37,18 @@ export default function BrandingSettingsPage() {
         post('/settings/branding', {
             forceFormData: true,
             preserveScroll: true,
-            onSuccess: () => setResult({ variant: 'success', title: 'Identitas berhasil disimpan', description: 'Nama dan logo aplikasi berhasil diperbarui.' }),
-            onError: () => setResult({ variant: 'error', title: 'Identitas gagal disimpan', description: 'Perubahan identitas aplikasi gagal disimpan.' }),
+            onSuccess: () =>
+                setResult({
+                    variant: 'success',
+                    title: 'Identitas berhasil disimpan',
+                    description: 'Nama dan logo aplikasi berhasil diperbarui.',
+                }),
+            onError: () =>
+                setResult({
+                    variant: 'error',
+                    title: 'Identitas gagal disimpan',
+                    description: 'Perubahan identitas aplikasi gagal disimpan.',
+                }),
         });
     }
 
@@ -46,7 +60,11 @@ export default function BrandingSettingsPage() {
                 if (logoInput.current) {
                     logoInput.current.value = '';
                 }
-                setResult({ variant: 'success', title: 'Logo berhasil dihapus', description: 'Logo khusus telah dihapus dari aplikasi.' });
+                setResult({
+                    variant: 'success',
+                    title: 'Logo berhasil dihapus',
+                    description: 'Logo khusus telah dihapus dari aplikasi.',
+                });
             },
         });
     }

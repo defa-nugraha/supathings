@@ -13,6 +13,8 @@ The browser and ESP32 use the WebSocket endpoint configured with \`VITE_WS_URL\`
 
 Discovery is not registration and is not authorization. A MAC address is an identifier, not a secret or proof of ownership. An unregistered ESP32, or one without a valid device bearer token, cannot submit telemetry, poll actuator commands, or acknowledge commands.
 
+Device registration and authentication are separate concerns. Registration stores the ESP32 MAC address and owner relationship; it does not create a bearer credential.
+
 ## WebSocket messages
 
 - ESP32 → server: \`{ "type": "device_discovered", "device_id": "AA:BB:CC:DD:EE:FF", "sensors": ["DHT22", "LDR"] }\`

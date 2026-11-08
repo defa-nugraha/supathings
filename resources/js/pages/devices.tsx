@@ -552,7 +552,9 @@ export default function Devices() {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            setIsTokenVisible((visible) => !visible)
+                                            setIsTokenVisible(
+                                                (visible) => !visible,
+                                            )
                                         }
                                         className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
                                         title={
@@ -588,7 +590,11 @@ export default function Devices() {
                                     className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
                                 >
                                     <RefreshCw
-                                        className={rotatingToken ? 'size-3.5 animate-spin' : 'size-3.5'}
+                                        className={
+                                            rotatingToken
+                                                ? 'size-3.5 animate-spin'
+                                                : 'size-3.5'
+                                        }
                                     />
                                     Regenerate token
                                 </button>
@@ -1075,10 +1081,10 @@ export default function Devices() {
                                         ESP32.
                                     </li>
                                     <li>
-                                        Sertakan MAC address device pada
-                                        request agar server mengetahui device
-                                        mana yang mengirim telemetry atau
-                                        mengambil perintah.
+                                        Sertakan MAC address device pada request
+                                        agar server mengetahui device mana yang
+                                        mengirim telemetry atau mengambil
+                                        perintah.
                                     </li>
                                 </ol>
                             </div>

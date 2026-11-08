@@ -157,9 +157,10 @@ export default function Devices() {
     useEffect(() => {
         void fetch('/api/devices', { headers: { Accept: 'application/json' } })
             .then((response) => (response.ok ? response.json() : null))
-            .then((payload) => {
-                if (Array.isArray(payload?.data))
-                    const mappedDevices = payload.data.map(
+            .then(async (payload) => {
+                if (!Array.isArray(payload?.data)) return;
+
+                const mappedDevices = payload.data.map(
                         (d: {
                             mac_address: string;
                             name: string;

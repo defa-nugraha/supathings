@@ -93,7 +93,9 @@ export default function Cultivation() {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
-    const [deleteBatchTarget, setDeleteBatchTarget] = useState<Batch | null>(null);
+    const [deleteBatchTarget, setDeleteBatchTarget] = useState<Batch | null>(
+        null,
+    );
     const [showBatchForm, setShowBatchForm] = useState(false);
     const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
     const [showHarvestForm, setShowHarvestForm] = useState(false);
@@ -369,10 +371,16 @@ export default function Cultivation() {
 
                     <ActionModal
                         open={Boolean(deleteBatchTarget)}
-                        onOpenChange={(open) => !open && setDeleteBatchTarget(null)}
+                        onOpenChange={(open) =>
+                            !open && setDeleteBatchTarget(null)
+                        }
                         variant="confirm"
                         title="Hapus batch?"
-                        description={deleteBatchTarget ? `Hapus batch "${deleteBatchTarget.name}"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.` : ''}
+                        description={
+                            deleteBatchTarget
+                                ? `Hapus batch "${deleteBatchTarget.name}"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.`
+                                : ''
+                        }
                         confirmLabel="Ya, hapus batch"
                         onConfirm={async () => {
                             if (!deleteBatchTarget) return;

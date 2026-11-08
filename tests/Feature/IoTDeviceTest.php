@@ -63,6 +63,25 @@ test('users can register an ESP32 without generating a device-specific token', f
     expect($device->device_token_encrypted)->toBeNull();
 });
 
+test('existing users without an API token can create one from the token endpoint', function () {
+    $user = User::factory()->create([
+        'api_token_hash' => null,
+        'api_token_encrypted' => null,
+    ]);
+
+    $token = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->assertOk()
+        ->json('api_token');
+
+    expect($token)->toBeString()->not->toBeEmpty();
+
+    $user->refresh();
+
+    expect($user->api_token_hash)->toBe(hash('sha256', $token));
+    expect($user->api_token_encrypted)->not->toBeNull();
+});
+
 test('new users automatically receive a persistent API token', function () {
     $user = User::factory()->create();
 

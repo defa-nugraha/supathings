@@ -161,8 +161,8 @@ class AiCultivationService
     }
 
     /**
-     * @param EloquentCollection<int, SensorReading> $readings
-     * @param EloquentCollection<int, IotDevice>      $devices
+     * @param  EloquentCollection<int, SensorReading> $readings
+     * @param  EloquentCollection<int, IotDevice> $devices
      *
      * @return array<string, mixed>
      */
@@ -238,7 +238,7 @@ class AiCultivationService
     }
 
     /**
-     * @param array<string, mixed> $schema
+     * @param  array<string, mixed> $schema
      *
      * @return array<string, mixed>
      */
@@ -319,7 +319,7 @@ class AiCultivationService
     }
 
     /**
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed> $credentials
      */
     private function exchangeToken(array $credentials): string
     {

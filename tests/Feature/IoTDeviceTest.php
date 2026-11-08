@@ -71,11 +71,16 @@ test('owners can generate a device token after registration and reuse it', funct
     ]);
 
     $response = $this->actingAs($owner)
-        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token/rotate')
+        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token')
         ->assertOk()
         ->assertJsonStructure(['device_token']);
 
     $token = $response->json('device_token');
+
+    $this->actingAs($owner)
+        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'token_already_generated');
 
     $this->actingAs($owner)
         ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')

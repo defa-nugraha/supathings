@@ -231,7 +231,9 @@ class AiCultivationService
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
 
-    /** @param array<string, mixed> $schema
+    /**
+     * @param array<string, mixed> $schema
+     *
      * @return array<string, mixed>
      */
     private function generate(string $system, string $prompt, array $schema): array

@@ -49,6 +49,7 @@ export default function Devices() {
     const [tokenLoading, setTokenLoading] = useState(true);
     const [rotatingToken, setRotatingToken] = useState(false);
     const [copyStatus, setCopyStatus] = useState(false);
+    const [tokenMissing, setTokenMissing] = useState(false);
     const socket = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
@@ -63,9 +64,15 @@ export default function Devices() {
 
             if (response.ok && typeof payload.api_token === 'string') {
                 setApiToken(payload.api_token);
+                setTokenMissing(false);
+            } else {
+                setApiToken('');
+                setTokenMissing(true);
             }
         } catch {
-            setNotice('Token API gagal dimuat. Silakan coba lagi.');
+            setApiToken('');
+            setTokenMissing(true);
+            setNotice('Token API belum tersedia. Anda dapat membuat token baru.');
         } finally {
             setTokenLoading(false);
         }
@@ -586,7 +593,7 @@ export default function Devices() {
                                 <button
                                     type="button"
                                     onClick={() => void rotateApiToken()}
-                                    disabled={!apiToken || rotatingToken}
+                                    disabled={rotatingToken}
                                     className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
                                 >
                                     <RefreshCw
@@ -596,12 +603,14 @@ export default function Devices() {
                                                 : 'size-3.5'
                                         }
                                     />
-                                    Regenerate token
+                                    {tokenMissing ? 'Buat token' : 'Regenerate token'}
                                 </button>
                             </div>
 
                             <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                                Regenerate akan membatalkan token lama untuk
+                                {tokenMissing
+                                    ? 'Token API belum tersedia untuk akun ini. Buat token baru agar ESP32 dapat menggunakan API.'
+                                    : 'Regenerate akan membatalkan token lama untuk'}
                                 semua ESP32 yang menggunakannya. Simpan token
                                 dengan aman dan jangan membagikannya kepada
                                 pihak lain.

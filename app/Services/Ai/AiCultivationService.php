@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
+// @php-cs-fixer-ignore phpdoc_align PHPStan generic type aliases are intentionally aligned for static analysis.
+
 class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';

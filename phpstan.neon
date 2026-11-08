@@ -11,3 +11,7 @@ parameters:
         - routes/
 
     level: 7
+
+    typeAliases:
+        SensorItems: 'Illuminate\\Database\\Eloquent\\Collection<int, App\\Models\\SensorReading>'
+        DeviceItems: 'Illuminate\\Database\\Eloquent\\Collection<int, App\\Models\\IotDevice>'

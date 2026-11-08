@@ -173,10 +173,12 @@ class AiCultivationService
                 if ($field === null) {
                     continue;
                 }
+
                 $values = $readings->where('iot_device_id', $device->id)->pluck($field)->filter(fn ($v) => $v !== null)->map(fn ($v) => (float) $v);
                 if ($values->isEmpty()) {
                     continue;
                 }
+
                 $outside = $values->filter(fn (float $v) => $v < $rule->minimum || $v > $rule->maximum);
                 if ($outside->isNotEmpty()) {
                     $anomalies[] = [

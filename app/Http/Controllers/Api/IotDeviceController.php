@@ -62,8 +62,8 @@ class IotDeviceController extends Controller
 
         $attributes = [
             'name' => $data['name'],
-            'status' => $device?->status ?? 'offline',
-            'last_seen_at' => $device?->last_seen_at,
+            'status' => $device ? $device->status : 'offline',
+            'last_seen_at' => $device ? $device->last_seen_at : null,
             'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']],
         ];
 

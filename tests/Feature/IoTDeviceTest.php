@@ -41,7 +41,7 @@ test('guests cannot access device management endpoints', function () {
     $this->getJson('/api/devices')->assertUnauthorized();
 });
 
-test('users can register an ESP32 by MAC address without generating a device token', function () {
+test('users can register an ESP32 by MAC address and receive a reusable API credential through device management', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->postJson('/api/devices', [
@@ -53,39 +53,20 @@ test('users can register an ESP32 by MAC address without generating a device tok
     $response->assertCreated()
         ->assertJsonPath('data.mac_address', 'A1:B2:C3:D4:E5:F6')
         ->assertJsonPath('data.name', 'Kumbung Utama')
-        ->assertJsonMissingPath('device_token');
+        ->assertJsonMissingPath('data.device_token')
+        ->assertJsonMissingPath('data.device_token_hash')
+        ->assertJsonMissingPath('data.device_token_encrypted');
 
-    $this->assertDatabaseHas('iot_devices', [
-        'mac_address' => 'A1:B2:C3:D4:E5:F6',
-        'user_id' => $user->id,
-        'device_token_hash' => null,
-        'device_token_encrypted' => null,
-    ]);
-});
+    $device = IotDevice::query()->where('mac_address', 'A1:B2:C3:D4:E5:F6')->firstOrFail();
+    expect($device->device_token_hash)->not->toBeNull();
+    expect($device->device_token_encrypted)->not->toBeNull();
 
-test('owners can generate a device token after registration and reuse it', function () {
-    $owner = User::factory()->create();
-    $device = createIotDevice($owner, [
-        'device_token_hash' => null,
-        'device_token_encrypted' => null,
-    ]);
-
-    $response = $this->actingAs($owner)
-        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token')
-        ->assertOk()
-        ->assertJsonStructure(['device_token']);
-
-    $token = $response->json('device_token');
-
-    $this->actingAs($owner)
-        ->postJson('/api/devices/'.urlencode($device->mac_address).'/token')
-        ->assertStatus(409)
-        ->assertJsonPath('code', 'token_already_generated');
-
-    $this->actingAs($owner)
+    $token = $this->actingAs($user)
         ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
         ->assertOk()
-        ->assertJsonPath('device_token', $token);
+        ->json('device_token');
+
+    expect($token)->toBeString()->not->toBeEmpty();
 
     $this->withToken($token)->postJson('/api/telemetry', [
         'temperature' => 28,
@@ -94,6 +75,26 @@ test('owners can generate a device token after registration and reuse it', funct
     $this->withToken($token)->postJson('/api/telemetry', [
         'temperature' => 29,
     ])->assertStatus(202);
+});
+
+test('legacy devices without a token receive one when their token card is opened', function () {
+    $owner = User::factory()->create();
+    $device = createIotDevice($owner, [
+        'device_token_hash' => null,
+        'device_token_encrypted' => null,
+    ]);
+
+    $response = $this->actingAs($owner)
+        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertOk()
+        ->assertJsonStructure(['device_token']);
+
+    $token = $response->json('device_token');
+
+    $this->actingAs($owner)
+        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->assertOk()
+        ->assertJsonPath('device_token', $token);
 });
 
 test('regenerating a device token invalidates the previous token', function () {

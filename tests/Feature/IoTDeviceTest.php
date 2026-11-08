@@ -41,7 +41,7 @@ test('guests cannot access device management endpoints', function () {
     $this->getJson('/api/devices')->assertUnauthorized();
 });
 
-test('users can register an ESP32 by MAC address and receive a reusable API credential through device management', function () {
+test('users can register an ESP32 without generating a device-specific token', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->postJson('/api/devices', [
@@ -58,22 +58,90 @@ test('users can register an ESP32 by MAC address and receive a reusable API cred
         ->assertJsonMissingPath('data.device_token_encrypted');
 
     $device = IotDevice::query()->where('mac_address', 'A1:B2:C3:D4:E5:F6')->firstOrFail();
-    expect($device->device_token_hash)->not->toBeNull();
-    expect($device->device_token_encrypted)->not->toBeNull();
+
+    expect($device->device_token_hash)->toBeNull();
+    expect($device->device_token_encrypted)->toBeNull();
+});
+
+test('new users automatically receive a persistent API token', function () {
+    $user = User::factory()->create();
+
+    expect($user->api_token_hash)->toBeString()->not->toBeEmpty();
+    expect($user->api_token_encrypted)->toBeString()->not->toBeEmpty();
 
     $token = $this->actingAs($user)
-        ->getJson('/api/devices/'.urlencode($device->mac_address).'/token')
+        ->getJson('/api/account/token')
         ->assertOk()
-        ->json('device_token');
+        ->json('api_token');
 
     expect($token)->toBeString()->not->toBeEmpty();
+    expect(hash('sha256', $token))->toBe($user->api_token_hash);
+});
+
+test('user API token can send telemetry for an owned device', function () {
+    $user = User::factory()->create();
+    $device = createIotDevice($user, [
+        'device_token_hash' => null,
+        'device_token_encrypted' => null,
+    ]);
+
+    $token = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->json('api_token');
 
     $this->withToken($token)->postJson('/api/telemetry', [
+        'device_id' => $device->mac_address,
+        'temperature' => 28.5,
+        'humidity' => 88,
+    ])->assertStatus(202)->assertJsonPath('accepted', true);
+
+    $this->assertDatabaseHas('iot_devices', [
+        'id' => $device->id,
+        'status' => 'online',
+    ]);
+});
+
+test('user API token cannot send telemetry for another account device', function () {
+    $user = User::factory()->create();
+    $otherDevice = createIotDevice(User::factory()->create());
+
+    $token = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->json('api_token');
+
+    $this->withToken($token)->postJson('/api/telemetry', [
+        'device_id' => $otherDevice->mac_address,
         'temperature' => 28,
-    ])->assertStatus(202);
+    ])->assertUnauthorized();
+});
 
-    $this->withToken($token)->postJson('/api/telemetry', [
-        'temperature' => 29,
+test('regenerating a user API token invalidates the previous token', function () {
+    $user = User::factory()->create();
+
+    $oldToken = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->json('api_token');
+
+    $newToken = $this->actingAs($user)
+        ->postJson('/api/account/token/rotate')
+        ->assertOk()
+        ->json('api_token');
+
+    expect($newToken)->not->toBe($oldToken);
+
+    $device = createIotDevice($user, [
+        'device_token_hash' => null,
+        'device_token_encrypted' => null,
+    ]);
+
+    $this->withToken($oldToken)->postJson('/api/telemetry', [
+        'device_id' => $device->mac_address,
+        'temperature' => 28,
+    ])->assertUnauthorized();
+
+    $this->withToken($newToken)->postJson('/api/telemetry', [
+        'device_id' => $device->mac_address,
+        'temperature' => 28,
     ])->assertStatus(202);
 });
 
@@ -420,19 +488,42 @@ test('automatic control avoids duplicate pending commands for the same state', f
     $this->assertDatabaseCount('actuator_commands', 1);
 });
 
-test('device tokens can poll pending actuator commands and acknowledge execution', function () {
-    $device = createIotDevice(User::factory()->create(), ['device_token_hash' => hash('sha256', 'device-token')]);
+test('user API tokens can poll and acknowledge commands for an owned device', function () {
+    $user = User::factory()->create();
+    $device = createIotDevice($user, [
+        'device_token_hash' => null,
+        'device_token_encrypted' => null,
+    ]);
     $command = ActuatorCommand::query()->create([
-        'iot_device_id' => $device->id, 'actuator' => 'mist', 'state' => 'on', 'mode' => 'manual', 'status' => 'pending',
+        'iot_device_id' => $device->id,
+        'actuator' => 'mist',
+        'state' => 'on',
+        'mode' => 'manual',
+        'status' => 'pending',
     ]);
 
-    $this->withToken('device-token')->getJson('/api/device/commands')
-        ->assertOk()->assertJsonPath('data.0.id', $command->id)->assertJsonPath('data.0.status', 'sent');
-    $this->withToken('device-token')->postJson('/api/device/commands/'.$command->id.'/ack', [
-        'status' => 'acknowledged', 'actual_state' => 'on',
-    ])->assertOk()->assertJsonPath('data.status', 'acknowledged');
+    $token = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->json('api_token');
 
-    $this->assertDatabaseHas('actuator_commands', ['id' => $command->id, 'status' => 'acknowledged']);
+    $this->withToken($token)
+        ->getJson('/api/device/commands?device_id='.urlencode($device->mac_address))
+        ->assertOk()
+        ->assertJsonPath('data.0.id', $command->id)
+        ->assertJsonPath('data.0.status', 'sent');
+
+    $this->withToken($token)
+        ->postJson('/api/device/commands/'.$command->id.'/ack', [
+            'status' => 'acknowledged',
+            'actual_state' => 'on',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'acknowledged');
+
+    $this->assertDatabaseHas('actuator_commands', [
+        'id' => $command->id,
+        'status' => 'acknowledged',
+    ]);
 });
 
 test('users can read actuator status only for their own device', function () {

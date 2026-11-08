@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import ActionModal from '@/components/action-modal';
 import {
     AlertTriangle,
     CalendarDays,
@@ -92,6 +93,7 @@ export default function Cultivation() {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
+    const [deleteBatchTarget, setDeleteBatchTarget] = useState<Batch | null>(null);
     const [showBatchForm, setShowBatchForm] = useState(false);
     const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
     const [showHarvestForm, setShowHarvestForm] = useState(false);
@@ -206,14 +208,6 @@ export default function Cultivation() {
     };
 
     const deleteBatch = async (batch: Batch) => {
-        if (
-            !window.confirm(
-                'Hapus batch "' +
-                    batch.name +
-                    '"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.',
-            )
-        )
-            return;
         setError('');
         setNotice('');
         try {
@@ -373,6 +367,20 @@ export default function Cultivation() {
                         </div>
                     </header>
 
+                    <ActionModal
+                        open={Boolean(deleteBatchTarget)}
+                        onOpenChange={(open) => !open && setDeleteBatchTarget(null)}
+                        variant="confirm"
+                        title="Hapus batch?"
+                        description={deleteBatchTarget ? `Hapus batch "${deleteBatchTarget.name}"? Batch yang memiliki catatan panen atau biaya tidak dapat dihapus.` : ''}
+                        confirmLabel="Ya, hapus batch"
+                        onConfirm={async () => {
+                            if (!deleteBatchTarget) return;
+                            const target = deleteBatchTarget;
+                            setDeleteBatchTarget(null);
+                            await deleteBatch(target);
+                        }}
+                    />
                     {error && (
                         <div
                             role="alert"
@@ -753,7 +761,7 @@ export default function Cultivation() {
                                                             type="button"
                                                             title="Hapus batch"
                                                             onClick={() =>
-                                                                void deleteBatch(
+                                                                setDeleteBatchTarget(
                                                                     batch,
                                                                 )
                                                             }

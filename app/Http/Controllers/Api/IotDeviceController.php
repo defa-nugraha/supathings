@@ -58,17 +58,36 @@ class IotDeviceController extends Controller
             return response()->json(['message' => 'Device sudah terdaftar pada akun lain.'], 409);
         }
 
-        $device = IotDevice::query()->updateOrCreate(
-            ['mac_address' => $mac, 'user_id' => $request->user()->id],
-            [
-                'name' => $data['name'],
-                'status' => 'offline',
-                'last_seen_at' => null,
-                'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']],
-            ],
-        );
+        $device = IotDevice::query()->where('mac_address', $mac)->where('user_id', $request->user()->id)->first();
 
-        return response()->json(['data' => $device], 201);
+        $attributes = [
+            'name' => $data['name'],
+            'status' => $device?->status ?? 'offline',
+            'last_seen_at' => $device?->last_seen_at,
+            'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']],
+        ];
+
+        if (! $device) {
+            $token = Str::random(64);
+            $attributes['device_token_hash'] = hash('sha256', $token);
+            $attributes['device_token_encrypted'] = Crypt::encryptString($token);
+        } elseif (! $device->device_token_hash && ! $device->device_token_encrypted) {
+            $token = Str::random(64);
+            $attributes['device_token_hash'] = hash('sha256', $token);
+            $attributes['device_token_encrypted'] = Crypt::encryptString($token);
+        }
+
+        $device ??= IotDevice::query()->create([
+            'mac_address' => $mac,
+            'user_id' => $request->user()->id,
+            ...$attributes,
+        ]);
+
+        if ($device->wasRecentlyCreated === false) {
+            $device->update($attributes);
+        }
+
+        return response()->json(['data' => $device->fresh()], 201);
     }
 
     public function update(Request $request, string $device): JsonResponse
@@ -98,10 +117,20 @@ class IotDeviceController extends Controller
             })
             ->firstOrFail();
 
+        if (! $record->device_token_hash && ! $record->device_token_encrypted) {
+            $token = Str::random(64);
+            $record->forceFill([
+                'device_token_hash' => hash('sha256', $token),
+                'device_token_encrypted' => Crypt::encryptString($token),
+            ])->save();
+
+            return response()->json(['device_token' => $token]);
+        }
+
         if (! $record->device_token_encrypted) {
             return response()->json([
-                'code' => 'token_not_generated',
-                'message' => 'Token perangkat belum dibuat.',
+                'code' => 'token_not_recoverable',
+                'message' => 'Token lama tidak dapat dipulihkan. Gunakan regenerate untuk membuat token baru.',
             ], 409);
         }
 
@@ -113,34 +142,6 @@ class IotDeviceController extends Controller
                 'message' => 'Token tidak dapat didekripsi. Buat token baru untuk perangkat ini.',
             ], 409);
         }
-
-        return response()->json(['device_token' => $token]);
-    }
-
-    /**
-     * Generate the initial device token for a registered device.
-     */
-    public function generateToken(Request $request, string $device): JsonResponse
-    {
-        $record = IotDevice::query()
-            ->where('user_id', $request->user()->id)
-            ->where(function ($query) use ($device): void {
-                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
-            })
-            ->firstOrFail();
-
-        if ($record->device_token_hash || $record->device_token_encrypted) {
-            return response()->json([
-                'code' => 'token_already_generated',
-                'message' => 'Token perangkat sudah dibuat. Gunakan regenerate untuk menggantinya.',
-            ], 409);
-        }
-
-        $token = Str::random(64);
-        $record->forceFill([
-            'device_token_hash' => hash('sha256', $token),
-            'device_token_encrypted' => Crypt::encryptString($token),
-        ])->save();
 
         return response()->json(['device_token' => $token]);
     }

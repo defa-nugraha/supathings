@@ -264,25 +264,15 @@ export default function Devices() {
                 setSelected(null);
                 setNotice('Nama perangkat berhasil diperbarui.');
             } else {
-                if (
-                    typeof payload.device_token !== 'string' ||
-                    !payload.device_token
-                ) {
-                    throw new Error(
-                        'Device tersimpan, tetapi token tidak diterima. Muat ulang daftar device lalu buka Token & Hubungkan.',
-                    );
-                }
-
                 setIsAddOpen(false);
                 setDeviceName('');
                 setSelectedDiscovered(null);
                 setDiscovered((prev) =>
                     prev.filter((item) => item.id !== targetMac),
                 );
-                setConnectionDevice(savedDevice);
-                setConnectionToken(payload.device_token);
-                setTokenNeedsRotation(false);
-                setCopyStatus('');
+                setNotice(
+                    'Perangkat berhasil didaftarkan. Token dapat dibuat dari menu Token & Hubungkan di Kelola device.',
+                );
             }
         } catch (error) {
             setFormError(
@@ -928,9 +918,7 @@ export default function Devices() {
                                 ) : (
                                     <Check className="size-4" />
                                 )}
-                                {registering
-                                    ? 'Menyimpan…'
-                                    : 'Simpan & buat token'}
+                                {registering ? 'Menyimpan…' : 'Simpan device'}
                             </button>
                         </div>
                     </section>
@@ -994,12 +982,11 @@ export default function Devices() {
                                     Token lama belum dapat ditampilkan
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                                    Token ini dibuat sebelum penyimpanan
-                                    terenkripsi tersedia. Server hanya memiliki
-                                    hash-nya, sehingga token lama tidak dapat
-                                    dipulihkan. Buat token baru untuk
-                                    menghubungkan ESP32; token lama akan
-                                    dinonaktifkan.
+                                    Buat token untuk pertama kali atau
+                                    regenerate jika token lama sudah tidak
+                                    dipercaya. Token akan tetap berlaku untuk
+                                    telemetry dan perintah ESP32 sampai Anda
+                                    melakukan regenerate.
                                 </p>
                                 <button
                                     onClick={() => void rotateDeviceToken()}

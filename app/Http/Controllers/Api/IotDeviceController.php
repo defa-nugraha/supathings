@@ -8,6 +8,7 @@ use App\Jobs\StoreSensorReading;
 use App\Models\ActuatorCommand;
 use App\Models\ControlRule;
 use App\Models\IotDevice;
+use App\Models\User;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -19,6 +20,45 @@ use Illuminate\Validation\Rule;
 
 class IotDeviceController extends Controller
 {
+    public function showUserToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->api_token_encrypted) {
+            $token = Str::random(64);
+            $user->forceFill([
+                'api_token_hash' => hash('sha256', $token),
+                'api_token_encrypted' => Crypt::encryptString($token),
+            ])->save();
+
+            return response()->json(['api_token' => $token]);
+        }
+
+        try {
+            $token = Crypt::decryptString($user->api_token_encrypted);
+        } catch (DecryptException) {
+            return response()->json([
+                'code' => 'token_not_recoverable',
+                'message' => 'Token API tidak dapat dipulihkan. Buat token baru.',
+            ], 409);
+        }
+
+        return response()->json(['api_token' => $token]);
+    }
+
+    public function rotateUserToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $token = Str::random(64);
+
+        $user->forceFill([
+            'api_token_hash' => hash('sha256', $token),
+            'api_token_encrypted' => Crypt::encryptString($token),
+        ])->save();
+
+        return response()->json(['api_token' => $token]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $devices = $this->deviceQuery($request)->with('controlRules')->latest()->get();
@@ -410,6 +450,28 @@ class IotDeviceController extends Controller
 
         $hash = hash('sha256', $token);
 
-        return IotDevice::query()->where('device_token_hash', $hash)->first();
+        // Keep existing device credentials working for already configured ESP32 devices.
+        $legacyDevice = IotDevice::query()->where('device_token_hash', $hash)->first();
+        if ($legacyDevice) {
+            return $legacyDevice;
+        }
+
+        $user = User::query()->where('api_token_hash', $hash)->first();
+        if (! $user) {
+            return null;
+        }
+
+        $deviceId = $request->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            return null;
+        }
+
+        return IotDevice::query()
+            ->where('user_id', $user->id)
+            ->where(function ($query) use ($deviceId): void {
+                $query->where('id', $deviceId)
+                    ->orWhere('mac_address', Str::upper($deviceId));
+            })
+            ->first();
     }
 }

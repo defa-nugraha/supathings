@@ -44,16 +44,105 @@ export default function Devices() {
     const [connectionDevice, setConnectionDevice] = useState<Device | null>(
         null,
     );
-    const [connectionToken, setConnectionToken] = useState('');
-    const [tokenLoading, setTokenLoading] = useState(false);
-    const [tokenNeedsGeneration, setTokenNeedsGeneration] = useState(false);
-    const [tokenNeedsRotation, setTokenNeedsRotation] = useState(false);
-    const [rotatingToken, setRotatingToken] = useState(false);
+    const [deviceTokens, setDeviceTokens] = useState<Record<string, string>>(
+        {},
+    );
+    const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
+        new Set(),
+    );
+    const tokenRequests = useRef(new Set<string>());
+    const [rotatingToken, setRotatingToken] = useState<string | null>(null);
     const [copyStatus, setCopyStatus] = useState('');
     const socket = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
     );
+
+    const loadDeviceToken = async (deviceId: string) => {
+        if (tokenRequests.current.has(deviceId)) return;
+
+        tokenRequests.current.add(deviceId);
+        try {
+            const response = await fetch(
+                '/api/devices/' + encodeURIComponent(deviceId) + '/token',
+                { headers: { Accept: 'application/json' } },
+            );
+            const payload = await response.json();
+
+            if (response.ok && typeof payload.device_token === 'string') {
+                setDeviceTokens((prev) => ({
+                    ...prev,
+                    [deviceId]: payload.device_token,
+                }));
+            }
+        } catch {
+            // Token status is intentionally non-blocking for device management.
+        } finally {
+            tokenRequests.current.delete(deviceId);
+        }
+    };
+
+    const copyDeviceToken = async (deviceId: string) => {
+        const token = deviceTokens[deviceId];
+        if (!token) return;
+
+        try {
+            await navigator.clipboard.writeText(token);
+            setCopyStatus(deviceId);
+            window.setTimeout(
+                () => setCopyStatus((current) => (current === deviceId ? '' : current)),
+                2000,
+            );
+        } catch {
+            setNotice('Clipboard tidak tersedia. Salin token secara manual.');
+        }
+    };
+
+    const rotateDeviceToken = async (deviceId: string) => {
+        const confirmed = window.confirm(
+            'Regenerate token? Token lama akan langsung tidak berlaku dan ESP32 harus diperbarui menggunakan token baru.',
+        );
+        if (!confirmed) return;
+
+        setRotatingToken(deviceId);
+        try {
+            const response = await fetch(
+                '/api/devices/' +
+                    encodeURIComponent(deviceId) +
+                    '/token/rotate',
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            const payload = await response.json();
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Token baru gagal dibuat.');
+            }
+
+            setDeviceTokens((prev) => ({
+                ...prev,
+                [deviceId]: payload.device_token,
+            }));
+            setVisibleTokens((prev) => new Set(prev).add(deviceId));
+            setNotice('Token baru berhasil dibuat. Perbarui token pada ESP32.');
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Token baru gagal dibuat.',
+            );
+        } finally {
+            setRotatingToken(null);
+        }
+    };
 
     useEffect(() => {
         if (!isAddOpen || selectedDiscovered) return;
@@ -70,31 +159,35 @@ export default function Devices() {
             .then((response) => (response.ok ? response.json() : null))
             .then((payload) => {
                 if (Array.isArray(payload?.data))
-                    setDevices(
-                        payload.data.map(
-                            (d: {
-                                mac_address: string;
-                                name: string;
-                                status: string;
-                                last_seen_at?: string | null;
-                                metadata?: { sensors?: string[] };
-                            }) => ({
-                                id: d.mac_address,
-                                name: d.name,
-                                status:
-                                    d.status === 'online'
-                                        ? 'online'
-                                        : 'offline',
-                                lastSeen: d.last_seen_at
-                                    ? new Date(d.last_seen_at).toLocaleString(
-                                          'id-ID',
-                                      )
-                                    : 'Belum pernah terhubung',
-                                sensors: d.metadata?.sensors ?? [
-                                    'DHT22',
-                                    'LDR',
-                                ],
-                            }),
+                    const mappedDevices = payload.data.map(
+                        (d: {
+                            mac_address: string;
+                            name: string;
+                            status: string;
+                            last_seen_at?: string | null;
+                            metadata?: { sensors?: string[] };
+                        }) => ({
+                            id: d.mac_address,
+                            name: d.name,
+                            status:
+                                d.status === 'online'
+                                    ? 'online'
+                                    : 'offline',
+                            lastSeen: d.last_seen_at
+                                ? new Date(d.last_seen_at).toLocaleString(
+                                      'id-ID',
+                                  )
+                                : 'Belum pernah terhubung',
+                            sensors: d.metadata?.sensors ?? [
+                                'DHT22',
+                                'LDR',
+                            ],
+                        }),
+                    );
+                    setDevices(mappedDevices);
+                    await Promise.all(
+                        mappedDevices.map((device: Device) =>
+                            loadDeviceToken(device.id),
                         ),
                     );
             })
@@ -286,146 +379,8 @@ export default function Devices() {
         }
     };
 
-    const openDeviceConnection = async (device: Device) => {
+    const openDeviceConnection = (device: Device) => {
         setConnectionDevice(device);
-        setConnectionToken('');
-        setTokenNeedsGeneration(false);
-        setTokenNeedsRotation(false);
-        setCopyStatus('');
-        setTokenLoading(true);
-
-        try {
-            const response = await fetch(
-                '/api/devices/' + encodeURIComponent(device.id) + '/token',
-                { headers: { Accept: 'application/json' } },
-            );
-            const payload = await response.json();
-
-            if (response.status === 409 && payload.code === 'token_not_generated') {
-                setTokenNeedsGeneration(true);
-                return;
-            }
-            if (
-                response.status === 409 &&
-                payload.code === 'token_not_recoverable'
-            ) {
-                setTokenNeedsRotation(true);
-                return;
-            }
-            if (!response.ok) {
-                throw new Error(
-                    payload.message || 'Token device tidak dapat dimuat.',
-                );
-            }
-            setConnectionToken(payload.device_token);
-        } catch (error) {
-            setNotice(
-                error instanceof Error
-                    ? error.message
-                    : 'Token device tidak dapat dimuat.',
-            );
-            setConnectionDevice(null);
-        } finally {
-            setTokenLoading(false);
-        }
-    };
-
-    const generateDeviceToken = async () => {
-        if (!connectionDevice) return;
-
-        setRotatingToken(true);
-        try {
-            const response = await fetch(
-                '/api/devices/' +
-                    encodeURIComponent(connectionDevice.id) +
-                    '/token',
-                {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN':
-                            document.querySelector<HTMLMetaElement>(
-                                'meta[name="csrf-token"]',
-                            )?.content ?? '',
-                    },
-                },
-            );
-            const payload = await response.json();
-            if (!response.ok) {
-                throw new Error(
-                    payload.message || 'Token gagal dibuat.',
-                );
-            }
-
-            setConnectionToken(payload.device_token);
-            setTokenNeedsGeneration(false);
-            setCopyStatus('Token berhasil dibuat.');
-        } catch (error) {
-            setNotice(
-                error instanceof Error
-                    ? error.message
-                    : 'Token gagal dibuat.',
-            );
-        } finally {
-            setRotatingToken(false);
-        }
-    };
-
-    const rotateDeviceToken = async () => {
-        if (!connectionDevice) return;
-        const confirmed = window.confirm(
-            'Buat token baru? Token lama akan langsung tidak berlaku dan konfigurasi ESP32 harus diperbarui.',
-        );
-        if (!confirmed) return;
-
-        setRotatingToken(true);
-        try {
-            const response = await fetch(
-                '/api/devices/' +
-                    encodeURIComponent(connectionDevice.id) +
-                    '/token/rotate',
-                {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN':
-                            document.querySelector<HTMLMetaElement>(
-                                'meta[name="csrf-token"]',
-                            )?.content ?? '',
-                    },
-                },
-            );
-            const payload = await response.json();
-            if (!response.ok) {
-                throw new Error(payload.message || 'Token baru gagal dibuat.');
-            }
-            setConnectionToken(payload.device_token);
-            setTokenNeedsGeneration(false);
-            setTokenNeedsRotation(false);
-            setCopyStatus(
-                'Token baru berhasil dibuat. Perbarui token pada ESP32.',
-            );
-        } catch (error) {
-            setNotice(
-                error instanceof Error
-                    ? error.message
-                    : 'Token baru gagal dibuat.',
-            );
-        } finally {
-            setRotatingToken(false);
-        }
-    };
-
-    const copyDeviceToken = async () => {
-        if (!connectionToken) return;
-        try {
-            await navigator.clipboard.writeText(connectionToken);
-            setCopyStatus('Token berhasil disalin.');
-        } catch {
-            setCopyStatus(
-                'Clipboard tidak tersedia. Salin token secara manual.',
-            );
-        }
     };
 
     const deletePendingDevice = async () => {
@@ -488,8 +443,7 @@ export default function Devices() {
                                 Kelola device
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
-                                Hubungkan ESP32, beri nama perangkat, dan pantau
-                                status koneksi.
+                                Kelola identitas device, token API, dan koneksi ESP32.
                             </p>
                         </div>
                         <button
@@ -589,6 +543,132 @@ export default function Devices() {
                             </div>
                         ))}
                     </div>
+                    <section
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                        aria-labelledby="device-token-title"
+                    >
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <h2
+                                    id="device-token-title"
+                                    className="font-semibold text-slate-900"
+                                >
+                                    Token API device
+                                </h2>
+                                <p className="mt-1 text-sm leading-relaxed text-slate-500">
+                                    Token adalah kredensial Bearer yang digunakan
+                                    ESP32 untuk mengirim telemetry dan mengambil
+                                    perintah. Token tidak berubah sampai Anda
+                                    memilih Regenerate.
+                                </p>
+                            </div>
+                            <KeyRound className="hidden size-5 text-slate-400 sm:block" />
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            {devices.length === 0 ? (
+                                <div className="rounded-xl border border-dashed border-slate-200 p-5 text-sm text-slate-500 md:col-span-2">
+                                    Daftarkan device terlebih dahulu untuk
+                                    mendapatkan token API.
+                                </div>
+                            ) : (
+                                devices.map((device) => {
+                                    const token = deviceTokens[device.id];
+                                    const isVisible = visibleTokens.has(device.id);
+                                    const isRotating = rotatingToken === device.id;
+
+                                    return (
+                                        <div
+                                            key={device.id}
+                                            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="font-semibold text-slate-900">
+                                                        {device.name}
+                                                    </p>
+                                                    <p className="mt-0.5 font-mono text-xs text-slate-500">
+                                                        {device.id}
+                                                    </p>
+                                                </div>
+                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                                                    API credential
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                                                <KeyRound className="size-4 shrink-0 text-slate-400" />
+                                                <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
+                                                    {token
+                                                        ? isVisible
+                                                            ? token
+                                                            : token.slice(0, 8) + '••••••••' + token.slice(-4)
+                                                        : 'Memuat token…'}
+                                                </code>
+                                                {token && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setVisibleTokens((prev) => {
+                                                                const next = new Set(prev);
+                                                                if (next.has(device.id)) {
+                                                                    next.delete(device.id);
+                                                                } else {
+                                                                    next.add(device.id);
+                                                                }
+                                                                return next;
+                                                            })
+                                                        }
+                                                        className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+                                                        title={isVisible ? 'Sembunyikan token' : 'Tampilkan token'}
+                                                        aria-label={isVisible ? 'Sembunyikan token' : 'Tampilkan token'}
+                                                    >
+                                                        <Eye className="size-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void copyDeviceToken(device.id)}
+                                                    disabled={!token}
+                                                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                                                >
+                                                    <Copy className="size-3.5" />
+                                                    {copyStatus === device.id
+                                                        ? 'Tersalin'
+                                                        : 'Copy token'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => void rotateDeviceToken(device.id)}
+                                                    disabled={isRotating}
+                                                    className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
+                                                >
+                                                    {isRotating ? (
+                                                        <RefreshCw className="size-3.5 animate-spin" />
+                                                    ) : (
+                                                        <RefreshCw className="size-3.5" />
+                                                    )}
+                                                    Regenerate token
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openDeviceConnection(device)}
+                                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                                                >
+                                                    <Link2 className="size-3.5" />
+                                                    Hubungkan device
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </section>
+
                     <section
                         data-tour="devices-list"
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -979,7 +1059,6 @@ export default function Devices() {
                     onMouseDown={(event) => {
                         if (event.target === event.currentTarget) {
                             setConnectionDevice(null);
-                            setConnectionToken('');
                         }
                     }}
                 >
@@ -998,7 +1077,7 @@ export default function Devices() {
                                     id="device-connection-title"
                                     className="text-lg font-semibold text-slate-900"
                                 >
-                                    Token & Hubungkan device
+                                    Hubungkan device
                                 </h2>
                                 <p className="mt-1 text-sm text-slate-500">
                                     {connectionDevice.name} ·{' '}
@@ -1010,7 +1089,6 @@ export default function Devices() {
                             <button
                                 onClick={() => {
                                     setConnectionDevice(null);
-                                    setConnectionToken('');
                                 }}
                                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
                                 aria-label="Tutup modal token"
@@ -1019,164 +1097,68 @@ export default function Devices() {
                             </button>
                         </div>
 
-                        {tokenLoading ? (
-                            <div className="mt-6 flex items-center gap-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-                                <RefreshCw className="size-4 animate-spin" />
-                                Mengambil token device…
-                            </div>
-                        ) : tokenNeedsGeneration || tokenNeedsRotation ? (
-                            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                                <p className="text-sm font-semibold text-amber-900">
-                                    Token belum dibuat
+                        <div className="mt-6 space-y-4">
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-semibold text-slate-900">
+                                    Hubungkan ESP32
                                 </p>
-                                <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                                    {tokenNeedsGeneration
-                                        ? 'Buat token untuk pertama kali. Setelah dibuat, token dapat digunakan berulang kali untuk telemetry dan perintah ESP32.'
-                                        : 'Token lama tidak dapat dipulihkan. Buat token baru untuk menggantinya.'}
+                                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                                    Token autentikasi dikelola terpisah pada kartu
+                                    <strong> Token API</strong> di halaman Kelola
+                                    device. Salin token dari kartu tersebut ke
+                                    konfigurasi ESP32.
                                 </p>
-                                <button
-                                    onClick={() =>
-                                        void (tokenNeedsGeneration
-                                            ? generateDeviceToken()
-                                            : rotateDeviceToken())
-                                    }
-                                    disabled={rotatingToken}
-                                    className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                                >
-                                    {rotatingToken ? (
-                                        <RefreshCw className="size-4 animate-spin" />
-                                    ) : (
-                                        <KeyRound className="size-4" />
-                                    )}
-                                    {rotatingToken
-                                        ? 'Memproses…'
-                                        : tokenNeedsGeneration
-                                          ? 'Buat token'
-                                          : 'Regenerate token'}
-                                </button>
                             </div>
-                        ) : connectionToken ? (
-                            <div className="mt-6 space-y-4">
-                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                                    <p className="text-sm font-semibold text-emerald-900">
-                                        Token device siap digunakan
-                                    </p>
-                                    <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-                                        Tempel token ini pada variabel
-                                        DEVICE_TOKEN di sketch ESP32. Token
-                                        hanya dapat diakses oleh akun yang
-                                        memiliki perangkat ini.
-                                    </p>
-                                    <code className="mt-3 block rounded-lg border border-emerald-100 bg-white p-3 text-xs break-all text-slate-800">
-                                        {connectionToken}
-                                    </code>
-                                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                                        <button
-                                            onClick={() =>
-                                                void copyDeviceToken()
-                                            }
-                                            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
-                                        >
-                                            <Copy className="size-3.5" />
-                                            Salin token
-                                        </button>
-                                        <button
-                                            onClick={() => void rotateDeviceToken()}
-                                            disabled={rotatingToken}
-                                            className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
-                                        >
-                                            {rotatingToken ? (
-                                                <RefreshCw className="size-3.5 animate-spin" />
-                                            ) : (
-                                                <KeyRound className="size-3.5" />
-                                            )}
-                                            {rotatingToken
-                                                ? 'Membuat token…'
-                                                : 'Regenerate token'}
-                                        </button>
-                                        {copyStatus && (
-                                            <span
-                                                role="status"
-                                                className="text-xs text-emerald-800"
-                                            >
-                                                {copyStatus}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
 
-                                <div className="rounded-xl border border-slate-200 p-4">
-                                    <p className="text-sm font-semibold text-slate-800">
-                                        Konfigurasi koneksi ESP32
-                                    </p>
-                                    <div className="mt-3 space-y-2">
-                                        <div>
-                                            <p className="text-xs text-slate-500">
-                                                Alamat aplikasi
-                                            </p>
-                                            <code className="mt-1 block rounded-lg bg-slate-50 p-2 text-xs break-all text-slate-700">
-                                                {window.location.origin}
-                                            </code>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">
-                                                Baris konfigurasi pada file .ino
-                                            </p>
-                                            <pre className="mt-1 overflow-x-auto rounded-lg bg-slate-950 p-3 text-xs leading-relaxed text-slate-100">
-                                                {'const char* SUPATHINGS_URL = "' +
-                                                    window.location.origin +
-                                                    '";\n' +
-                                                    'const char* DEVICE_TOKEN = "' +
-                                                    connectionToken +
-                                                    '";'}
-                                            </pre>
-                                        </div>
-                                    </div>
-                                    <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
-                                        <li>
-                                            Masukkan SSID dan password Wi-Fi
-                                            pada sketch ESP32.
-                                        </li>
-                                        <li>
-                                            Salin alamat aplikasi dan token ke
-                                            konfigurasi sketch, lalu upload ke
-                                            ESP32.
-                                        </li>
-                                        <li>
-                                            ESP32 mengirim telemetry ke{' '}
-                                            <code className="rounded bg-slate-100 px-1">
-                                                /api/telemetry
-                                            </code>{' '}
-                                            dan mengambil perintah dari{' '}
-                                            <code className="rounded bg-slate-100 px-1">
-                                                /api/device/commands
-                                            </code>
-                                            .
-                                        </li>
-                                    </ol>
-                                </div>
-                                <p className="text-xs leading-relaxed text-slate-500">
-                                    Status device akan berubah menjadi Online
-                                    setelah server menerima telemetry yang valid
-                                    dari ESP32. Membuka modal ini tidak otomatis
-                                    menghubungkan perangkat.
+                            <div className="rounded-xl border border-slate-200 p-4">
+                                <p className="text-sm font-semibold text-slate-800">
+                                    Konfigurasi koneksi ESP32
                                 </p>
-                                {copyStatus && (
-                                    <p
-                                        role="status"
-                                        className="text-xs text-slate-500"
-                                    >
-                                        {copyStatus}
-                                    </p>
-                                )}
+                                <div className="mt-3 space-y-2">
+                                    <div>
+                                        <p className="text-xs text-slate-500">
+                                            Alamat aplikasi
+                                        </p>
+                                        <code className="mt-1 block rounded-lg bg-white p-2 text-xs break-all text-slate-700">
+                                            {window.location.origin}
+                                        </code>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500">
+                                            Header autentikasi API
+                                        </p>
+                                        <code className="mt-1 block rounded-lg bg-slate-950 p-3 text-xs break-all leading-relaxed text-slate-100">
+                                            Authorization: Bearer &lt;DEVICE_TOKEN&gt;
+                                        </code>
+                                    </div>
+                                </div>
+                                <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
+                                    <li>Salin token API dari kartu Token API.</li>
+                                    <li>Masukkan token tersebut ke firmware ESP32.</li>
+                                    <li>
+                                        ESP32 mengirim telemetry ke{' '}
+                                        <code className="rounded bg-slate-100 px-1">
+                                            /api/telemetry
+                                        </code>{' '}
+                                        dan mengambil perintah dari{' '}
+                                        <code className="rounded bg-slate-100 px-1">
+                                            /api/device/commands
+                                        </code>
+                                        .
+                                    </li>
+                                </ol>
                             </div>
-                        ) : null}
+                            <p className="text-xs leading-relaxed text-slate-500">
+                                Status device berubah menjadi Online setelah
+                                server menerima telemetry yang valid. Membuka
+                                dialog ini tidak otomatis menghubungkan perangkat.
+                            </p>
+                        </div>
 
                         <div className="mt-6 flex justify-end">
                             <button
                                 onClick={() => {
                                     setConnectionDevice(null);
-                                    setConnectionToken('');
                                 }}
                                 className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
                             >

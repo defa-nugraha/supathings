@@ -163,7 +163,6 @@ class AiCultivationService
     /**
      * @param  EloquentCollection<int, SensorReading> $readings
      * @param  EloquentCollection<int, IotDevice> $devices
-     *
      * @return array<string, mixed>
      */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array
@@ -222,7 +221,9 @@ class AiCultivationService
         ];
     }
 
-    /** @param EloquentCollection<int, SensorReading> $readings */
+    /**
+     * @param  EloquentCollection<int, SensorReading> $readings
+     */
     private function trend(EloquentCollection $readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
@@ -239,7 +240,6 @@ class AiCultivationService
 
     /**
      * @param  array<string, mixed> $schema
-     *
      * @return array<string, mixed>
      */
     private function generate(string $system, string $prompt, array $schema): array

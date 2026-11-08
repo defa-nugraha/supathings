@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function (): void {
+    Route::get('/account/token', [IotDeviceController::class, 'showUserToken'])->middleware('throttle:10,1');
+    Route::post('/account/token/rotate', [IotDeviceController::class, 'rotateUserToken'])->middleware('throttle:5,1');
     Route::get('/devices', [IotDeviceController::class, 'index']);
     Route::get('/devices/{device}/readings', [IotDeviceController::class, 'readings']);
     Route::get('/devices/{device}/token', [IotDeviceController::class, 'showToken'])->middleware('throttle:10,1');

@@ -3,17 +3,17 @@
 namespace App\Services\Ai;
 
 use App\Models\ActuatorCommand;
-use App\Models\ControlRule;
 use App\Models\AiAnalysis;
+use App\Models\ControlRule;
 use App\Models\CultivationBatch;
 use App\Models\CultivationExpense;
 use App\Models\HarvestRecord;
 use App\Models\IotDevice;
 use App\Models\SensorReading;
 use App\Models\User;
-use Illuminate\Http\Client\ConnectionException;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -154,7 +154,8 @@ class AiCultivationService
         ];
     }
 
-    /** @param EloquentCollection<int, SensorReading> $readings
+    /**
+     * @param EloquentCollection<int, SensorReading> $readings
      * @param EloquentCollection<int, IotDevice> $devices
      * @return array<string, mixed>
      */

@@ -211,22 +211,18 @@ export default function CultivationHistory() {
                             await remove(target);
                         }}
                     />
-                    {error && (
-                        <p
-                            role="alert"
-                            className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
-                        >
-                            {error}
-                        </p>
-                    )}
-                    {notice && (
-                        <p
-                            role="status"
-                            className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
-                        >
-                            {notice}
-                        </p>
-                    )}
+                    <ActionModal
+                        open={Boolean(error || notice)}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                setError('');
+                                setNotice('');
+                            }
+                        }}
+                        variant={error ? 'error' : 'success'}
+                        title={error ? 'Aksi gagal' : 'Aksi berhasil'}
+                        description={error || notice}
+                    />
                     <section
                         data-tour="harvest-history"
                         className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"

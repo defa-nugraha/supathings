@@ -58,13 +58,17 @@ class IotDeviceController extends Controller
             return response()->json(['message' => 'Device sudah terdaftar pada akun lain.'], 409);
         }
 
-        $token = Str::random(64);
         $device = IotDevice::query()->updateOrCreate(
             ['mac_address' => $mac, 'user_id' => $request->user()->id],
-            ['name' => $data['name'], 'status' => 'offline', 'last_seen_at' => null, 'device_token_hash' => hash('sha256', $token), 'device_token_encrypted' => Crypt::encryptString($token), 'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']]],
+            [
+                'name' => $data['name'],
+                'status' => 'offline',
+                'last_seen_at' => null,
+                'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']],
+            ],
         );
 
-        return response()->json(['data' => $device, 'device_token' => $token], 201);
+        return response()->json(['data' => $device], 201);
     }
 
     public function update(Request $request, string $device): JsonResponse
@@ -114,7 +118,8 @@ class IotDeviceController extends Controller
     }
 
     /**
-     * Rotate a device token when the existing plaintext token is unavailable or compromised.
+     * Generate the initial device token or regenerate it when the existing token
+     * is no longer trusted. A generated token remains valid until regenerated.
      */
     public function rotateToken(Request $request, string $device): JsonResponse
     {

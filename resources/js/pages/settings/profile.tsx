@@ -1,5 +1,7 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
+import { useState } from 'react';
+import ActionModal from '@/components/action-modal';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -23,6 +25,7 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<PageProps>().props;
+    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
 
     return (
         <>
@@ -42,6 +45,8 @@ export default function Profile({
                     options={{
                         preserveScroll: true,
                     }}
+                    onSuccess={() => setResult({ variant: 'success', title: 'Profil berhasil diperbarui', description: 'Nama dan alamat email akun berhasil disimpan.' })}
+                    onError={() => setResult({ variant: 'error', title: 'Profil gagal diperbarui', description: 'Perubahan profil gagal disimpan. Periksa data lalu coba lagi.' })}
                     className="space-y-6"
                 >
                     {({ processing, errors }) => (
@@ -126,6 +131,13 @@ export default function Profile({
                 </Form>
             </div>
 
+            <ActionModal
+                open={Boolean(result)}
+                onOpenChange={(open) => !open && setResult(null)}
+                variant={result?.variant}
+                title={result?.title ?? ''}
+                description={result?.description ?? ''}
+            />
             <DeleteUser />
         </>
     );

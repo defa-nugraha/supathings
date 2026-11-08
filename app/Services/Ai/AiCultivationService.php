@@ -3,6 +3,7 @@
 namespace App\Services\Ai;
 
 use App\Models\ActuatorCommand;
+use App\Models\ControlRule;
 use App\Models\AiAnalysis;
 use App\Models\CultivationBatch;
 use App\Models\CultivationExpense;
@@ -11,6 +12,8 @@ use App\Models\IotDevice;
 use App\Models\SensorReading;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -20,7 +23,8 @@ class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 
-    public function analyze(User $user, Carbon $from, Carbon $to): array
+    /** @return array<string, mixed> */
+    public function analyze(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $context = $this->context($user, $from, $to);
         $fingerprint = hash('sha256', json_encode($context, JSON_THROW_ON_ERROR));
@@ -59,6 +63,7 @@ class AiCultivationService
         }
     }
 
+    /** @return array<string, mixed> */
     public function chat(User $user, string $question): array
     {
         $to = now();
@@ -71,7 +76,8 @@ class AiCultivationService
         );
     }
 
-    private function context(User $user, Carbon $from, Carbon $to): array
+    /** @return array<string, mixed> */
+    private function context(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $devices = IotDevice::query()->where('user_id', $user->id)->with('controlRules')->get();
         $deviceIds = $devices->modelKeys();
@@ -109,9 +115,11 @@ class AiCultivationService
                 'id' => $device->id,
                 'name' => $device->name,
                 'status' => $device->status,
-                'last_seen_at' => $device->last_seen_at?->toISOString(),
+                'last_seen_at' => $device->last_seen_at === null
+                    ? null
+                    : Carbon::parse($device->last_seen_at)->toISOString(),
                 'control_mode' => $device->control_mode,
-                'rules' => $device->controlRules->map(fn ($rule): array => [
+                'rules' => $device->controlRules->map(fn (ControlRule $rule): array => [
                     'parameter' => $rule->parameter,
                     'minimum' => (float) $rule->minimum,
                     'maximum' => (float) $rule->maximum,
@@ -146,7 +154,11 @@ class AiCultivationService
         ];
     }
 
-    private function environment($readings, $devices): array
+    /** @param EloquentCollection<int, SensorReading> $readings
+     * @param EloquentCollection<int, IotDevice> $devices
+     * @return array<string, mixed>
+     */
+    private function environment(EloquentCollection $readings, EloquentCollection $devices): array
     {
         $metrics = [];
         foreach (['temperature' => '°C', 'humidity' => '%', 'light_percent' => '%'] as $field => $unit) {
@@ -198,11 +210,12 @@ class AiCultivationService
             'metrics' => $metrics,
             'anomalies' => $anomalies,
             'reading_count' => $readings->count(),
-            'offline_devices' => $devices->filter(fn (IotDevice $d) => $d->last_seen_at === null || $d->last_seen_at->lt(now()->subMinutes(5)))->pluck('name')->values()->all(),
+            'offline_devices' => $devices->filter(fn (IotDevice $d) => $d->last_seen_at === null || Carbon::parse($d->last_seen_at)->lt(now()->subMinutes(5)))->pluck('name')->values()->all(),
         ];
     }
 
-    private function trend($readings, string $field): ?float
+    /** @param EloquentCollection<int, SensorReading> $readings */
+    private function trend(EloquentCollection $readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
         if ($points->count() < 3) {
@@ -216,6 +229,9 @@ class AiCultivationService
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
 
+    /** @param array<string, mixed> $schema
+     * @return array<string, mixed>
+     */
     private function generate(string $system, string $prompt, array $schema): array
     {
         if (config('vertex-ai.enabled') === false) {
@@ -253,7 +269,14 @@ class AiCultivationService
             throw new RuntimeException('Vertex AI menolak permintaan (HTTP '.$response->status().'): '.$response->json('error.message', 'Unknown error'));
         }
 
-        $text = collect($response->json('candidates.0.content.parts', []))->pluck('text')->filter()->implode('');
+        /** @var array<int, array{text?: string}> $parts */
+        $parts = $response->json('candidates.0.content.parts', []);
+        $text = '';
+        foreach ($parts as $part) {
+            if (isset($part['text']) && is_string($part['text'])) {
+                $text .= $part['text'];
+            }
+        }
         $decoded = json_decode($text, true);
         if (is_array($decoded) === false) {
             throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
@@ -285,6 +308,7 @@ class AiCultivationService
         );
     }
 
+    /** @param array<string, mixed> $credentials */
     private function exchangeToken(array $credentials): string
     {
         $now = time();
@@ -317,6 +341,7 @@ class AiCultivationService
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
+    /** @return array<string, mixed> */
     private function analysisSchema(): array
     {
         return [
@@ -364,6 +389,7 @@ class AiCultivationService
         ];
     }
 
+    /** @return array<string, mixed> */
     private function chatSchema(): array
     {
         return [

@@ -203,7 +203,9 @@ class AiCultivationService
     private function trend($readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
-        if ($points->count() < 3) return null;
+        if ($points->count() < 3) {
+            return null;
+        }
         $first = $points->first();
         $last = $points->last();
         $hours = max(1 / 60, $first->measured_at->diffInSeconds($last->measured_at) / 3600);

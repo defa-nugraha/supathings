@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import ActionModal from '@/components/action-modal';
 import {
     Check,
     Clock3,
@@ -48,6 +49,7 @@ export default function Devices() {
     const [isTokenVisible, setIsTokenVisible] = useState(false);
     const [tokenLoading, setTokenLoading] = useState(true);
     const [rotatingToken, setRotatingToken] = useState(false);
+    const [confirmRotateToken, setConfirmRotateToken] = useState(false);
     const [copyStatus, setCopyStatus] = useState(false);
     const [tokenMissing, setTokenMissing] = useState(false);
     const socket = useRef<WebSocket | null>(null);
@@ -91,11 +93,6 @@ export default function Devices() {
     };
 
     const rotateApiToken = async () => {
-        const confirmed = window.confirm(
-            'Regenerate token API? Token lama akan langsung tidak berlaku pada seluruh ESP32 yang menggunakannya.',
-        );
-        if (!confirmed) return;
-
         setRotatingToken(true);
         try {
             const response = await fetch('/api/account/token/rotate', {
@@ -129,6 +126,8 @@ export default function Devices() {
             setRotatingToken(false);
         }
     };
+    const requestRotateApiToken = () => setConfirmRotateToken(true);
+
     useEffect(() => {
         if (!isAddOpen || selectedDiscovered) return;
 
@@ -473,6 +472,19 @@ export default function Devices() {
                             </section>
                         </div>
                     )}
+                    <ActionModal
+                        open={confirmRotateToken}
+                        onOpenChange={setConfirmRotateToken}
+                        variant="confirm"
+                        title="Regenerate token API?"
+                        description="Token lama akan langsung tidak berlaku pada seluruh ESP32 yang menggunakannya."
+                        confirmLabel="Regenerate token"
+                        busy={rotatingToken}
+                        onConfirm={async () => {
+                            setConfirmRotateToken(false);
+                            await rotateApiToken();
+                        }}
+                    />
                     <div className="grid gap-4 md:grid-cols-3">
                         {[
                             {
@@ -592,7 +604,7 @@ export default function Devices() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => void rotateApiToken()}
+                                    onClick={requestRotateApiToken}
                                     disabled={rotatingToken}
                                     className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
                                 >

@@ -1,4 +1,8 @@
 import { Head, router } from '@inertiajs/react';
+import ActionModal from '@/components/action-modal';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 
 type ManagedUser = {
@@ -45,6 +49,11 @@ export default function AdminUsers({
     const [search, setSearch] = useState(filters.search);
     const [role, setRole] = useState(filters.role);
     const [status, setStatus] = useState(filters.status);
+    const [editing, setEditing] = useState<ManagedUser | null>(null);
+    const [editRole, setEditRole] = useState<'admin' | 'user'>('user');
+    const [editActive, setEditActive] = useState<'aktif' | 'nonaktif'>('aktif');
+    const [confirmSave, setConfirmSave] = useState(false);
+    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
 
     const applyFilters = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -56,42 +65,79 @@ export default function AdminUsers({
     };
 
     const updateUser = (user: ManagedUser) => {
-        const nextRole = window.prompt(
-            'Role pengguna: admin atau user',
-            user.role,
-        );
-        if (nextRole === null) return;
-        if (nextRole !== 'admin' && nextRole !== 'user') {
-            window.alert('Role harus admin atau user.');
-            return;
-        }
+        setEditing(user);
+        setEditRole(user.role);
+        setEditActive(user.is_active ? 'aktif' : 'nonaktif');
+    };
 
-        const activeInput = window.prompt(
-            'Status akun: aktif atau nonaktif',
-            user.is_active ? 'aktif' : 'nonaktif',
-        );
-        if (activeInput === null) return;
-        if (activeInput !== 'aktif' && activeInput !== 'nonaktif') {
-            window.alert('Status harus aktif atau nonaktif.');
-            return;
-        }
+    const requestSave = () => setConfirmSave(true);
 
-        if (!window.confirm(`Simpan perubahan akses untuk ${user.name}?`)) {
-            return;
-        }
-
+    const saveUser = () => {
+        if (!editing) return;
         router.patch(
-            `/admin/users/${user.id}`,
+            '/admin/users/' + editing.id,
+            { role: editRole, is_active: editActive === 'aktif' },
             {
-                role: nextRole,
-                is_active: activeInput === 'aktif',
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEditing(null);
+                    setConfirmSave(false);
+                    setResult({ variant: 'success', title: 'Perubahan berhasil disimpan', description: 'Role dan status akun berhasil diperbarui.' });
+                },
+                onError: () => {
+                    setConfirmSave(false);
+                    setResult({ variant: 'error', title: 'Perubahan gagal', description: 'Role dan status akun gagal diperbarui. Silakan coba lagi.' });
+                },
             },
-            { preserveScroll: true },
         );
     };
 
     return (
         <>
+            <ActionModal
+                open={confirmSave}
+                onOpenChange={setConfirmSave}
+                variant="confirm"
+                title="Simpan perubahan akses?"
+                description={editing ? 'Simpan perubahan akses untuk ' + editing.name + '?' : ''}
+                confirmLabel="Simpan perubahan"
+                onConfirm={saveUser}
+            />
+            <ActionModal
+                open={Boolean(result)}
+                onOpenChange={(open) => !open && setResult(null)}
+                variant={result?.variant}
+                title={result?.title ?? ''}
+                description={result?.description ?? ''}
+            />
+            <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit akses pengguna</DialogTitle>
+                        <DialogDescription>Atur role dan status akun pengguna.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="admin-user-role">Role</Label>
+                            <select id="admin-user-role" value={editRole} onChange={(event) => setEditRole(event.target.value as 'admin' | 'user')} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="admin-user-status">Status</Label>
+                            <select id="admin-user-status" value={editActive} onChange={(event) => setEditActive(event.target.value as 'aktif' | 'nonaktif')} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                                <option value="aktif">Aktif</option>
+                                <option value="nonaktif">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditing(null)}>Batal</Button>
+                        <Button onClick={requestSave}>Simpan perubahan</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <Head title="Kelola Pengguna" />
             <main className="min-h-full bg-slate-50 px-4 py-6 md:px-8 md:py-8">
                 <div className="mx-auto max-w-7xl space-y-6">

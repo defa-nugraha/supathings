@@ -162,7 +162,7 @@ class AiCultivationService
 
     /**
      * @param SensorItems $readings
-     * @param DeviceItems $devices
+     * @param DeviceItems  $devices
      * @return array<string, mixed>
      */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array
@@ -279,7 +279,7 @@ class AiCultivationService
             throw new RuntimeException('Vertex AI menolak permintaan (HTTP '.$response->status().'): '.$response->json('error.message', 'Unknown error'));
         }
 
-                $parts = $response->json('candidates.0.content.parts', []);
+        $parts = $response->json('candidates.0.content.parts', []);
         $text = '';
         foreach ($parts as $part) {
             if (isset($part['text'])) {

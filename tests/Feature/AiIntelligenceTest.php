@@ -39,6 +39,23 @@ function fakeVertex(): void
     ]);
 }
 
+function fakeVertexChat(): void
+{
+    Http::fake([
+        '*aiplatform.googleapis.com/*' => Http::response([
+            'candidates' => [[
+                'content' => ['parts' => [[
+                    'text' => json_encode([
+                        'answer' => 'Kelembapan sedang cenderung menurun.',
+                        'evidence' => ['Pembacaan sensor menunjukkan penurunan kelembapan.'],
+                        'limitations' => ['Data hanya mencakup periode analisis yang tersedia.'],
+                    ], JSON_THROW_ON_ERROR),
+                ]]],
+            ]],
+        ], 200),
+    ]);
+}
+
 beforeEach(function () {
     config([
         'vertex-ai.enabled' => true,
@@ -100,7 +117,7 @@ test('AI analysis rejects periods longer than seven days', function () {
 test('AI chat returns structured data', function () {
     $user = User::factory()->create();
     createAiDevice($user);
-    fakeVertex();
+    fakeVertexChat();
 
     $this->actingAs($user)->postJson('/api/ai/chat', ['question' => 'Bagaimana kondisi kelembapan?'])
         ->assertOk()->assertJsonStructure(['data' => ['answer', 'evidence', 'limitations']]);

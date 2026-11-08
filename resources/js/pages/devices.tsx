@@ -610,10 +610,7 @@ export default function Devices() {
                             <p className="mt-3 text-xs leading-relaxed text-slate-500">
                                 {tokenMissing
                                     ? 'Token API belum tersedia untuk akun ini. Buat token baru agar ESP32 dapat menggunakan API.'
-                                    : 'Regenerate akan membatalkan token lama untuk'}
-                                semua ESP32 yang menggunakannya. Simpan token
-                                dengan aman dan jangan membagikannya kepada
-                                pihak lain.
+                                    : 'Regenerate akan membatalkan token lama untuk semua ESP32 yang menggunakannya. Simpan token dengan aman dan jangan membagikannya kepada pihak lain.'}
                             </p>
                         </div>
                     </section>

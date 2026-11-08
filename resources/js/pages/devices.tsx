@@ -46,6 +46,7 @@ export default function Devices() {
     );
     const [connectionToken, setConnectionToken] = useState('');
     const [tokenLoading, setTokenLoading] = useState(false);
+    const [tokenNeedsGeneration, setTokenNeedsGeneration] = useState(false);
     const [tokenNeedsRotation, setTokenNeedsRotation] = useState(false);
     const [rotatingToken, setRotatingToken] = useState(false);
     const [copyStatus, setCopyStatus] = useState('');
@@ -288,6 +289,7 @@ export default function Devices() {
     const openDeviceConnection = async (device: Device) => {
         setConnectionDevice(device);
         setConnectionToken('');
+        setTokenNeedsGeneration(false);
         setTokenNeedsRotation(false);
         setCopyStatus('');
         setTokenLoading(true);
@@ -299,6 +301,10 @@ export default function Devices() {
             );
             const payload = await response.json();
 
+            if (response.status === 409 && payload.code === 'token_not_generated') {
+                setTokenNeedsGeneration(true);
+                return;
+            }
             if (
                 response.status === 409 &&
                 payload.code === 'token_not_recoverable'
@@ -321,6 +327,47 @@ export default function Devices() {
             setConnectionDevice(null);
         } finally {
             setTokenLoading(false);
+        }
+    };
+
+    const generateDeviceToken = async () => {
+        if (!connectionDevice) return;
+
+        setRotatingToken(true);
+        try {
+            const response = await fetch(
+                '/api/devices/' +
+                    encodeURIComponent(connectionDevice.id) +
+                    '/token',
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            const payload = await response.json();
+            if (!response.ok) {
+                throw new Error(
+                    payload.message || 'Token gagal dibuat.',
+                );
+            }
+
+            setConnectionToken(payload.device_token);
+            setTokenNeedsGeneration(false);
+            setCopyStatus('Token berhasil dibuat.');
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Token gagal dibuat.',
+            );
+        } finally {
+            setRotatingToken(false);
         }
     };
 
@@ -353,6 +400,7 @@ export default function Devices() {
                 throw new Error(payload.message || 'Token baru gagal dibuat.');
             }
             setConnectionToken(payload.device_token);
+            setTokenNeedsGeneration(false);
             setTokenNeedsRotation(false);
             setCopyStatus(
                 'Token baru berhasil dibuat. Perbarui token pada ESP32.',
@@ -976,20 +1024,22 @@ export default function Devices() {
                                 <RefreshCw className="size-4 animate-spin" />
                                 Mengambil token device…
                             </div>
-                        ) : tokenNeedsRotation ? (
+                        ) : tokenNeedsGeneration || tokenNeedsRotation ? (
                             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
                                 <p className="text-sm font-semibold text-amber-900">
                                     Token belum dibuat
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                                    Buat token untuk pertama kali. Setelah
-                                    dibuat, token dapat digunakan berulang kali
-                                    untuk telemetry dan perintah ESP32. Gunakan
-                                    regenerate hanya jika token lama harus
-                                    dinonaktifkan.
+                                    {tokenNeedsGeneration
+                                        ? 'Buat token untuk pertama kali. Setelah dibuat, token dapat digunakan berulang kali untuk telemetry dan perintah ESP32.'
+                                        : 'Token lama tidak dapat dipulihkan. Buat token baru untuk menggantinya.'}
                                 </p>
                                 <button
-                                    onClick={() => void rotateDeviceToken()}
+                                    onClick={() =>
+                                        void (tokenNeedsGeneration
+                                            ? generateDeviceToken()
+                                            : rotateDeviceToken())
+                                    }
                                     disabled={rotatingToken}
                                     className="mt-4 inline-flex items-center gap-2 rounded-lg bg-amber-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
                                 >
@@ -999,8 +1049,10 @@ export default function Devices() {
                                         <KeyRound className="size-4" />
                                     )}
                                     {rotatingToken
-                                        ? 'Membuat token…'
-                                        : 'Buat token'}
+                                        ? 'Memproses…'
+                                        : tokenNeedsGeneration
+                                          ? 'Buat token'
+                                          : 'Regenerate token'}
                                 </button>
                             </div>
                         ) : connectionToken ? (

@@ -47,9 +47,7 @@ export default function Devices() {
     const [deviceTokens, setDeviceTokens] = useState<Record<string, string>>(
         {},
     );
-    const [visibleTokens, setVisibleTokens] = useState<Set<string>>(
-        new Set(),
-    );
+    const [visibleTokens, setVisibleTokens] = useState<Set<string>>(new Set());
     const tokenRequests = useRef(new Set<string>());
     const [rotatingToken, setRotatingToken] = useState<string | null>(null);
     const [copyStatus, setCopyStatus] = useState('');
@@ -164,37 +162,28 @@ export default function Devices() {
                 if (!Array.isArray(payload?.data)) return;
 
                 const mappedDevices = payload.data.map(
-                        (d: {
-                            mac_address: string;
-                            name: string;
-                            status: string;
-                            last_seen_at?: string | null;
-                            metadata?: { sensors?: string[] };
-                        }) => ({
-                            id: d.mac_address,
-                            name: d.name,
-                            status:
-                                d.status === 'online'
-                                    ? 'online'
-                                    : 'offline',
-                            lastSeen: d.last_seen_at
-                                ? new Date(d.last_seen_at).toLocaleString(
-                                      'id-ID',
-                                  )
-                                : 'Belum pernah terhubung',
-                            sensors: d.metadata?.sensors ?? [
-                                'DHT22',
-                                'LDR',
-                            ],
-                        }),
-                    );
-                    setDevices(mappedDevices);
-                    await Promise.all(
-                        mappedDevices.map((device: Device) =>
-                            loadDeviceToken(device.id),
-                        ),
-                    );
-            })
+                    (d: {
+                        mac_address: string;
+                        name: string;
+                        status: string;
+                        last_seen_at?: string | null;
+                        metadata?: { sensors?: string[] };
+                    }) => ({
+                        id: d.mac_address,
+                        name: d.name,
+                        status: d.status === 'online' ? 'online' : 'offline',
+                        lastSeen: d.last_seen_at
+                            ? new Date(d.last_seen_at).toLocaleString('id-ID')
+                            : 'Belum pernah terhubung',
+                        sensors: d.metadata?.sensors ?? ['DHT22', 'LDR'],
+                    }),
+                );
+                setDevices(mappedDevices);
+                await Promise.all(
+                    mappedDevices.map((device: Device) =>
+                        loadDeviceToken(device.id),
+                    ),
+                );            })
             .catch(() => undefined);
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) return;
@@ -447,7 +436,8 @@ export default function Devices() {
                                 Kelola device
                             </h1>
                             <p className="mt-1 text-sm text-slate-500">
-                                Kelola identitas device, token API, dan koneksi ESP32.
+                                Kelola identitas device, token API, dan koneksi
+                                ESP32.
                             </p>
                         </div>
                         <button
@@ -560,10 +550,10 @@ export default function Devices() {
                                     Token API device
                                 </h2>
                                 <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                                    Token adalah kredensial Bearer yang digunakan
-                                    ESP32 untuk mengirim telemetry dan mengambil
-                                    perintah. Token tidak berubah sampai Anda
-                                    memilih Regenerate.
+                                    Token adalah kredensial Bearer yang
+                                    digunakan ESP32 untuk mengirim telemetry dan
+                                    mengambil perintah. Token tidak berubah
+                                    sampai Anda memilih Regenerate.
                                 </p>
                             </div>
                             <KeyRound className="hidden size-5 text-slate-400 sm:block" />
@@ -609,7 +599,10 @@ export default function Devices() {
                                                     {token
                                                         ? isVisible
                                                             ? token
-                                                            : token.slice(0, 8) +
+                                                            : token.slice(
+                                                                  0,
+                                                                  8,
+                                                              ) +
                                                               '••••••••' +
                                                               token.slice(-4)
                                                         : 'Memuat token…'}
@@ -618,15 +611,28 @@ export default function Devices() {
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            setVisibleTokens((prev) => {
-                                                                const next = new Set(prev);
-                                                                if (next.has(device.id)) {
-                                                                    next.delete(device.id);
-                                                                } else {
-                                                                    next.add(device.id);
-                                                                }
-                                                                return next;
-                                                            })
+                                                            setVisibleTokens(
+                                                                (prev) => {
+                                                                    const next =
+                                                                        new Set(
+                                                                            prev,
+                                                                        );
+                                                                    if (
+                                                                        next.has(
+                                                                            device.id,
+                                                                        )
+                                                                    ) {
+                                                                        next.delete(
+                                                                            device.id,
+                                                                        );
+                                                                    } else {
+                                                                        next.add(
+                                                                            device.id,
+                                                                        );
+                                                                    }
+                                                                    return next;
+                                                                },
+                                                            )
                                                         }
                                                         className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
                                                         title={
@@ -648,7 +654,11 @@ export default function Devices() {
                                             <div className="mt-3 flex flex-wrap items-center gap-2">
                                                 <button
                                                     type="button"
-                                                    onClick={() => void copyDeviceToken(device.id)}
+                                                    onClick={() =>
+                                                        void copyDeviceToken(
+                                                            device.id,
+                                                        )
+                                                    }
                                                     disabled={!token}
                                                     className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                                                 >
@@ -659,7 +669,11 @@ export default function Devices() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => void rotateDeviceToken(device.id)}
+                                                    onClick={() =>
+                                                        void rotateDeviceToken(
+                                                            device.id,
+                                                        )
+                                                    }
                                                     disabled={isRotating}
                                                     className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
                                                 >
@@ -672,7 +686,11 @@ export default function Devices() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => openDeviceConnection(device)}
+                                                    onClick={() =>
+                                                        openDeviceConnection(
+                                                            device,
+                                                        )
+                                                    }
                                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
                                                 >
                                                     <Link2 className="size-3.5" />
@@ -780,9 +798,7 @@ export default function Devices() {
                                         </div>
                                         <button
                                             onClick={() =>
-                                                void openDeviceConnection(
-                                                    device,
-                                                )
+                                                openDeviceConnection(device)
                                             }
                                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                                         >
@@ -1120,10 +1136,11 @@ export default function Devices() {
                                     Hubungkan ESP32
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                                    Token autentikasi dikelola terpisah pada kartu
-                                    <strong> Token API</strong> di halaman Kelola
-                                    device. Salin token dari kartu tersebut ke
-                                    konfigurasi ESP32.
+                                    Token autentikasi dikelola terpisah pada
+                                    kartu
+                                    <strong> Token API</strong> di halaman
+                                    Kelola device. Salin token dari kartu
+                                    tersebut ke konfigurasi ESP32.
                                 </p>
                             </div>
 
@@ -1144,14 +1161,20 @@ export default function Devices() {
                                         <p className="text-xs text-slate-500">
                                             Header autentikasi API
                                         </p>
-                                        <code className="mt-1 block rounded-lg bg-slate-950 p-3 text-xs break-all leading-relaxed text-slate-100">
-                                            Authorization: Bearer &lt;DEVICE_TOKEN&gt;
+                                        <code className="mt-1 block rounded-lg bg-slate-950 p-3 text-xs leading-relaxed break-all text-slate-100">
+                                            Authorization: Bearer
+                                            &lt;DEVICE_TOKEN&gt;
                                         </code>
                                     </div>
                                 </div>
                                 <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-600">
-                                    <li>Salin token API dari kartu Token API.</li>
-                                    <li>Masukkan token tersebut ke firmware ESP32.</li>
+                                    <li>
+                                        Salin token API dari kartu Token API.
+                                    </li>
+                                    <li>
+                                        Masukkan token tersebut ke firmware
+                                        ESP32.
+                                    </li>
                                     <li>
                                         ESP32 mengirim telemetry ke{' '}
                                         <code className="rounded bg-slate-100 px-1">
@@ -1168,7 +1191,8 @@ export default function Devices() {
                             <p className="text-xs leading-relaxed text-slate-500">
                                 Status device berubah menjadi Online setelah
                                 server menerima telemetry yang valid. Membuka
-                                dialog ini tidak otomatis menghubungkan perangkat.
+                                dialog ini tidak otomatis menghubungkan
+                                perangkat.
                             </p>
                         </div>
 

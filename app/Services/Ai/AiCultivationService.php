@@ -170,7 +170,7 @@ class AiCultivationService
                     'light' => 'light_percent',
                     default => null,
                 };
-                if (! $field) {
+                if ($field === null) {
                     continue;
                 }
                 $values = $readings->where('iot_device_id', $device->id)->pluck($field)->filter(fn ($v) => $v !== null)->map(fn ($v) => (float) $v);
@@ -196,7 +196,7 @@ class AiCultivationService
             'metrics' => $metrics,
             'anomalies' => $anomalies,
             'reading_count' => $readings->count(),
-            'offline_devices' => $devices->filter(fn (IotDevice $d) => ! $d->last_seen_at || $d->last_seen_at->lt(now()->subMinutes(5)))->pluck('name')->values()->all(),
+            'offline_devices' => $devices->filter(fn (IotDevice $d) => $d->last_seen_at === null || $d->last_seen_at->lt(now()->subMinutes(5)))->pluck('name')->values()->all(),
         ];
     }
 
@@ -214,14 +214,14 @@ class AiCultivationService
 
     private function generate(string $system, string $prompt, array $schema): array
     {
-        if (! config('vertex-ai.enabled')) {
+        if (config('vertex-ai.enabled') === false) {
             throw new RuntimeException('Vertex AI belum diaktifkan. Atur VERTEX_AI_ENABLED=true dan kredensial Vertex AI.');
         }
 
         $project = config('vertex-ai.project_id');
         $location = config('vertex-ai.location', 'global');
         $model = config('vertex-ai.model', 'gemini-3.8-flash');
-        if (! $project) {
+        if ($project === null || $project === '') {
             throw new RuntimeException('VERTEX_AI_PROJECT_ID belum dikonfigurasi.');
         }
 
@@ -251,7 +251,7 @@ class AiCultivationService
 
         $text = collect($response->json('candidates.0.content.parts', []))->pluck('text')->filter()->implode('');
         $decoded = json_decode($text, true);
-        if (! is_array($decoded)) {
+        if (is_array($decoded) === false) {
             throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
         }
         return $decoded;
@@ -263,11 +263,11 @@ class AiCultivationService
             return $token;
         }
         $encoded = config('vertex-ai.service_account_json_base64');
-        if (! $encoded) {
+        if ($encoded === null || $encoded === '') {
             throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
         }
         $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
-        if (! is_array($credentials) || empty($credentials['client_email']) || empty($credentials['private_key'])) {
+        if (is_array($credentials) === false || empty($credentials['client_email']) || empty($credentials['private_key'])) {
             throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');
         }
 
@@ -290,7 +290,7 @@ class AiCultivationService
             'exp' => $now + 3600,
         ], JSON_THROW_ON_ERROR));
         $unsigned = $header.'.'.$claim;
-        if (! openssl_sign($unsigned, $signature, $credentials['private_key'], OPENSSL_ALGO_SHA256)) {
+        if (openssl_sign($unsigned, $signature, $credentials['private_key'], OPENSSL_ALGO_SHA256) === false) {
             throw new RuntimeException('Gagal menandatangani service account.');
         }
 
@@ -298,7 +298,7 @@ class AiCultivationService
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion' => $unsigned.'.'.$this->b64($signature),
         ]);
-        if ($response->failed() || ! $response->json('access_token')) {
+        if ($response->failed() || empty($response->json('access_token'))) {
             throw new RuntimeException('Gagal memperoleh access token Google Cloud.');
         }
         return (string) $response->json('access_token');

@@ -19,6 +19,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
+/**
+ * @phpstan-type SensorItems EloquentCollection<int, SensorReading>
+ * @phpstan-type DeviceItems EloquentCollection<int, IotDevice>
+ */
 class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
@@ -161,8 +165,8 @@ class AiCultivationService
     }
 
     /**
-     * @param EloquentCollection<int, SensorReading> $readings
-     * @param EloquentCollection<int, IotDevice>     $devices
+     * @param SensorItems $readings
+     * @param DeviceItems $devices
      * @return array<string, mixed>
      */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array

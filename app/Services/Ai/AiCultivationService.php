@@ -208,6 +208,7 @@ class AiCultivationService
         if ($points->count() < 3) {
             return null;
         }
+
         $first = $points->first();
         $last = $points->last();
         $hours = max(1 / 60, $first->measured_at->diffInSeconds($last->measured_at) / 3600);
@@ -256,6 +257,7 @@ class AiCultivationService
         if (is_array($decoded) === false) {
             throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
         }
+
         return $decoded;
     }
 
@@ -264,10 +266,12 @@ class AiCultivationService
         if ($token = config('vertex-ai.access_token')) {
             return $token;
         }
+
         $encoded = config('vertex-ai.service_account_json_base64');
         if ($encoded === null || $encoded === '') {
             throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
         }
+
         $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
         if (is_array($credentials) === false || empty($credentials['client_email']) || empty($credentials['private_key'])) {
             throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');
@@ -303,6 +307,7 @@ class AiCultivationService
         if ($response->failed() || empty($response->json('access_token'))) {
             throw new RuntimeException('Gagal memperoleh access token Google Cloud.');
         }
+
         return (string) $response->json('access_token');
     }
 

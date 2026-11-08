@@ -23,9 +23,6 @@ class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 
-    /**
-     * @return array<string, mixed>
-     */
     public function analyze(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $context = $this->context($user, $from, $to);
@@ -65,9 +62,6 @@ class AiCultivationService
         }
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function chat(User $user, string $question): array
     {
         $to = now();
@@ -80,9 +74,6 @@ class AiCultivationService
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function context(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $devices = IotDevice::query()->where('user_id', $user->id)->with('controlRules')->get();
@@ -160,11 +151,6 @@ class AiCultivationService
         ];
     }
 
-    /**
-     * @param  EloquentCollection<int, SensorReading> $readings
-     * @param  EloquentCollection<int, IotDevice> $devices
-     * @return array<string, mixed>
-     */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array
     {
         $metrics = [];
@@ -221,9 +207,6 @@ class AiCultivationService
         ];
     }
 
-    /**
-     * @param  EloquentCollection<int, SensorReading> $readings
-     */
     private function trend(EloquentCollection $readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
@@ -238,10 +221,6 @@ class AiCultivationService
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
 
-    /**
-     * @param  array<string, mixed> $schema
-     * @return array<string, mixed>
-     */
     private function generate(string $system, string $prompt, array $schema): array
     {
         if (config('vertex-ai.enabled') === false) {
@@ -279,49 +258,7 @@ class AiCultivationService
             throw new RuntimeException('Vertex AI menolak permintaan (HTTP '.$response->status().'): '.$response->json('error.message', 'Unknown error'));
         }
 
-        /** @var array<int, array{text?: string}> $parts */
-        $parts = $response->json('candidates.0.content.parts', []);
-        $text = '';
-        foreach ($parts as $part) {
-            if (isset($part['text']) && is_string($part['text'])) {
-                $text .= $part['text'];
-            }
-        }
-        $decoded = json_decode($text, true);
-        if (is_array($decoded) === false) {
-            throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
-        }
-
-        return $decoded;
-    }
-
-    private function accessToken(): string
-    {
-        if ($token = config('vertex-ai.access_token')) {
-            return $token;
-        }
-
-        $encoded = config('vertex-ai.service_account_json_base64');
-        if ($encoded === null || $encoded === '') {
-            throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
-        }
-
-        $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
-        if (is_array($credentials) === false || empty($credentials['client_email']) || empty($credentials['private_key'])) {
-            throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');
-        }
-
-        return Cache::remember(
-            'vertex-ai.access-token.'.hash('sha256', (string) $credentials['client_email']),
-            now()->addMinutes(50),
-            fn (): string => $this->exchangeToken($credentials),
-        );
-    }
-
-    /**
-     * @param  array<string, mixed> $credentials
-     */
-    private function exchangeToken(array $credentials): string
+        private function exchangeToken(array $credentials): string
     {
         $now = time();
         $header = $this->b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
@@ -353,9 +290,6 @@ class AiCultivationService
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function analysisSchema(): array
     {
         return [
@@ -403,9 +337,6 @@ class AiCultivationService
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function chatSchema(): array
     {
         return [

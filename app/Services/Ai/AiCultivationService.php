@@ -1,6 +1,5 @@
 <?php
 
-// @php-cs-fixer-ignore phpdoc_align PHPStan generic type aliases are intentionally aligned for static analysis.
 namespace App\Services\Ai;
 
 use App\Models\ActuatorCommand;
@@ -421,3 +420,5 @@ class AiCultivationService
         ];
     }
 }
+
+// @php-cs-fixer-ignore phpdoc_align PHPStan generic type aliases are intentionally aligned for static analysis.

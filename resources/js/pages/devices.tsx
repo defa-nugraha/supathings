@@ -90,7 +90,10 @@ export default function Devices() {
             await navigator.clipboard.writeText(token);
             setCopyStatus(deviceId);
             window.setTimeout(
-                () => setCopyStatus((current) => (current === deviceId ? '' : current)),
+                () =>
+                    setCopyStatus((current) =>
+                        current === deviceId ? '' : current,
+                    ),
                 2000,
             );
         } catch {
@@ -575,8 +578,11 @@ export default function Devices() {
                             ) : (
                                 devices.map((device) => {
                                     const token = deviceTokens[device.id];
-                                    const isVisible = visibleTokens.has(device.id);
-                                    const isRotating = rotatingToken === device.id;
+                                    const isVisible = visibleTokens.has(
+                                        device.id,
+                                    );
+                                    const isRotating =
+                                        rotatingToken === device.id;
 
                                     return (
                                         <div
@@ -603,7 +609,9 @@ export default function Devices() {
                                                     {token
                                                         ? isVisible
                                                             ? token
-                                                            : token.slice(0, 8) + '••••••••' + token.slice(-4)
+                                                            : token.slice(0, 8) +
+                                                              '••••••••' +
+                                                              token.slice(-4)
                                                         : 'Memuat token…'}
                                                 </code>
                                                 {token && (
@@ -621,8 +629,16 @@ export default function Devices() {
                                                             })
                                                         }
                                                         className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
-                                                        title={isVisible ? 'Sembunyikan token' : 'Tampilkan token'}
-                                                        aria-label={isVisible ? 'Sembunyikan token' : 'Tampilkan token'}
+                                                        title={
+                                                            isVisible
+                                                                ? 'Sembunyikan token'
+                                                                : 'Tampilkan token'
+                                                        }
+                                                        aria-label={
+                                                            isVisible
+                                                                ? 'Sembunyikan token'
+                                                                : 'Tampilkan token'
+                                                        }
                                                     >
                                                         <Eye className="size-4" />
                                                     </button>

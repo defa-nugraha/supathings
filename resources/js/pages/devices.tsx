@@ -183,7 +183,8 @@ export default function Devices() {
                     mappedDevices.map((device: Device) =>
                         loadDeviceToken(device.id),
                     ),
-                );            })
+                );
+            })
             .catch(() => undefined);
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) return;

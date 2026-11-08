@@ -979,14 +979,14 @@ export default function Devices() {
                         ) : tokenNeedsRotation ? (
                             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
                                 <p className="text-sm font-semibold text-amber-900">
-                                    Token lama belum dapat ditampilkan
+                                    Token belum dibuat
                                 </p>
                                 <p className="mt-1 text-sm leading-relaxed text-amber-800">
-                                    Buat token untuk pertama kali atau
-                                    regenerate jika token lama sudah tidak
-                                    dipercaya. Token akan tetap berlaku untuk
-                                    telemetry dan perintah ESP32 sampai Anda
-                                    melakukan regenerate.
+                                    Buat token untuk pertama kali. Setelah
+                                    dibuat, token dapat digunakan berulang kali
+                                    untuk telemetry dan perintah ESP32. Gunakan
+                                    regenerate hanya jika token lama harus
+                                    dinonaktifkan.
                                 </p>
                                 <button
                                     onClick={() => void rotateDeviceToken()}

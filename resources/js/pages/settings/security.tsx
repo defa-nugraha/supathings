@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import ActionModal from '@/components/action-modal';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -18,6 +19,7 @@ type Props = {
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
 
     return (
         <>
@@ -43,6 +45,7 @@ export default function Security(props: Props) {
                         'current_password',
                     ]}
                     resetOnSuccess
+                    onSuccess={() => setResult({ variant: 'success', title: 'Password berhasil diperbarui', description: 'Password akun berhasil diganti.' })}
                     onError={(errors) => {
                         if (errors.password) {
                             passwordInput.current?.focus();
@@ -124,6 +127,13 @@ export default function Security(props: Props) {
                 </Form>
             </div>
 
+            <ActionModal
+                open={Boolean(result)}
+                onOpenChange={(open) => !open && setResult(null)}
+                variant={result?.variant}
+                title={result?.title ?? ''}
+                description={result?.description ?? ''}
+            />
             <ManageTwoFactor
                 canManageTwoFactor={props.canManageTwoFactor}
                 requiresConfirmation={props.requiresConfirmation}

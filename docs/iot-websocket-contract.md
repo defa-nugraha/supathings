@@ -8,8 +8,9 @@ The browser and ESP32 use the WebSocket endpoint configured with \`VITE_WS_URL\`
 2. ESP32 sends \`device_discovered\` to the WebSocket server with its MAC address and supported sensors.
 3. The browser receives the discovery event. The MAC is displayed as the device identity; users do not type or edit it.
 4. In **Tambah device**, the user selects one discovered ESP32 and only enters its display name.
-5. The authenticated application registers the selected MAC and issues a random device token.
-6. The user copies the token into the ESP32 firmware configuration. Only then can that ESP32 authenticate to the data and command APIs.
+5. The authenticated application registers the selected MAC and creates one persistent random device API token.
+6. In **Kelola device**, the token is shown in a masked **Token API** card with a copy action. The token is independent from the **Hubungkan device** flow.
+7. The user copies the token into the ESP32 firmware configuration. The same token can be reused for telemetry and command APIs until the owner explicitly regenerates it.
 
 Discovery is not registration and is not authorization. A MAC address is an identifier, not a secret or proof of ownership. An unregistered ESP32, or one without a valid device bearer token, cannot submit telemetry, poll actuator commands, or acknowledge commands.
 
@@ -31,6 +32,6 @@ The following requests use \`Authorization: Bearer <device_token>\`:
 - \`GET /api/device/commands\` — retrieve pending actuator commands.
 - \`POST /api/device/commands/{command}/ack\` — acknowledge command execution.
 
-The application stores a SHA-256 hash for token validation and an encrypted copy so the authenticated owner can reveal the token again from **Token & Hubungkan**. Both token fields are hidden from ordinary device API serialization. Token reveal and rotation are restricted to the owning account. Never print tokens to Serial Monitor in production, application logs, or WebSocket messages.
+The application stores a SHA-256 hash for token validation and an encrypted copy so the authenticated owner can retrieve the token from the **Token API** card. Both token fields are hidden from ordinary device API serialization. Token retrieval and rotation are restricted to the owning account. Regeneration immediately invalidates the previous token. Never print tokens to Serial Monitor in production, application logs, or WebSocket messages.
 
 Firmware must fail safe when commands expire, the network is lost, or sensor readings are invalid. Use actuator maximum-on timers and hysteresis in firmware/control rules as appropriate.

@@ -25,7 +25,11 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<PageProps>().props;
-    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
+    const [result, setResult] = useState<{
+        variant: 'success' | 'error';
+        title: string;
+        description: string;
+    } | null>(null);
 
     return (
         <>
@@ -45,8 +49,22 @@ export default function Profile({
                     options={{
                         preserveScroll: true,
                     }}
-                    onSuccess={() => setResult({ variant: 'success', title: 'Profil berhasil diperbarui', description: 'Nama dan alamat email akun berhasil disimpan.' })}
-                    onError={() => setResult({ variant: 'error', title: 'Profil gagal diperbarui', description: 'Perubahan profil gagal disimpan. Periksa data lalu coba lagi.' })}
+                    onSuccess={() =>
+                        setResult({
+                            variant: 'success',
+                            title: 'Profil berhasil diperbarui',
+                            description:
+                                'Nama dan alamat email akun berhasil disimpan.',
+                        })
+                    }
+                    onError={() =>
+                        setResult({
+                            variant: 'error',
+                            title: 'Profil gagal diperbarui',
+                            description:
+                                'Perubahan profil gagal disimpan. Periksa data lalu coba lagi.',
+                        })
+                    }
                     className="space-y-6"
                 >
                     {({ processing, errors }) => (

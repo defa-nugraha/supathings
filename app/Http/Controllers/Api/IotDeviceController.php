@@ -100,8 +100,8 @@ class IotDeviceController extends Controller
 
         if (! $record->device_token_encrypted) {
             return response()->json([
-                'code' => 'token_not_recoverable',
-                'message' => 'Token lama tidak dapat dipulihkan. Buat token baru untuk perangkat ini.',
+                'code' => 'token_not_generated',
+                'message' => 'Token perangkat belum dibuat.',
             ], 409);
         }
 
@@ -113,6 +113,34 @@ class IotDeviceController extends Controller
                 'message' => 'Token tidak dapat didekripsi. Buat token baru untuk perangkat ini.',
             ], 409);
         }
+
+        return response()->json(['device_token' => $token]);
+    }
+
+    /**
+     * Generate the initial device token for a registered device.
+     */
+    public function generateToken(Request $request, string $device): JsonResponse
+    {
+        $record = IotDevice::query()
+            ->where('user_id', $request->user()->id)
+            ->where(function ($query) use ($device): void {
+                $query->where('id', $device)->orWhere('mac_address', Str::upper($device));
+            })
+            ->firstOrFail();
+
+        if ($record->device_token_hash || $record->device_token_encrypted) {
+            return response()->json([
+                'code' => 'token_already_generated',
+                'message' => 'Token perangkat sudah dibuat. Gunakan regenerate untuk menggantinya.',
+            ], 409);
+        }
+
+        $token = Str::random(64);
+        $record->forceFill([
+            'device_token_hash' => hash('sha256', $token),
+            'device_token_encrypted' => Crypt::encryptString($token),
+        ])->save();
 
         return response()->json(['device_token' => $token]);
     }

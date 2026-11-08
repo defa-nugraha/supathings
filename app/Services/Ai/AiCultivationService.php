@@ -161,8 +161,8 @@ class AiCultivationService
     }
 
     /**
-     * @param SensorItems $readings
-     * @param DeviceItems  $devices
+     * @param SensorData $readings
+     * @param DeviceData $devices
      * @return array<string, mixed>
      */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array

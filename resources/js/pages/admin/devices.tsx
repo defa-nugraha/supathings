@@ -1,7 +1,14 @@
 import { Head, router } from '@inertiajs/react';
 import ActionModal from '@/components/action-modal';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
@@ -52,7 +59,11 @@ export default function AdminDevices({ devices, users, filters }: Props) {
     const [editName, setEditName] = useState('');
     const [editOwnerId, setEditOwnerId] = useState('');
     const [confirmSave, setConfirmSave] = useState(false);
-    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
+    const [result, setResult] = useState<{
+        variant: 'success' | 'error';
+        title: string;
+        description: string;
+    } | null>(null);
 
     const applySearch = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -71,12 +82,20 @@ export default function AdminDevices({ devices, users, filters }: Props) {
 
     const requestSave = () => {
         if (!editing || !editName.trim()) {
-            setResult({ variant: 'error', title: 'Data belum lengkap', description: 'Nama perangkat wajib diisi.' });
+            setResult({
+                variant: 'error',
+                title: 'Data belum lengkap',
+                description: 'Nama perangkat wajib diisi.',
+            });
             return;
         }
         const ownerId = Number(editOwnerId);
         if (!users.some((user) => user.id === ownerId)) {
-            setResult({ variant: 'error', title: 'Pemilik tidak valid', description: 'ID pemilik tidak valid atau akun tidak aktif.' });
+            setResult({
+                variant: 'error',
+                title: 'Pemilik tidak valid',
+                description: 'ID pemilik tidak valid atau akun tidak aktif.',
+            });
             return;
         }
         setConfirmSave(true);
@@ -92,11 +111,21 @@ export default function AdminDevices({ devices, users, filters }: Props) {
                 onSuccess: () => {
                     setEditing(null);
                     setConfirmSave(false);
-                    setResult({ variant: 'success', title: 'Perubahan berhasil disimpan', description: 'Nama dan kepemilikan perangkat berhasil diperbarui.' });
+                    setResult({
+                        variant: 'success',
+                        title: 'Perubahan berhasil disimpan',
+                        description:
+                            'Nama dan kepemilikan perangkat berhasil diperbarui.',
+                    });
                 },
                 onError: () => {
                     setConfirmSave(false);
-                    setResult({ variant: 'error', title: 'Perubahan gagal', description: 'Perubahan perangkat gagal disimpan. Periksa kembali data lalu coba lagi.' });
+                    setResult({
+                        variant: 'error',
+                        title: 'Perubahan gagal',
+                        description:
+                            'Perubahan perangkat gagal disimpan. Periksa kembali data lalu coba lagi.',
+                    });
                 },
             },
         );
@@ -109,7 +138,13 @@ export default function AdminDevices({ devices, users, filters }: Props) {
                 onOpenChange={setConfirmSave}
                 variant="confirm"
                 title="Simpan perubahan perangkat?"
-                description={editing ? 'Simpan perubahan nama atau kepemilikan perangkat ' + editing.mac_address + '?' : ''}
+                description={
+                    editing
+                        ? 'Simpan perubahan nama atau kepemilikan perangkat ' +
+                          editing.mac_address +
+                          '?'
+                        : ''
+                }
                 confirmLabel="Simpan perubahan"
                 onConfirm={saveDevice}
             />
@@ -120,27 +155,56 @@ export default function AdminDevices({ devices, users, filters }: Props) {
                 title={result?.title ?? ''}
                 description={result?.description ?? ''}
             />
-            <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+            <Dialog
+                open={Boolean(editing)}
+                onOpenChange={(open) => !open && setEditing(null)}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit perangkat</DialogTitle>
-                        <DialogDescription>Perbarui nama dan pemilik perangkat.</DialogDescription>
+                        <DialogDescription>
+                            Perbarui nama dan pemilik perangkat.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
                         <div className="grid gap-2">
-                            <Label htmlFor="admin-device-name">Nama perangkat</Label>
-                            <Input id="admin-device-name" value={editName} onChange={(event) => setEditName(event.target.value)} />
+                            <Label htmlFor="admin-device-name">
+                                Nama perangkat
+                            </Label>
+                            <Input
+                                id="admin-device-name"
+                                value={editName}
+                                onChange={(event) =>
+                                    setEditName(event.target.value)
+                                }
+                            />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="admin-device-owner">Pemilik</Label>
-                            <select id="admin-device-owner" value={editOwnerId} onChange={(event) => setEditOwnerId(event.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                            <select
+                                id="admin-device-owner"
+                                value={editOwnerId}
+                                onChange={(event) =>
+                                    setEditOwnerId(event.target.value)
+                                }
+                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            >
                                 <option value="">Pilih pemilik</option>
-                                {users.map((user) => <option key={user.id} value={user.id}>{user.name} ({user.email})</option>)}
+                                {users.map((user) => (
+                                    <option key={user.id} value={user.id}>
+                                        {user.name} ({user.email})
+                                    </option>
+                                ))}
                             </select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditing(null)}>Batal</Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setEditing(null)}
+                        >
+                            Batal
+                        </Button>
                         <Button onClick={requestSave}>Simpan perubahan</Button>
                     </DialogFooter>
                 </DialogContent>

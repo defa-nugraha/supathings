@@ -44,96 +44,74 @@ export default function Devices() {
     const [connectionDevice, setConnectionDevice] = useState<Device | null>(
         null,
     );
-    const [deviceTokens, setDeviceTokens] = useState<Record<string, string>>(
-        {},
-    );
-    const [visibleTokens, setVisibleTokens] = useState<Set<string>>(new Set());
-    const tokenRequests = useRef(new Set<string>());
-    const [rotatingToken, setRotatingToken] = useState<string | null>(null);
-    const [copyStatus, setCopyStatus] = useState('');
+    const [apiToken, setApiToken] = useState('');
+    const [isTokenVisible, setIsTokenVisible] = useState(false);
+    const [tokenLoading, setTokenLoading] = useState(true);
+    const [rotatingToken, setRotatingToken] = useState(false);
+    const [copyStatus, setCopyStatus] = useState(false);
     const socket = useRef<WebSocket | null>(null);
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
     );
 
-    const loadDeviceToken = async (deviceId: string) => {
-        if (tokenRequests.current.has(deviceId)) return;
-
-        tokenRequests.current.add(deviceId);
+    const loadApiToken = async () => {
         try {
-            const response = await fetch(
-                '/api/devices/' + encodeURIComponent(deviceId) + '/token',
-                { headers: { Accept: 'application/json' } },
-            );
+            const response = await fetch('/api/account/token', {
+                headers: { Accept: 'application/json' },
+            });
             const payload = await response.json();
 
-            if (response.ok && typeof payload.device_token === 'string') {
-                setDeviceTokens((prev) => ({
-                    ...prev,
-                    [deviceId]: payload.device_token,
-                }));
+            if (response.ok && typeof payload.api_token === 'string') {
+                setApiToken(payload.api_token);
             }
         } catch {
-            // Token status is intentionally non-blocking for device management.
+            setNotice('Token API gagal dimuat. Silakan coba lagi.');
         } finally {
-            tokenRequests.current.delete(deviceId);
+            setTokenLoading(false);
         }
     };
 
-    const copyDeviceToken = async (deviceId: string) => {
-        const token = deviceTokens[deviceId];
-        if (!token) return;
+    const copyApiToken = async () => {
+        if (!apiToken) return;
 
         try {
-            await navigator.clipboard.writeText(token);
-            setCopyStatus(deviceId);
-            window.setTimeout(
-                () =>
-                    setCopyStatus((current) =>
-                        current === deviceId ? '' : current,
-                    ),
-                2000,
-            );
+            await navigator.clipboard.writeText(apiToken);
+            setCopyStatus(true);
+            window.setTimeout(() => setCopyStatus(false), 2000);
         } catch {
             setNotice('Clipboard tidak tersedia. Salin token secara manual.');
         }
     };
 
-    const rotateDeviceToken = async (deviceId: string) => {
+    const rotateApiToken = async () => {
         const confirmed = window.confirm(
-            'Regenerate token? Token lama akan langsung tidak berlaku dan ESP32 harus diperbarui menggunakan token baru.',
+            'Regenerate token API? Token lama akan langsung tidak berlaku pada seluruh ESP32 yang menggunakannya.',
         );
         if (!confirmed) return;
 
-        setRotatingToken(deviceId);
+        setRotatingToken(true);
         try {
-            const response = await fetch(
-                '/api/devices/' +
-                    encodeURIComponent(deviceId) +
-                    '/token/rotate',
-                {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-CSRF-TOKEN':
-                            document.querySelector<HTMLMetaElement>(
-                                'meta[name="csrf-token"]',
-                            )?.content ?? '',
-                    },
+            const response = await fetch('/api/account/token/rotate', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN':
+                        document.querySelector<HTMLMetaElement>(
+                            'meta[name="csrf-token"]',
+                        )?.content ?? '',
                 },
-            );
+            });
             const payload = await response.json();
 
             if (!response.ok) {
                 throw new Error(payload.message || 'Token baru gagal dibuat.');
             }
 
-            setDeviceTokens((prev) => ({
-                ...prev,
-                [deviceId]: payload.device_token,
-            }));
-            setVisibleTokens((prev) => new Set(prev).add(deviceId));
-            setNotice('Token baru berhasil dibuat. Perbarui token pada ESP32.');
+            setApiToken(payload.api_token);
+            setIsTokenVisible(true);
+            setNotice(
+                'Token API baru berhasil dibuat. Perbarui token pada seluruh ESP32 yang terhubung.',
+            );
         } catch (error) {
             setNotice(
                 error instanceof Error
@@ -141,10 +119,9 @@ export default function Devices() {
                     : 'Token baru gagal dibuat.',
             );
         } finally {
-            setRotatingToken(null);
+            setRotatingToken(false);
         }
     };
-
     useEffect(() => {
         if (!isAddOpen || selectedDiscovered) return;
 
@@ -179,13 +156,9 @@ export default function Devices() {
                     }),
                 );
                 setDevices(mappedDevices);
-                await Promise.all(
-                    mappedDevices.map((device: Device) =>
-                        loadDeviceToken(device.id),
-                    ),
-                );
             })
             .catch(() => undefined);
+        void loadApiToken();
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) return;
         try {
@@ -548,162 +521,87 @@ export default function Devices() {
                                     id="device-token-title"
                                     className="font-semibold text-slate-900"
                                 >
-                                    Token API device
+                                    Token API
                                 </h2>
-                                <p className="mt-1 text-sm leading-relaxed text-slate-500">
-                                    Token adalah kredensial Bearer yang
-                                    digunakan ESP32 untuk mengirim telemetry dan
-                                    mengambil perintah. Token tidak berubah
-                                    sampai Anda memilih Regenerate.
+                                <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">
+                                    Token ini dibuat otomatis saat akun
+                                    terdaftar dan digunakan sebagai kredensial
+                                    Bearer untuk ESP32. Token tidak bergantung
+                                    pada pendaftaran device dan dapat digunakan
+                                    untuk beberapa device milik akun ini.
                                 </p>
                             </div>
                             <KeyRound className="hidden size-5 text-slate-400 sm:block" />
                         </div>
 
-                        <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            {devices.length === 0 ? (
-                                <div className="rounded-xl border border-dashed border-slate-200 p-5 text-sm text-slate-500 md:col-span-2">
-                                    Daftarkan device terlebih dahulu untuk
-                                    mendapatkan token API.
-                                </div>
-                            ) : (
-                                devices.map((device) => {
-                                    const token = deviceTokens[device.id];
-                                    const isVisible = visibleTokens.has(
-                                        device.id,
-                                    );
-                                    const isRotating =
-                                        rotatingToken === device.id;
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                                <KeyRound className="size-4 shrink-0 text-slate-400" />
+                                <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
+                                    {tokenLoading
+                                        ? 'Memuat token…'
+                                        : apiToken
+                                          ? isTokenVisible
+                                              ? apiToken
+                                              : apiToken.slice(0, 8) +
+                                                '••••••••' +
+                                                apiToken.slice(-4)
+                                          : 'Token tidak tersedia'}
+                                </code>
+                                {!tokenLoading && apiToken && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setIsTokenVisible((visible) => !visible)
+                                        }
+                                        className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
+                                        title={
+                                            isTokenVisible
+                                                ? 'Sembunyikan token'
+                                                : 'Tampilkan token'
+                                        }
+                                        aria-label={
+                                            isTokenVisible
+                                                ? 'Sembunyikan token'
+                                                : 'Tampilkan token'
+                                        }
+                                    >
+                                        <Eye className="size-4" />
+                                    </button>
+                                )}
+                            </div>
 
-                                    return (
-                                        <div
-                                            key={device.id}
-                                            className="rounded-xl border border-slate-200 bg-slate-50 p-4"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-slate-900">
-                                                        {device.name}
-                                                    </p>
-                                                    <p className="mt-0.5 font-mono text-xs text-slate-500">
-                                                        {device.id}
-                                                    </p>
-                                                </div>
-                                                <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                                                    API credential
-                                                </span>
-                                            </div>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => void copyApiToken()}
+                                    disabled={!apiToken || tokenLoading}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
+                                >
+                                    <Copy className="size-3.5" />
+                                    {copyStatus ? 'Tersalin' : 'Copy token'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => void rotateApiToken()}
+                                    disabled={!apiToken || rotatingToken}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
+                                >
+                                    <RefreshCw
+                                        className={rotatingToken ? 'size-3.5 animate-spin' : 'size-3.5'}
+                                    />
+                                    Regenerate token
+                                </button>
+                            </div>
 
-                                            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                                                <KeyRound className="size-4 shrink-0 text-slate-400" />
-                                                <code className="min-w-0 flex-1 truncate text-xs text-slate-700">
-                                                    {token
-                                                        ? isVisible
-                                                            ? token
-                                                            : token.slice(
-                                                                  0,
-                                                                  8,
-                                                              ) +
-                                                              '••••••••' +
-                                                              token.slice(-4)
-                                                        : 'Memuat token…'}
-                                                </code>
-                                                {token && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setVisibleTokens(
-                                                                (prev) => {
-                                                                    const next =
-                                                                        new Set(
-                                                                            prev,
-                                                                        );
-                                                                    if (
-                                                                        next.has(
-                                                                            device.id,
-                                                                        )
-                                                                    ) {
-                                                                        next.delete(
-                                                                            device.id,
-                                                                        );
-                                                                    } else {
-                                                                        next.add(
-                                                                            device.id,
-                                                                        );
-                                                                    }
-                                                                    return next;
-                                                                },
-                                                            )
-                                                        }
-                                                        className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
-                                                        title={
-                                                            isVisible
-                                                                ? 'Sembunyikan token'
-                                                                : 'Tampilkan token'
-                                                        }
-                                                        aria-label={
-                                                            isVisible
-                                                                ? 'Sembunyikan token'
-                                                                : 'Tampilkan token'
-                                                        }
-                                                    >
-                                                        <Eye className="size-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        void copyDeviceToken(
-                                                            device.id,
-                                                        )
-                                                    }
-                                                    disabled={!token}
-                                                    className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
-                                                >
-                                                    <Copy className="size-3.5" />
-                                                    {copyStatus === device.id
-                                                        ? 'Tersalin'
-                                                        : 'Copy token'}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        void rotateDeviceToken(
-                                                            device.id,
-                                                        )
-                                                    }
-                                                    disabled={isRotating}
-                                                    className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 disabled:opacity-50"
-                                                >
-                                                    {isRotating ? (
-                                                        <RefreshCw className="size-3.5 animate-spin" />
-                                                    ) : (
-                                                        <RefreshCw className="size-3.5" />
-                                                    )}
-                                                    Regenerate token
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        openDeviceConnection(
-                                                            device,
-                                                        )
-                                                    }
-                                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-                                                >
-                                                    <Link2 className="size-3.5" />
-                                                    Hubungkan device
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
+                            <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                                Regenerate akan membatalkan token lama untuk
+                                semua ESP32 yang menggunakannya. Simpan token
+                                dengan aman dan jangan membagikannya kepada
+                                pihak lain.
+                            </p>
                         </div>
-                    </section>
+                    </section>n>
 
                     <section
                         data-tour="devices-list"
@@ -1164,7 +1062,7 @@ export default function Devices() {
                                         </p>
                                         <code className="mt-1 block rounded-lg bg-slate-950 p-3 text-xs leading-relaxed break-all text-slate-100">
                                             Authorization: Bearer
-                                            &lt;DEVICE_TOKEN&gt;
+                                            &lt;API_TOKEN&gt;
                                         </code>
                                     </div>
                                 </div>
@@ -1177,15 +1075,10 @@ export default function Devices() {
                                         ESP32.
                                     </li>
                                     <li>
-                                        ESP32 mengirim telemetry ke{' '}
-                                        <code className="rounded bg-slate-100 px-1">
-                                            /api/telemetry
-                                        </code>{' '}
-                                        dan mengambil perintah dari{' '}
-                                        <code className="rounded bg-slate-100 px-1">
-                                            /api/device/commands
-                                        </code>
-                                        .
+                                        Sertakan MAC address device pada
+                                        request agar server mengetahui device
+                                        mana yang mengirim telemetry atau
+                                        mengambil perintah.
                                     </li>
                                 </ol>
                             </div>

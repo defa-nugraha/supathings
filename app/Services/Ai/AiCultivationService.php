@@ -171,9 +171,13 @@ Konteks: ".json_encode($this->context($user, $from, $to), JSON_UNESCAPED_UNICODE
                     'light' => 'light_percent',
                     default => null,
                 };
-                if (! $field) continue;
+                if (! $field) {
+                    continue;
+                }
                 $values = $readings->where('iot_device_id', $device->id)->pluck($field)->filter(fn ($v) => $v !== null)->map(fn ($v) => (float) $v);
-                if ($values->isEmpty()) continue;
+                if ($values->isEmpty()) {
+                    continue;
+                }
                 $outside = $values->filter(fn (float $v) => $v < $rule->minimum || $v > $rule->maximum);
                 if ($outside->isNotEmpty()) {
                     $anomalies[] = [
@@ -216,7 +220,9 @@ Konteks: ".json_encode($this->context($user, $from, $to), JSON_UNESCAPED_UNICODE
         $project = config('vertex-ai.project_id');
         $location = config('vertex-ai.location', 'global');
         $model = config('vertex-ai.model', 'gemini-3.8-flash');
-        if (! $project) throw new RuntimeException('VERTEX_AI_PROJECT_ID belum dikonfigurasi.');
+        if (! $project) {
+            throw new RuntimeException('VERTEX_AI_PROJECT_ID belum dikonfigurasi.');
+        }
 
         $token = $this->accessToken();
         $host = $location === 'global' ? 'aiplatform.googleapis.com' : $location.'-aiplatform.googleapis.com';
@@ -244,15 +250,21 @@ Konteks: ".json_encode($this->context($user, $from, $to), JSON_UNESCAPED_UNICODE
 
         $text = collect($response->json('candidates.0.content.parts', []))->pluck('text')->filter()->implode('');
         $decoded = json_decode($text, true);
-        if (! is_array($decoded)) throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
+        if (! is_array($decoded)) {
+            throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
+        }
         return $decoded;
     }
 
     private function accessToken(): string
     {
-        if ($token = config('vertex-ai.access_token')) return $token;
+        if ($token = config('vertex-ai.access_token')) {
+            return $token;
+        }
         $encoded = config('vertex-ai.service_account_json_base64');
-        if (! $encoded) throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
+        if (! $encoded) {
+            throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
+        }
         $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
         if (! is_array($credentials) || empty($credentials['client_email']) || empty($credentials['private_key'])) {
             throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');

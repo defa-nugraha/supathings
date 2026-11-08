@@ -358,7 +358,7 @@ export default function Devices() {
                     prev.filter((item) => item.id !== targetMac),
                 );
                 setNotice(
-                    'Perangkat berhasil didaftarkan. Token dapat dibuat dari menu Token & Hubungkan di Kelola device.',
+                    'Perangkat berhasil didaftarkan. Token API tersedia di kartu Token API pada halaman ini.',
                 );
             }
         } catch (error) {

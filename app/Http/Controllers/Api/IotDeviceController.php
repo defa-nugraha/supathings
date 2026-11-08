@@ -403,7 +403,7 @@ class IotDeviceController extends Controller
 
         $recordQuery = ActuatorCommand::query()
             ->when($device, fn ($query) => $query->where('iot_device_id', $device->id))
-            ->when($user, fn ($query) => $query->whereHas('iotDevice', fn ($deviceQuery) => $deviceQuery->where('user_id', $user->id)));
+            ->when($user, fn ($query) => $query->whereHas('device', fn ($deviceQuery) => $deviceQuery->where('user_id', $user->id)));
 
         $record = $recordQuery->findOrFail($command);
 

@@ -1,5 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import ActionModal from '@/components/action-modal';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ type PageProps = {
 export default function BrandingSettingsPage() {
     const { brandingSettings } = usePage<PageProps>().props;
     const logoInput = useRef<HTMLInputElement>(null);
+    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
     const { data, setData, post, processing, errors, progress } = useForm<{
         app_name: string;
         logo: File | null;
@@ -31,6 +33,8 @@ export default function BrandingSettingsPage() {
         post('/settings/branding', {
             forceFormData: true,
             preserveScroll: true,
+            onSuccess: () => setResult({ variant: 'success', title: 'Identitas berhasil disimpan', description: 'Nama dan logo aplikasi berhasil diperbarui.' }),
+            onError: () => setResult({ variant: 'error', title: 'Identitas gagal disimpan', description: 'Perubahan identitas aplikasi gagal disimpan.' }),
         });
     }
 
@@ -42,6 +46,7 @@ export default function BrandingSettingsPage() {
                 if (logoInput.current) {
                     logoInput.current.value = '';
                 }
+                setResult({ variant: 'success', title: 'Logo berhasil dihapus', description: 'Logo khusus telah dihapus dari aplikasi.' });
             },
         });
     }
@@ -49,6 +54,13 @@ export default function BrandingSettingsPage() {
     return (
         <>
             <Head title="Identitas aplikasi" />
+            <ActionModal
+                open={Boolean(result)}
+                onOpenChange={(open) => !open && setResult(null)}
+                variant={result?.variant}
+                title={result?.title ?? ''}
+                description={result?.description ?? ''}
+            />
             <div className="space-y-6">
                 <Heading
                     variant="small"

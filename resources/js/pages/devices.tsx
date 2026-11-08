@@ -74,7 +74,9 @@ export default function Devices() {
         } catch {
             setApiToken('');
             setTokenMissing(true);
-            setNotice('Token API belum tersedia. Anda dapat membuat token baru.');
+            setNotice(
+                'Token API belum tersedia. Anda dapat membuat token baru.',
+            );
         } finally {
             setTokenLoading(false);
         }
@@ -615,7 +617,9 @@ export default function Devices() {
                                                 : 'size-3.5'
                                         }
                                     />
-                                    {tokenMissing ? 'Buat token' : 'Regenerate token'}
+                                    {tokenMissing
+                                        ? 'Buat token'
+                                        : 'Regenerate token'}
                                 </button>
                             </div>
 

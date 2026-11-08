@@ -24,7 +24,7 @@ class IotDeviceController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->api_token_encrypted) {
+        if (! $user->api_token_hash || ! $user->api_token_encrypted) {
             $token = Str::random(64);
             $user->forceFill([
                 'api_token_hash' => hash('sha256', $token),

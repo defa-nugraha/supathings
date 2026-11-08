@@ -23,6 +23,9 @@ class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 
+    /**
+     * @return array<string, mixed>
+     */
     public function analyze(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $context = $this->context($user, $from, $to);
@@ -62,6 +65,9 @@ class AiCultivationService
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function chat(User $user, string $question): array
     {
         $to = now();
@@ -74,6 +80,9 @@ class AiCultivationService
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function context(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $devices = IotDevice::query()->where('user_id', $user->id)->with('controlRules')->get();
@@ -151,6 +160,11 @@ class AiCultivationService
         ];
     }
 
+    /**
+     * @param EloquentCollection<int, SensorReading> $readings
+     * @param EloquentCollection<int, IotDevice> $devices
+     * @return array<string, mixed>
+     */
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array
     {
         $metrics = [];
@@ -207,6 +221,9 @@ class AiCultivationService
         ];
     }
 
+    /**
+     * @param EloquentCollection<int, SensorReading> $readings
+     */
     private function trend(EloquentCollection $readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
@@ -221,6 +238,10 @@ class AiCultivationService
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
 
+    /**
+     * @param array<string, mixed> $schema
+     * @return array<string, mixed>
+     */
     private function generate(string $system, string $prompt, array $schema): array
     {
         if (config('vertex-ai.enabled') === false) {
@@ -230,7 +251,7 @@ class AiCultivationService
         $project = config('vertex-ai.project_id');
         $location = config('vertex-ai.location', 'global');
         $model = config('vertex-ai.model', 'gemini-3.8-flash');
-        if ($project === null || $project === '') {
+        if (blank($project)) {
             throw new RuntimeException('VERTEX_AI_PROJECT_ID belum dikonfigurasi.');
         }
 
@@ -262,7 +283,7 @@ class AiCultivationService
         $parts = $response->json('candidates.0.content.parts', []);
         $text = '';
         foreach ($parts as $part) {
-            if (isset($part['text']) && is_string($part['text'])) {
+            if (isset($part['text'])) {
                 $text .= $part['text'];
             }
         }
@@ -281,7 +302,7 @@ class AiCultivationService
         }
 
         $encoded = config('vertex-ai.service_account_json_base64');
-        if ($encoded === null || $encoded === '') {
+        if (blank($encoded)) {
             throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
         }
 
@@ -297,6 +318,9 @@ class AiCultivationService
         );
     }
 
+    /**
+     * @param array<string, string> $credentials
+     */
     private function exchangeToken(array $credentials): string
     {
         $now = time();
@@ -329,6 +353,9 @@ class AiCultivationService
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function analysisSchema(): array
     {
         return [
@@ -376,6 +403,9 @@ class AiCultivationService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function chatSchema(): array
     {
         return [

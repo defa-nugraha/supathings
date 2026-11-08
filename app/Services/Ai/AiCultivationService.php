@@ -22,6 +22,7 @@ use RuntimeException;
 class AiCultivationService
 {
     private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
+
     public function analyze(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $context = $this->context($user, $from, $to);
@@ -60,6 +61,7 @@ class AiCultivationService
             throw $exception;
         }
     }
+
     public function chat(User $user, string $question): array
     {
         $to = now();
@@ -71,6 +73,7 @@ class AiCultivationService
             $this->chatSchema(),
         );
     }
+
     private function context(User $user, CarbonInterface $from, CarbonInterface $to): array
     {
         $devices = IotDevice::query()->where('user_id', $user->id)->with('controlRules')->get();
@@ -147,6 +150,7 @@ class AiCultivationService
             ],
         ];
     }
+
     private function environment(EloquentCollection $readings, EloquentCollection $devices): array
     {
         $metrics = [];
@@ -202,6 +206,7 @@ class AiCultivationService
             'offline_devices' => $devices->filter(fn (IotDevice $d) => $d->last_seen_at === null || Carbon::parse($d->last_seen_at)->lt(now()->subMinutes(5)))->pluck('name')->values()->all(),
         ];
     }
+
     private function trend(EloquentCollection $readings, string $field): ?float
     {
         $points = $readings->filter(fn ($r) => $r->{$field} !== null)->values();
@@ -215,6 +220,7 @@ class AiCultivationService
 
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
+
     private function generate(string $system, string $prompt, array $schema): array
     {
         if (config('vertex-ai.enabled') === false) {
@@ -251,6 +257,46 @@ class AiCultivationService
         if ($response->failed()) {
             throw new RuntimeException('Vertex AI menolak permintaan (HTTP '.$response->status().'): '.$response->json('error.message', 'Unknown error'));
         }
+
+        /** @var array<int, array{text?: string}> $parts */
+        $parts = $response->json('candidates.0.content.parts', []);
+        $text = '';
+        foreach ($parts as $part) {
+            if (isset($part['text']) && is_string($part['text'])) {
+                $text .= $part['text'];
+            }
+        }
+        $decoded = json_decode($text, true);
+        if (is_array($decoded) === false) {
+            throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
+        }
+
+        return $decoded;
+    }
+
+    private function accessToken(): string
+    {
+        if ($token = config('vertex-ai.access_token')) {
+            return $token;
+        }
+
+        $encoded = config('vertex-ai.service_account_json_base64');
+        if ($encoded === null || $encoded === '') {
+            throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
+        }
+
+        $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
+        if (is_array($credentials) === false || empty($credentials['client_email']) || empty($credentials['private_key'])) {
+            throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');
+        }
+
+        return Cache::remember(
+            'vertex-ai.access-token.'.hash('sha256', (string) $credentials['client_email']),
+            now()->addMinutes(50),
+            fn (): string => $this->exchangeToken($credentials),
+        );
+    }
+
     private function exchangeToken(array $credentials): string
     {
         $now = time();
@@ -282,6 +328,7 @@ class AiCultivationService
     {
         return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
+
     private function analysisSchema(): array
     {
         return [
@@ -328,6 +375,7 @@ class AiCultivationService
             'required' => ['status', 'summary', 'findings', 'recommendations', 'predictions', 'financial'],
         ];
     }
+
     private function chatSchema(): array
     {
         return [

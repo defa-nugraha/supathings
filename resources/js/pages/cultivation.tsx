@@ -381,22 +381,18 @@ export default function Cultivation() {
                             await deleteBatch(target);
                         }}
                     />
-                    {error && (
-                        <div
-                            role="alert"
-                            className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"
-                        >
-                            {error}
-                        </div>
-                    )}
-                    {notice && (
-                        <div
-                            role="status"
-                            className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800"
-                        >
-                            {notice}
-                        </div>
-                    )}
+                    <ActionModal
+                        open={Boolean(error || notice)}
+                        onOpenChange={(open) => {
+                            if (!open) {
+                                setError('');
+                                setNotice('');
+                            }
+                        }}
+                        variant={error ? 'error' : 'success'}
+                        title={error ? 'Aksi gagal' : 'Aksi berhasil'}
+                        description={error || notice}
+                    />
 
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex items-center gap-2">

@@ -51,6 +51,7 @@ Route::middleware(['auth', 'account.active', 'verified'])->group(function (): vo
     Route::inertia('cultivation/journal', 'cultivation-journal')->name('cultivation.journal');
     Route::inertia('cultivation/expenses', 'cultivation-expenses')->name('cultivation.expenses');
     Route::inertia('reports', 'reports')->name('reports');
+    Route::inertia('ai', 'ai-intelligence')->name('ai');
 });
 
 require __DIR__.'/settings.php';

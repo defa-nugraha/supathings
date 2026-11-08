@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BrainCircuit,
     ChartNoAxesColumn,
     ChevronDown,
     Cpu,
@@ -209,6 +210,19 @@ export function AppSidebar() {
                             </CollapsibleContent>
                         </SidebarMenuItem>
                     </Collapsible>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={isCurrentUrl('/ai')}
+                            tooltip={{ children: 'AI Intelligence' }}
+                            className="h-10 rounded-xl data-[active=true]:bg-blue-50 data-[active=true]:font-semibold data-[active=true]:text-blue-700"
+                        >
+                            <Link href="/ai" prefetch>
+                                <BrainCircuit className="size-[18px]" />
+                                <span>AI Intelligence</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild

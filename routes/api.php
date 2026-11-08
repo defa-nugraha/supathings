@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AiIntelligenceController;
 use App\Http\Controllers\Api\CultivationController;
 use App\Http\Controllers\Api\IotDeviceController;
 use App\Http\Controllers\Api\ReportController;
@@ -34,6 +35,9 @@ Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function
     Route::patch('/cultivation/expenses/{expense}', [CultivationController::class, 'updateExpense']);
     Route::delete('/cultivation/expenses/{expense}', [CultivationController::class, 'destroyExpense']);
     Route::get('/reports', [ReportController::class, 'index']);
+    Route::get('/ai/analysis/latest', [AiIntelligenceController::class, 'latest'])->middleware('throttle:30,1');
+    Route::post('/ai/analysis', [AiIntelligenceController::class, 'analyze'])->middleware('throttle:5,1');
+    Route::post('/ai/chat', [AiIntelligenceController::class, 'chat'])->middleware('throttle:20,1');
 });
 
 Route::get('/device/commands', [IotDeviceController::class, 'pollCommands'])->middleware('throttle:120,1');

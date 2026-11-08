@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BrainCircuit,
     ChartNoAxesColumn,
     Cpu,
     LayoutDashboard,
@@ -31,6 +32,7 @@ const primaryItems = [
 ];
 
 const moreItems = [
+    { label: 'AI Intelligence', href: '/ai', icon: BrainCircuit },
     { label: 'Riwayat panen', href: '/cultivation/history', icon: History },
     {
         label: 'Jurnal budidaya',

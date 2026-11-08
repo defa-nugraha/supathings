@@ -212,6 +212,7 @@ class AiCultivationService
         $first = $points->first();
         $last = $points->last();
         $hours = max(1 / 60, $first->measured_at->diffInSeconds($last->measured_at) / 3600);
+
         return round(((float) $last->{$field} - (float) $first->{$field}) / $hours, 3);
     }
 

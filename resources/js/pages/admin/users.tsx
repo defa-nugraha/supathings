@@ -1,7 +1,14 @@
 import { Head, router } from '@inertiajs/react';
 import ActionModal from '@/components/action-modal';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 
@@ -53,7 +60,11 @@ export default function AdminUsers({
     const [editRole, setEditRole] = useState<'admin' | 'user'>('user');
     const [editActive, setEditActive] = useState<'aktif' | 'nonaktif'>('aktif');
     const [confirmSave, setConfirmSave] = useState(false);
-    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
+    const [result, setResult] = useState<{
+        variant: 'success' | 'error';
+        title: string;
+        description: string;
+    } | null>(null);
 
     const applyFilters = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -82,11 +93,20 @@ export default function AdminUsers({
                 onSuccess: () => {
                     setEditing(null);
                     setConfirmSave(false);
-                    setResult({ variant: 'success', title: 'Perubahan berhasil disimpan', description: 'Role dan status akun berhasil diperbarui.' });
+                    setResult({
+                        variant: 'success',
+                        title: 'Perubahan berhasil disimpan',
+                        description: 'Role dan status akun berhasil diperbarui.',
+                    });
                 },
                 onError: () => {
                     setConfirmSave(false);
-                    setResult({ variant: 'error', title: 'Perubahan gagal', description: 'Role dan status akun gagal diperbarui. Silakan coba lagi.' });
+                    setResult({
+                        variant: 'error',
+                        title: 'Perubahan gagal',
+                        description:
+                            'Role dan status akun gagal diperbarui. Silakan coba lagi.',
+                    });
                 },
             },
         );
@@ -99,7 +119,11 @@ export default function AdminUsers({
                 onOpenChange={setConfirmSave}
                 variant="confirm"
                 title="Simpan perubahan akses?"
-                description={editing ? 'Simpan perubahan akses untuk ' + editing.name + '?' : ''}
+                description={
+                    editing
+                        ? 'Simpan perubahan akses untuk ' + editing.name + '?'
+                        : ''
+                }
                 confirmLabel="Simpan perubahan"
                 onConfirm={saveUser}
             />
@@ -110,30 +134,60 @@ export default function AdminUsers({
                 title={result?.title ?? ''}
                 description={result?.description ?? ''}
             />
-            <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
+            <Dialog
+                open={Boolean(editing)}
+                onOpenChange={(open) => !open && setEditing(null)}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit akses pengguna</DialogTitle>
-                        <DialogDescription>Atur role dan status akun pengguna.</DialogDescription>
+                        <DialogDescription>
+                            Atur role dan status akun pengguna.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-2">
                         <div className="grid gap-2">
                             <Label htmlFor="admin-user-role">Role</Label>
-                            <select id="admin-user-role" value={editRole} onChange={(event) => setEditRole(event.target.value as 'admin' | 'user')} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                            <select
+                                id="admin-user-role"
+                                value={editRole}
+                                onChange={(event) =>
+                                    setEditRole(
+                                        event.target.value as 'admin' | 'user',
+                                    )
+                                }
+                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            >
                                 <option value="user">User</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="admin-user-status">Status</Label>
-                            <select id="admin-user-status" value={editActive} onChange={(event) => setEditActive(event.target.value as 'aktif' | 'nonaktif')} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                            <select
+                                id="admin-user-status"
+                                value={editActive}
+                                onChange={(event) =>
+                                    setEditActive(
+                                        event.target.value as
+                                            | 'aktif'
+                                            | 'nonaktif',
+                                    )
+                                }
+                                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            >
                                 <option value="aktif">Aktif</option>
                                 <option value="nonaktif">Nonaktif</option>
                             </select>
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditing(null)}>Batal</Button>
+                        <Button
+                            variant="outline"
+                            onClick={() => setEditing(null)}
+                        >
+                            Batal
+                        </Button>
                         <Button onClick={requestSave}>Simpan perubahan</Button>
                     </DialogFooter>
                 </DialogContent>

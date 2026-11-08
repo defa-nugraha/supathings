@@ -146,9 +146,7 @@ export default function AiIntelligence() {
             setLatest(payload.data);
         } catch (cause) {
             setError(
-                cause instanceof Error
-                    ? cause.message
-                    : 'Analisis AI gagal.',
+                cause instanceof Error ? cause.message : 'Analisis AI gagal.',
             );
         } finally {
             setAnalyzing(false);
@@ -181,9 +179,7 @@ export default function AiIntelligence() {
             const payload = await response.json();
 
             if (!response.ok) {
-                throw new Error(
-                    payload.message ?? 'AI tidak dapat menjawab.',
-                );
+                throw new Error(payload.message ?? 'AI tidak dapat menjawab.');
             }
 
             setChat(payload.data);
@@ -227,9 +223,7 @@ export default function AiIntelligence() {
                         >
                             <RefreshCw
                                 className={
-                                    analyzing
-                                        ? 'size-4 animate-spin'
-                                        : 'size-4'
+                                    analyzing ? 'size-4 animate-spin' : 'size-4'
                                 }
                             />
                             {analyzing

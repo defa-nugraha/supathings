@@ -96,7 +96,8 @@ export default function AdminUsers({
                     setResult({
                         variant: 'success',
                         title: 'Perubahan berhasil disimpan',
-                        description: 'Role dan status akun berhasil diperbarui.',
+                        description:
+                            'Role dan status akun berhasil diperbarui.',
                     });
                 },
                 onError: () => {

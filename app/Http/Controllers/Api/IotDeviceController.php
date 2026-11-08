@@ -37,10 +37,13 @@ class IotDeviceController extends Controller
         try {
             $token = Crypt::decryptString($user->api_token_encrypted);
         } catch (DecryptException) {
-            return response()->json([
-                'code' => 'token_not_recoverable',
-                'message' => 'Token API tidak dapat dipulihkan. Buat token baru.',
-            ], 409);
+            $token = Str::random(64);
+            $user->forceFill([
+                'api_token_hash' => hash('sha256', $token),
+                'api_token_encrypted' => Crypt::encryptString($token),
+            ])->save();
+
+            return response()->json(['api_token' => $token]);
         }
 
         return response()->json(['api_token' => $token]);

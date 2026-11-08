@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
@@ -28,10 +30,23 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'api_token_hash', 'api_token_encrypted'])]
+#[Hidden(['password', 'api_token_hash', 'api_token_encrypted', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            if ($user->api_token_hash || $user->api_token_encrypted) {
+                return;
+            }
+
+            $token = Str::random(64);
+            $user->api_token_hash = hash('sha256', $token);
+            $user->api_token_encrypted = Crypt::encryptString($token);
+        });
+    }
+
     protected $attributes = [
         'role' => 'user',
         'is_active' => true,

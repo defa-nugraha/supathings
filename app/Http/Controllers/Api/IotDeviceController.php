@@ -107,16 +107,6 @@ class IotDeviceController extends Controller
             'metadata' => ['sensors' => $data['sensors'] ?? ['DHT22', 'LDR']],
         ];
 
-        if (! $device) {
-            $token = Str::random(64);
-            $attributes['device_token_hash'] = hash('sha256', $token);
-            $attributes['device_token_encrypted'] = Crypt::encryptString($token);
-        } elseif (! $device->device_token_hash && ! $device->device_token_encrypted) {
-            $token = Str::random(64);
-            $attributes['device_token_hash'] = hash('sha256', $token);
-            $attributes['device_token_encrypted'] = Crypt::encryptString($token);
-        }
-
         $device ??= IotDevice::query()->create([
             'mac_address' => $mac,
             'user_id' => $request->user()->id,
@@ -396,8 +386,13 @@ class IotDeviceController extends Controller
     public function acknowledgeCommand(Request $request, string $command): JsonResponse
     {
         $device = $this->deviceFromToken($request);
+        $user = null;
+
         if (! $device) {
-            return response()->json(['message' => 'Device token tidak valid.'], 401);
+            $user = $this->userFromApiToken($request);
+            if (! $user) {
+                return response()->json(['message' => 'API token tidak valid.'], 401);
+            }
         }
 
         $data = $request->validate([
@@ -406,9 +401,11 @@ class IotDeviceController extends Controller
             'message' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $record = ActuatorCommand::query()
-            ->where('iot_device_id', $device->id)
-            ->findOrFail($command);
+        $recordQuery = ActuatorCommand::query()
+            ->when($device, fn ($query) => $query->where('iot_device_id', $device->id))
+            ->when($user, fn ($query) => $query->whereHas('iotDevice', fn ($deviceQuery) => $deviceQuery->where('user_id', $user->id)));
+
+        $record = $recordQuery->findOrFail($command);
 
         if (! in_array($record->status, ['pending', 'sent'], true)) {
             return response()->json(['message' => 'Perintah sudah diproses.', 'data' => $record], 409);
@@ -439,6 +436,18 @@ class IotDeviceController extends Controller
         }
 
         return $query;
+    }
+
+    private function userFromApiToken(Request $request): ?User
+    {
+        $token = $request->bearerToken();
+        if (! $token) {
+            return null;
+        }
+
+        return User::query()
+            ->where('api_token_hash', hash('sha256', $token))
+            ->first();
     }
 
     private function deviceFromToken(Request $request): ?IotDevice

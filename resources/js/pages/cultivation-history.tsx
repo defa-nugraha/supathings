@@ -202,7 +202,11 @@ export default function CultivationHistory() {
                         onOpenChange={(open) => !open && setDeleteTarget(null)}
                         variant="confirm"
                         title="Hapus catatan panen?"
-                        description={deleteTarget ? `Hapus catatan panen tanggal ${formatIndonesianDate(deleteTarget.harvested_at)}? Data ini akan memengaruhi laporan hasil dan laba.` : ''}
+                        description={
+                            deleteTarget
+                                ? `Hapus catatan panen tanggal ${formatIndonesianDate(deleteTarget.harvested_at)}? Data ini akan memengaruhi laporan hasil dan laba.`
+                                : ''
+                        }
                         confirmLabel="Ya, hapus catatan"
                         onConfirm={async () => {
                             if (!deleteTarget) return;

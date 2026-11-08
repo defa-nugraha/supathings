@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import ActionModal from '@/components/action-modal';
 import { ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
@@ -55,6 +56,7 @@ export default function CultivationHistory() {
     const [batches, setBatches] = useState<BatchOption[]>([]);
     const [error, setError] = useState('');
     const [notice, setNotice] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<Harvest | null>(null);
     const [editing, setEditing] = useState<Harvest | null>(null);
     const [busy, setBusy] = useState(false);
     const [form, setForm] = useState({
@@ -159,14 +161,6 @@ export default function CultivationHistory() {
         }
     };
     const remove = async (item: Harvest) => {
-        if (
-            !window.confirm(
-                'Hapus catatan panen tanggal ' +
-                    formatIndonesianDate(item.harvested_at) +
-                    '? Data ini akan memengaruhi laporan hasil dan laba.',
-            )
-        )
-            return;
         setError('');
         try {
             const response = await fetch(
@@ -203,6 +197,20 @@ export default function CultivationHistory() {
                             yang salah dapat diedit atau dihapus.
                         </p>
                     </header>
+                    <ActionModal
+                        open={Boolean(deleteTarget)}
+                        onOpenChange={(open) => !open && setDeleteTarget(null)}
+                        variant="confirm"
+                        title="Hapus catatan panen?"
+                        description={deleteTarget ? `Hapus catatan panen tanggal ${formatIndonesianDate(deleteTarget.harvested_at)}? Data ini akan memengaruhi laporan hasil dan laba.` : ''}
+                        confirmLabel="Ya, hapus catatan"
+                        onConfirm={async () => {
+                            if (!deleteTarget) return;
+                            const target = deleteTarget;
+                            setDeleteTarget(null);
+                            await remove(target);
+                        }}
+                    />
                     {error && (
                         <p
                             role="alert"
@@ -321,7 +329,7 @@ export default function CultivationHistory() {
                                                         </button>
                                                         <button
                                                             onClick={() =>
-                                                                void remove(
+                                                                setDeleteTarget(
                                                                     item,
                                                                 )
                                                             }

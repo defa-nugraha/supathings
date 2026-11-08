@@ -19,7 +19,11 @@ type Props = {
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
-    const [result, setResult] = useState<{ variant: 'success' | 'error'; title: string; description: string } | null>(null);
+    const [result, setResult] = useState<{
+        variant: 'success' | 'error';
+        title: string;
+        description: string;
+    } | null>(null);
 
     return (
         <>
@@ -45,7 +49,13 @@ export default function Security(props: Props) {
                         'current_password',
                     ]}
                     resetOnSuccess
-                    onSuccess={() => setResult({ variant: 'success', title: 'Password berhasil diperbarui', description: 'Password akun berhasil diganti.' })}
+                    onSuccess={() =>
+                        setResult({
+                            variant: 'success',
+                            title: 'Password berhasil diperbarui',
+                            description: 'Password akun berhasil diganti.',
+                        })
+                    }
                     onError={(errors) => {
                         if (errors.password) {
                             passwordInput.current?.focus();

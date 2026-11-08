@@ -601,7 +601,7 @@ export default function Devices() {
                                 pihak lain.
                             </p>
                         </div>
-                    </section>n>
+                    </section>
 
                     <section
                         data-tour="devices-list"

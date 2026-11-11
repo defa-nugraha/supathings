@@ -215,18 +215,25 @@ class IotDeviceController extends Controller
 
     public function telemetry(Request $request): JsonResponse
     {
-        $device = $this->deviceFromToken($request);
-        if (! $device) {
-            return response()->json(['message' => 'Device token tidak valid.'], 401);
-        }
-
         $reading = $request->validate([
+            'device_id' => ['sometimes', 'string', 'max:17', 'regex:/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/'],
             'temperature' => ['nullable', 'numeric', 'between:-20,100'],
             'humidity' => ['nullable', 'numeric', 'between:0,100'],
             'light_raw' => ['nullable', 'integer', 'between:0,65535'],
             'light_percent' => ['nullable', 'numeric', 'between:0,100'],
             'timestamp' => ['nullable', 'date'],
+            'sensors' => ['sometimes', 'array'],
+            'sensors.*' => ['string', 'max:50'],
         ]);
+
+        $device = $this->deviceForTelemetry($request, $reading);
+        if (! $device) {
+            return response()->json([
+                'message' => 'Device token tidak valid atau device_id belum dikaitkan dengan akun.',
+            ], 401);
+        }
+
+        unset($reading['device_id'], $reading['sensors']);
 
         $device->forceFill(['status' => 'online', 'last_seen_at' => now()])->save();
 
@@ -234,7 +241,11 @@ class IotDeviceController extends Controller
         StoreSensorReading::dispatchSync($device->id, $reading);
         EvaluateControlRules::dispatchSync($device->id, $reading);
 
-        return response()->json(['accepted' => true], 202);
+        return response()->json([
+            'accepted' => true,
+            'device_id' => $device->mac_address,
+            'registered' => true,
+        ], 202);
     }
 
     public function rules(Request $request): JsonResponse
@@ -451,6 +462,64 @@ class IotDeviceController extends Controller
         return User::query()
             ->where('api_token_hash', hash('sha256', $token))
             ->first();
+    }
+
+    /**
+     * Resolve telemetry credentials and automatically provision a device when a
+     * valid account API token is used with a new ESP32 MAC address.
+     *
+     * This closes the onboarding loop when the separate WebSocket discovery
+     * broker is unavailable: the first authenticated telemetry request becomes
+     * the device's proof of possession for that account.
+     */
+    private function deviceForTelemetry(Request $request, array $data): ?IotDevice
+    {
+        $token = $request->bearerToken();
+        if (! $token) {
+            return null;
+        }
+
+        $hash = hash('sha256', $token);
+
+        $legacyDevice = IotDevice::query()->where('device_token_hash', $hash)->first();
+        if ($legacyDevice) {
+            return $legacyDevice;
+        }
+
+        $user = User::query()->where('api_token_hash', $hash)->first();
+        if (! $user) {
+            return null;
+        }
+
+        $deviceId = $data['device_id'] ?? null;
+        if (! is_string($deviceId) || ! preg_match('/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/', $deviceId)) {
+            return null;
+        }
+
+        $mac = Str::upper($deviceId);
+        $device = IotDevice::query()->where('mac_address', $mac)->first();
+
+        if ($device && $device->user_id !== $user->id) {
+            return null;
+        }
+
+        if (! $device) {
+            $sensors = array_values(array_filter(
+                $data['sensors'] ?? ['DHT22', 'LDR'],
+                static fn ($sensor): bool => is_string($sensor) && $sensor !== '',
+            ));
+
+            $device = IotDevice::query()->create([
+                'mac_address' => $mac,
+                'user_id' => $user->id,
+                'name' => 'ESP32 '.$mac,
+                'status' => 'online',
+                'last_seen_at' => now(),
+                'metadata' => ['sensors' => $sensors ?: ['DHT22', 'LDR']],
+            ]);
+        }
+
+        return $device;
     }
 
     private function deviceFromToken(Request $request): ?IotDevice

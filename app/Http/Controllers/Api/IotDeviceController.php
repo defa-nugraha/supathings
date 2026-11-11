@@ -474,7 +474,7 @@ class IotDeviceController extends Controller
      *
      * @param array<string, mixed> $data
      */
-    private function deviceForTelemetry(Request $request, array $data): ?IotDevice
+    private function deviceForTelemetry(Request $request, array $data): IotDevice|null
     {
         $token = $request->bearerToken();
         if ($token === null || $token === '') {
@@ -517,7 +517,9 @@ class IotDeviceController extends Controller
                 'name' => 'ESP32 '.$mac,
                 'status' => 'online',
                 'last_seen_at' => now(),
-                'metadata' => ['sensors' => $sensors ?: ['DHT22', 'LDR']],
+                'metadata' => [
+                    'sensors' => $sensors !== [] ? $sensors : ['DHT22', 'LDR'],
+                ],
             ]);
         }
 

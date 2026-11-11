@@ -477,7 +477,7 @@ class IotDeviceController extends Controller
     private function deviceForTelemetry(Request $request, array $data): ?IotDevice
     {
         $token = $request->bearerToken();
-        if (! $token) {
+        if ($token === null || $token === '') {
             return null;
         }
 
@@ -489,7 +489,7 @@ class IotDeviceController extends Controller
         }
 
         $user = User::query()->where('api_token_hash', $hash)->first();
-        if (! $user) {
+        if ($user === null) {
             return null;
         }
 
@@ -505,7 +505,7 @@ class IotDeviceController extends Controller
             return null;
         }
 
-        if (! $device) {
+        if ($device === null) {
             $sensors = array_values(array_filter(
                 $data['sensors'] ?? ['DHT22', 'LDR'],
                 static fn ($sensor): bool => is_string($sensor) && $sensor !== '',

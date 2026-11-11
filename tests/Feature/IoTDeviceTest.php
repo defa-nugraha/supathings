@@ -14,7 +14,7 @@ function createIotDevice(User $user, array $attributes = []): IotDevice
 {
     return IotDevice::query()->create(array_merge([
         'user_id' => $user->id,
-        'mac_address' => 'AA:BB:CC:DD:EE:'.strtoupper(Str::random(2)),
+        'mac_address' => 'AA:BB:CC:DD:EE:'.strtoupper(bin2hex(random_bytes(1))),
         'name' => 'Kumbung Test',
         'status' => 'offline',
         'control_mode' => 'manual',

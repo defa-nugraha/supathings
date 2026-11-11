@@ -494,7 +494,7 @@ class IotDeviceController extends Controller
         }
 
         $deviceId = $data['device_id'] ?? null;
-        if (! is_string($deviceId) || ! preg_match('/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/', $deviceId)) {
+        if (! is_string($deviceId) || preg_match('/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/', $deviceId) !== 1) {
             return null;
         }
 

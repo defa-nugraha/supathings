@@ -75,7 +75,7 @@ export default function Devices() {
         sensors: d.metadata?.sensors ?? ['DHT22', 'LDR'],
     });
 
-    const refreshDevices = async () => {
+    const fetchDevices = async () => {
         try {
             const response = await fetch('/api/devices', {
                 headers: {
@@ -90,12 +90,16 @@ export default function Devices() {
             const payload = await response.json();
             if (!Array.isArray(payload?.data)) return null;
 
-            const mappedDevices = payload.data.map(mapApiDevice);
-            setDevices(mappedDevices);
-            return mappedDevices;
+            return payload.data.map(mapApiDevice);
         } catch {
             return null;
         }
+    };
+
+    const refreshDevices = async () => {
+        const mappedDevices = await fetchDevices();
+        if (mappedDevices) setDevices(mappedDevices);
+        return mappedDevices;
     };
 
     const loadApiToken = async () => {
@@ -252,7 +256,7 @@ export default function Devices() {
 
         let cancelled = false;
         const poll = async () => {
-            const latest = await refreshDevices();
+            const latest = await fetchDevices();
             if (cancelled || !latest) return;
 
             const newDevices = latest.filter(

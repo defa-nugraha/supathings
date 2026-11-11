@@ -53,9 +53,50 @@ export default function Devices() {
     const [copyStatus, setCopyStatus] = useState(false);
     const [tokenMissing, setTokenMissing] = useState(false);
     const socket = useRef<WebSocket | null>(null);
+    const scanStartedWithDevices = useRef<Set<string>>(new Set());
     const [wsStatus, setWsStatus] = useState<'connected' | 'offline'>(
         'offline',
     );
+
+    const mapApiDevice = (d: {
+        id?: string | number;
+        mac_address: string;
+        name: string;
+        status: string;
+        last_seen_at?: string | null;
+        metadata?: { sensors?: string[] };
+    }): Device => ({
+        id: d.mac_address.toUpperCase(),
+        name: d.name,
+        status: d.status === 'online' ? 'online' : 'offline',
+        lastSeen: d.last_seen_at
+            ? new Date(d.last_seen_at).toLocaleString('id-ID')
+            : 'Belum pernah terhubung',
+        sensors: d.metadata?.sensors ?? ['DHT22', 'LDR'],
+    });
+
+    const refreshDevices = async () => {
+        try {
+            const response = await fetch('/api/devices', {
+                headers: {
+                    Accept: 'application/json',
+                    'Cache-Control': 'no-cache',
+                },
+                cache: 'no-store',
+            });
+
+            if (!response.ok) return null;
+
+            const payload = await response.json();
+            if (!Array.isArray(payload?.data)) return null;
+
+            const mappedDevices = payload.data.map(mapApiDevice);
+            setDevices(mappedDevices);
+            return mappedDevices;
+        } catch {
+            return null;
+        }
+    };
 
     const loadApiToken = async () => {
         try {
@@ -141,32 +182,9 @@ export default function Devices() {
     }, [isAddOpen, discovered, devices, selectedDiscovered]);
 
     useEffect(() => {
-        void fetch('/api/devices', { headers: { Accept: 'application/json' } })
-            .then((response) => (response.ok ? response.json() : null))
-            .then(async (payload) => {
-                if (!Array.isArray(payload?.data)) return;
-
-                const mappedDevices = payload.data.map(
-                    (d: {
-                        mac_address: string;
-                        name: string;
-                        status: string;
-                        last_seen_at?: string | null;
-                        metadata?: { sensors?: string[] };
-                    }) => ({
-                        id: d.mac_address,
-                        name: d.name,
-                        status: d.status === 'online' ? 'online' : 'offline',
-                        lastSeen: d.last_seen_at
-                            ? new Date(d.last_seen_at).toLocaleString('id-ID')
-                            : 'Belum pernah terhubung',
-                        sensors: d.metadata?.sensors ?? ['DHT22', 'LDR'],
-                    }),
-                );
-                setDevices(mappedDevices);
-            })
-            .catch(() => undefined);
+        void refreshDevices();
         void loadApiToken();
+
         const url = import.meta.env.VITE_WS_URL as string | undefined;
         if (!url) return;
         try {
@@ -199,9 +217,10 @@ export default function Devices() {
                         message.type === 'device_presence' &&
                         typeof message.device_id === 'string'
                     ) {
+                        const deviceId = message.device_id.toUpperCase();
                         setDevices((prev) =>
                             prev.map((d) =>
-                                d.id === message.device_id
+                                d.id === deviceId
                                     ? {
                                           ...d,
                                           status: message.online
@@ -227,28 +246,70 @@ export default function Devices() {
         }
     }, []);
 
-    const scan = () => {
-        if (socket.current?.readyState !== WebSocket.OPEN) {
-            setWsStatus('offline');
-            setFormError(
-                'Koneksi WebSocket belum tersedia. Periksa VITE_WS_URL dan server discovery.',
-            );
-            return;
-        }
+    // HTTP discovery fallback for deployments without the optional WebSocket broker.
+    useEffect(() => {
+        if (!isAddOpen) return;
 
+        let cancelled = false;
+        const poll = async () => {
+            const latest = await refreshDevices();
+            if (cancelled || !latest) return;
+
+            const newDevices = latest.filter(
+                (device) => !scanStartedWithDevices.current.has(device.id),
+            );
+
+            if (newDevices.length > 0) {
+                setDiscovered((prev) => {
+                    const merged = [...prev];
+                    for (const device of newDevices) {
+                        const index = merged.findIndex(
+                            (item) => item.id === device.id,
+                        );
+                        if (index >= 0) {
+                            merged[index] = device;
+                        } else {
+                            merged.push(device);
+                        }
+                    }
+                    return merged;
+                });
+                setScanning(false);
+            }
+        };
+
+        void poll();
+        const interval = window.setInterval(() => void poll(), 1500);
+        const timeout = window.setTimeout(() => setScanning(false), 15000);
+
+        return () => {
+            cancelled = true;
+            window.clearInterval(interval);
+            window.clearTimeout(timeout);
+        };
+    }, [isAddOpen]);
+    const scan = () => {
+        scanStartedWithDevices.current = new Set(
+            devices.map((device) => device.id),
+        );
+        setDiscovered([]);
         setFormError('');
         setScanning(true);
-        socket.current.send(JSON.stringify({ type: 'discover_devices' }));
-        window.setTimeout(() => setScanning(false), 5000);
+
+        if (socket.current?.readyState === WebSocket.OPEN) {
+            socket.current.send(JSON.stringify({ type: 'discover_devices' }));
+        } else {
+            setWsStatus('offline');
+        }
     };
 
     const openAddDeviceModal = () => {
         setSelected(null);
-        setSelectedDiscovered(
-            discovered.find(
-                (item) => !devices.some((device) => device.id === item.id),
-            ) ?? null,
+        scanStartedWithDevices.current = new Set(
+            devices.map((device) => device.id),
         );
+        setSelectedDiscovered(null);
+        setDiscovered([]);
         setDeviceName('');
         setFormError('');
         setIsAddOpen(true);

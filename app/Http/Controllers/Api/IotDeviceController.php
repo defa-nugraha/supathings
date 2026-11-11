@@ -227,7 +227,7 @@ class IotDeviceController extends Controller
         ]);
 
         $device = $this->deviceForTelemetry($request, $reading);
-        if (! $device) {
+        if ($device === null) {
             return response()->json([
                 'message' => 'Device token tidak valid atau device_id belum dikaitkan dengan akun.',
             ], 401);
@@ -455,7 +455,7 @@ class IotDeviceController extends Controller
     private function userFromApiToken(Request $request): ?User
     {
         $token = $request->bearerToken();
-        if (! $token) {
+        if ($token === null || $token === '') {
             return null;
         }
 
@@ -494,14 +494,14 @@ class IotDeviceController extends Controller
         }
 
         $deviceId = $data['device_id'] ?? null;
-        if (! is_string($deviceId) || preg_match('/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/', $deviceId) !== 1) {
+        if (gettype($deviceId) !== 'string' || preg_match('/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/', $deviceId) !== 1) {
             return null;
         }
 
         $mac = Str::upper($deviceId);
         $device = IotDevice::query()->where('mac_address', $mac)->first();
 
-        if ($device && $device->user_id !== $user->id) {
+        if ($device !== null && $device->user_id !== $user->id) {
             return null;
         }
 

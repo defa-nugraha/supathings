@@ -8,7 +8,6 @@ use App\Models\IotDevice;
 use App\Models\SensorReading;
 use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Str;
 
 function createIotDevice(User $user, array $attributes = []): IotDevice
 {

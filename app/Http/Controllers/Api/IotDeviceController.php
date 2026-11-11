@@ -472,9 +472,9 @@ class IotDeviceController extends Controller
      * broker is unavailable: the first authenticated telemetry request becomes
      * the device's proof of possession for that account.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
-    private function deviceForTelemetry(Request $request, array $data): IotDevice|null
+    private function deviceForTelemetry(Request $request, array $data): ?IotDevice
     {
         $token = $request->bearerToken();
         if ($token === null || $token === '') {

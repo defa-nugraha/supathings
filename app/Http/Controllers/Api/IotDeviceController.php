@@ -471,6 +471,8 @@ class IotDeviceController extends Controller
      * This closes the onboarding loop when the separate WebSocket discovery
      * broker is unavailable: the first authenticated telemetry request becomes
      * the device's proof of possession for that account.
+     *
+     * @param array<string, mixed> $data
      */
     private function deviceForTelemetry(Request $request, array $data): ?IotDevice
     {

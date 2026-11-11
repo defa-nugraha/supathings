@@ -59,7 +59,7 @@
             "pint --parallel"
         ],
         "lint:check": [
-            "pint --parallel --test -v"
+            "pint --parallel --test"
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",

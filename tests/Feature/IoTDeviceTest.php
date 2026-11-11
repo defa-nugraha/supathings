@@ -97,6 +97,33 @@ test('new users automatically receive a persistent API token', function () {
     expect(hash('sha256', $token))->toBe($user->api_token_hash);
 });
 
+test('user API token can automatically provision an unregistered ESP32 by MAC address', function () {
+    $user = User::factory()->create();
+
+    $token = $this->actingAs($user)
+        ->getJson('/api/account/token')
+        ->assertOk()
+        ->json('api_token');
+
+    $this->withToken($token)->postJson('/api/telemetry', [
+        'device_id' => 'AA:BB:CC:DD:EE:FF',
+        'temperature' => 27.5,
+        'humidity' => 89,
+        'light_raw' => 1200,
+        'light_percent' => 42,
+        'sensors' => ['DHT22', 'LDR'],
+    ])->assertStatus(202)
+        ->assertJsonPath('accepted', true)
+        ->assertJsonPath('registered', true)
+        ->assertJsonPath('device_id', 'AA:BB:CC:DD:EE:FF');
+
+    $this->assertDatabaseHas('iot_devices', [
+        'user_id' => $user->id,
+        'mac_address' => 'AA:BB:CC:DD:EE:FF',
+        'status' => 'online',
+    ]);
+});
+
 test('user API token can send telemetry for an owned device', function () {
     $user = User::factory()->create();
     $device = createIotDevice($user, [

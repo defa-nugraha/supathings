@@ -40,4 +40,10 @@ class IotDevice extends Model
     {
         return $this->hasMany(ActuatorCommand::class);
     }
+
+    /** @return HasMany<ActuatorSchedule, $this> */
+    public function actuatorSchedules(): HasMany
+    {
+        return $this->hasMany(ActuatorSchedule::class);
+    }
 }

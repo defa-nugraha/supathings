@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiIntelligenceController;
 use App\Http\Controllers\Api\CultivationController;
 use App\Http\Controllers\Api\IotDeviceController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\ActuatorScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function (): void {
@@ -20,6 +21,10 @@ Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function
     Route::post('/control-mode', [IotDeviceController::class, 'mode']);
     Route::post('/actuator-commands', [IotDeviceController::class, 'command']);
     Route::get('/actuator-status', [IotDeviceController::class, 'actuatorStatus']);
+    Route::get('/actuator-schedules', [ActuatorScheduleController::class, 'index']);
+    Route::post('/actuator-schedules', [ActuatorScheduleController::class, 'store']);
+    Route::patch('/actuator-schedules/{schedule}', [ActuatorScheduleController::class, 'update']);
+    Route::delete('/actuator-schedules/{schedule}', [ActuatorScheduleController::class, 'destroy']);
 
     Route::get('/cultivation/batches', [CultivationController::class, 'batches']);
     Route::post('/cultivation/batches', [CultivationController::class, 'storeBatch']);

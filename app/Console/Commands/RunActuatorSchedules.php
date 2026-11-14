@@ -25,7 +25,12 @@ class RunActuatorSchedules extends Command
             ->where('enabled', true)
             ->orderBy('id')
             ->each(function (ActuatorSchedule $schedule) use ($now, $day, &$executed): void {
-                $days = is_array($schedule->days) ? array_map('intval', $schedule->days) : [];
+                $rawDays = $schedule->getRawOriginal('days');
+                $days = json_decode((string) $rawDays, true);
+                if (! is_array($days)) {
+                    return;
+                }
+                $days = array_map('intval', $days);
                 if (! in_array($day, $days, true)) {
                     return;
                 }

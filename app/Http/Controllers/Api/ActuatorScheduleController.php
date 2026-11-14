@@ -90,7 +90,10 @@ class ActuatorScheduleController extends Controller
         return $request->validate($rules);
     }
 
-    /** @param array<int, int> $days @return array<int, int> */
+    /**
+     * @param  array<int, int>  $days
+     * @return array<int, int>
+     */
     private function normalizeDays(array $days): array
     {
         $days = array_values(array_unique(array_map('intval', $days)));

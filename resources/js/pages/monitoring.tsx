@@ -73,7 +73,7 @@ const actuatorOptions: {
     },
     {
         key: 'blower',
-        title: 'Blower / Exhaust',
+        title: 'Exhaust',
         desc: 'Sirkulasi udara',
         Icon: Wind,
     },
@@ -1500,13 +1500,6 @@ export default function Monitoring() {
                                     </div>
                                 </div>
                                 <div className="grid gap-5 lg:grid-cols-3">
-                                    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs leading-relaxed text-slate-600">
-                                        Atur rentang aman, lalu pilih aktuator
-                                        yang akan dinyalakan ketika kondisi
-                                        pemicu tercapai. Saat kondisi kembali
-                                        aman, aktuator akan dimatikan mengikuti
-                                        logika otomatis yang sudah ada.
-                                    </div>
                                     {(
                                         [
                                             [

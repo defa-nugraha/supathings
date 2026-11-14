@@ -111,7 +111,6 @@ export default function AiIntelligence() {
     const [analyzing, setAnalyzing] = useState(false);
     const [error, setError] = useState('');
     const [question, setQuestion] = useState('');
-    const [chat, setChat] = useState<ChatResponse | null>(null);
     const [chatting, setChatting] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
     const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
@@ -162,7 +161,6 @@ export default function AiIntelligence() {
 
     const startNewChat = () => {
         setActiveChatId(null);
-        setChat(null);
         setQuestion('');
         setHistoryOpen(false);
     };
@@ -175,7 +173,6 @@ export default function AiIntelligence() {
     const selectChat = (item: ChatHistory) => {
         setActiveChatId(item.id);
         const last = [...item.messages].reverse().find((message) => message.role === 'assistant');
-        setChat(last?.response ?? null);
         setQuestion('');
         setHistoryOpen(false);
     };
@@ -243,7 +240,6 @@ export default function AiIntelligence() {
             }
 
             const responseData = payload.data as ChatResponse;
-            setChat(responseData);
 
             const messageTime = new Date().toISOString();
             const userMessage: ChatMessage = {

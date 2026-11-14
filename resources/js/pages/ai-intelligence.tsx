@@ -77,6 +77,7 @@ type ChatMessage = {
     role: 'user' | 'assistant';
     question?: string;
     response?: ChatResponse;
+    pending?: boolean;
     createdAt: string;
 };
 
@@ -212,12 +213,59 @@ export default function AiIntelligence() {
     const ask = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (!question.trim()) {
+        const trimmedQuestion = question.trim();
+        if (!trimmedQuestion || chatting) {
             return;
         }
 
+        const messageTime = new Date().toISOString();
+        const userMessage: ChatMessage = {
+            id: `user-${messageTime}`,
+            role: 'user',
+            question: trimmedQuestion,
+            createdAt: messageTime,
+        };
+        const pendingMessage: ChatMessage = {
+            id: `assistant-${messageTime}`,
+            role: 'assistant',
+            pending: true,
+            createdAt: messageTime,
+        };
+
+        let targetChatId = activeChatId;
         setChatting(true);
         setError('');
+        setQuestion('');
+
+        setChatHistory((current) => {
+            const existing = current.find((item) => item.id === activeChatId);
+
+            if (existing) {
+                return current.map((item) =>
+                    item.id === activeChatId
+                        ? {
+                              ...item,
+                              messages: [
+                                  ...item.messages,
+                                  userMessage,
+                                  pendingMessage,
+                              ],
+                          }
+                        : item,
+                );
+            }
+
+            const newChat: ChatHistory = {
+                id: messageTime,
+                title: trimmedQuestion.slice(0, 60),
+                createdAt: messageTime,
+                messages: [userMessage, pendingMessage],
+            };
+
+            targetChatId = newChat.id;
+            setActiveChatId(newChat.id);
+            return [newChat, ...current];
+        });
 
         try {
             const response = await fetch('/api/ai/chat', {
@@ -230,7 +278,7 @@ export default function AiIntelligence() {
                             .querySelector('meta[name="csrf-token"]')
                             ?.getAttribute('content') ?? '',
                 },
-                body: JSON.stringify({ question: question.trim() }),
+                body: JSON.stringify({ question: trimmedQuestion }),
             });
             const payload = await response.json();
 
@@ -240,50 +288,40 @@ export default function AiIntelligence() {
 
             const responseData = payload.data as ChatResponse;
 
-            const messageTime = new Date().toISOString();
-            const userMessage: ChatMessage = {
-                id: `user-${messageTime}`,
-                role: 'user',
-                question: question.trim(),
-                createdAt: messageTime,
-            };
-            const assistantMessage: ChatMessage = {
-                id: `assistant-${messageTime}`,
-                role: 'assistant',
-                response: responseData,
-                createdAt: messageTime,
-            };
-
-            setChatHistory((current) => {
-                const existing = current.find(
-                    (item) => item.id === activeChatId,
-                );
-                if (existing) {
-                    return current.map((item) =>
-                        item.id === activeChatId
+            setChatHistory((current) =>
+                current.map((item) =>
+                    item.id === targetChatId
+                        ? {
+                              ...item,
+                              messages: item.messages.map((message) =>
+                                  message.id === pendingMessage.id
+                                      ? {
+                                            ...message,
+                                            pending: false,
+                                            response: responseData,
+                                        }
+                                      : message,
+                              ),
+                          }
+                        : item,
+                ),
+            );
+        } catch (cause) {
+            setChatHistory((current) =>
+                current
+                    .map((item) =>
+                        item.id === targetChatId
                             ? {
                                   ...item,
-                                  messages: [
-                                      ...item.messages,
-                                      userMessage,
-                                      assistantMessage,
-                                  ],
+                                  messages: item.messages.filter(
+                                      (message) =>
+                                          message.id !== pendingMessage.id,
+                                  ),
                               }
                             : item,
-                    );
-                }
-
-                const newChat: ChatHistory = {
-                    id: messageTime,
-                    title: question.trim().slice(0, 60),
-                    createdAt: messageTime,
-                    messages: [userMessage, assistantMessage],
-                };
-                setActiveChatId(newChat.id);
-                return [newChat, ...current];
-            });
-            setQuestion('');
-        } catch (cause) {
+                    )
+                    .filter((item) => item.messages.length > 0),
+            );
             setError(
                 cause instanceof Error
                     ? cause.message
@@ -767,54 +805,80 @@ export default function AiIntelligence() {
                                                                     <Bot className="size-4 text-slate-600" />
                                                                 </div>
                                                                 <div className="max-w-[88%] rounded-2xl rounded-tl-md bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-800">
-                                                                    <p className="whitespace-pre-wrap">
-                                                                        {
-                                                                            message
-                                                                                .response
-                                                                                ?.answer
-                                                                        }
-                                                                    </p>
-                                                                    {message
-                                                                        .response
-                                                                        ?.evidence
-                                                                        .length ? (
-                                                                        <div className="mt-3 border-t border-slate-200 pt-3">
-                                                                            <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-                                                                                Bukti
-                                                                                data
-                                                                            </p>
-                                                                            <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">
-                                                                                {message.response.evidence.map(
-                                                                                    (
-                                                                                        item,
-                                                                                    ) => (
-                                                                                        <li
-                                                                                            key={
-                                                                                                item
-                                                                                            }
-                                                                                        >
-                                                                                            {
-                                                                                                item
-                                                                                            }
-                                                                                        </li>
+                                                                    {message.pending ? (
+                                                                        <div
+                                                                            className="flex items-center gap-1.5 py-1"
+                                                                            role="status"
+                                                                            aria-label="SupaThings AI sedang menjawab"
+                                                                        >
+                                                                            <span className="text-xs text-slate-500">
+                                                                                SupaThings AI sedang menjawab
+                                                                            </span>
+                                                                            <span className="flex items-center gap-1">
+                                                                                {[0, 1, 2].map(
+                                                                                    (dot) => (
+                                                                                        <span
+                                                                                            key={dot}
+                                                                                            className="size-1.5 animate-bounce rounded-full bg-slate-500"
+                                                                                            style={{
+                                                                                                animationDelay: `${dot * 140}ms`,
+                                                                                            }}
+                                                                                        />
                                                                                     ),
                                                                                 )}
-                                                                            </ul>
+                                                                            </span>
                                                                         </div>
-                                                                    ) : null}
-                                                                    {message
-                                                                        .response
-                                                                        ?.limitations
-                                                                        .length ? (
-                                                                        <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
-                                                                            {message.response.limitations.join(
-                                                                                ' ',
-                                                                            )}
-                                                                        </p>
-                                                                    ) : null}
+                                                                    ) : (
+                                                                        <>
+                                                                            <p className="whitespace-pre-wrap">
+                                                                                {
+                                                                                    message
+                                                                                        .response
+                                                                                        ?.answer
+                                                                                }
+                                                                            </p>
+                                                                            {message
+                                                                                .response
+                                                                                ?.evidence
+                                                                                .length ? (
+                                                                                <div className="mt-3 border-t border-slate-200 pt-3">
+                                                                                    <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+                                                                                        Bukti
+                                                                                        data
+                                                                                    </p>
+                                                                                    <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">
+                                                                                        {message.response.evidence.map(
+                                                                                            (
+                                                                                                item,
+                                                                                            ) => (
+                                                                                                <li
+                                                                                                    key={
+                                                                                                        item
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        item
+                                                                                                    }
+                                                                                                </li>
+                                                                                            ),
+                                                                                        )}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            ) : null}
+                                                                            {message
+                                                                                .response
+                                                                                ?.limitations
+                                                                                .length ? (
+                                                                                <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
+                                                                                    {message.response.limitations.join(
+                                                                                        ' ',
+                                                                                    )}
+                                                                                </p>
+                                                                            ) : null}
+                                                                        </>
+                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        ),
+                                                            </div>                                                        ),
                                                     )}
                                             </div>
                                         ) : (

@@ -1447,7 +1447,7 @@ export default function Monitoring() {
                                                                 <div className="min-w-0">
                                                                     <div className="flex items-center gap-2">
                                                                         <span
-                                                                            className={\`size-2 rounded-full \${schedule.enabled ? 'bg-emerald-500' : 'bg-slate-300'}\`}
+                                                                            className={`size-2 rounded-full ${schedule.enabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                                                         />
                                                                         <span className="text-lg font-semibold tracking-tight text-slate-900">
                                                                             {schedule.time.slice(
@@ -1760,7 +1760,7 @@ export default function Monitoring() {
                                                     : previous,
                                             )
                                         }
-                                        className={\`rounded-xl border px-4 py-2.5 text-sm font-semibold transition \${scheduleForm.state === state ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}\`}
+                                        className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${scheduleForm.state === state ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
                                     >
                                         {state === 'on' ? 'Nyalakan' : 'Matikan'}
                                     </button>
@@ -1793,7 +1793,7 @@ export default function Monitoring() {
                                                 : previous,
                                         )
                                     }
-                                    className={\`rounded-lg px-3 py-2 text-xs font-semibold \${scheduleForm.days.length === 7 ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}\`}
+                                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${scheduleForm.days.length === 7 ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                                 >
                                     Setiap hari
                                 </button>
@@ -1817,7 +1817,7 @@ export default function Monitoring() {
                                             onClick={() =>
                                                 toggleScheduleDay(day as number)
                                             }
-                                            className={\`rounded-xl border px-2 py-2.5 text-xs font-semibold transition \${selected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}\`}
+                                            className={`rounded-xl border px-2 py-2.5 text-xs font-semibold transition ${selected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}
                                         >
                                             {label}
                                         </button>

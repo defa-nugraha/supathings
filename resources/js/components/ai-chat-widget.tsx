@@ -420,7 +420,7 @@ export function AiChatWidget() {
                                                                         menjawab
                                                                     </span>
                                                                     <span className="flex items-center gap-1">
-                                                                        [
+                                                                        {[
                                                                             0,
                                                                             140,
                                                                             280,

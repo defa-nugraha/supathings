@@ -1129,13 +1129,17 @@ export default function Monitoring() {
                                 <p className="text-xs text-slate-500">
                                     ESP32 · DHT22 + LDR · Data terakhir{' '}
                                     {reading.at
-                                        ? new Date(
-                                              reading.at,
-                                          ).toLocaleTimeString('id-ID', {
-                                              hour: '2-digit',
-                                              minute: '2-digit',
-                                              second: '2-digit',
-                                          })
+                                        ? new Date(reading.at).toLocaleString(
+                                              'id-ID',
+                                              {
+                                                  day: '2-digit',
+                                                  month: 'long',
+                                                  year: 'numeric',
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                                  second: '2-digit',
+                                              },
+                                          )
                                         : 'Belum ada data'}
                                 </p>
                             </div>

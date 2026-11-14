@@ -33,7 +33,7 @@ test('users can create and list multiple actuator schedules for their device', f
     $this->actingAs($user)
         ->postJson('/api/actuator-schedules', $payload)
         ->assertCreated()
-        ->assertJsonPath('data.time', '07:00:00');
+        ->assertJsonPath('data.time', '07:00');
 
     $this->actingAs($user)
         ->postJson('/api/actuator-schedules', [

@@ -707,57 +707,6 @@ export default function AiIntelligence() {
                         </div>
                     )}
                 </div>
-                        </div>
-
-                        <form
-                            onSubmit={ask}
-                            className="mt-4 flex flex-col gap-3 sm:flex-row"
-                        >
-                            <input
-                                value={question}
-                                onChange={(event) =>
-                                    setQuestion(event.target.value)
-                                }
-                                placeholder="Contoh: kenapa kelembapan sering turun?"
-                                className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                maxLength={2000}
-                            />
-                            <button
-                                type="submit"
-                                disabled={chatting || !question.trim()}
-                                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white disabled:opacity-50"
-                            >
-                                <Send className="size-4" />
-                                {chatting ? 'Menjawab...' : 'Tanya'}
-                            </button>
-                        </form>
-
-                        {chat && (
-                            <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-                                <p className="text-sm leading-6 whitespace-pre-wrap text-slate-800">
-                                    {chat.answer}
-                                </p>
-                                {chat.evidence.length > 0 && (
-                                    <div className="mt-4">
-                                        <p className="text-xs font-semibold text-slate-500 uppercase">
-                                            Bukti data
-                                        </p>
-                                        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600">
-                                            {chat.evidence.map((item) => (
-                                                <li key={item}>{item}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                                {chat.limitations.length > 0 && (
-                                    <div className="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
-                                        {chat.limitations.join(' ')}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </section>
-                </div>
             </main>
         </>
     );

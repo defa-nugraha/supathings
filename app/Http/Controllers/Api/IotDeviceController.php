@@ -351,12 +351,15 @@ class IotDeviceController extends Controller
                 ? json_decode((string) $acknowledged->getRawOriginal('metadata'), true)
                 : null;
             $actualState = is_array($metadata) ? ($metadata['actual_state'] ?? null) : null;
+            $latestStatus = $latest->status ?? 'unknown';
 
             $status[$actuator] = [
                 'actual_state' => in_array($actualState, ['on', 'off'], true) ? $actualState : null,
-                'command_status' => $latest->status ?? 'unknown',
+                'command_status' => $latestStatus,
                 'requested_state' => $latest?->state,
+                'command_id' => $latest?->id,
                 'updated_at' => $latest?->updated_at,
+                'is_pending' => in_array($latestStatus, ['pending', 'sent'], true),
             ];
         }
 

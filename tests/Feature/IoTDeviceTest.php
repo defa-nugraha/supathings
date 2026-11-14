@@ -630,6 +630,38 @@ test('user API tokens can poll and acknowledge commands for an owned device', fu
     ]);
 });
 
+test('actuator status keeps a newer pending command from regressing to the previous acknowledged state', function () {
+    $user = User::factory()->create();
+    $device = createIotDevice($user);
+
+    ActuatorCommand::query()->create([
+        'iot_device_id' => $device->id,
+        'actuator' => 'mist',
+        'state' => 'off',
+        'mode' => 'manual',
+        'status' => 'acknowledged',
+        'metadata' => ['actual_state' => 'off'],
+    ]);
+    $pending = ActuatorCommand::query()->create([
+        'iot_device_id' => $device->id,
+        'actuator' => 'mist',
+        'state' => 'on',
+        'mode' => 'manual',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->getJson('/api/actuator-status?device_id='.$device->id)
+        ->assertOk();
+
+    $response
+        ->assertJsonPath('data.mist.actual_state', 'off')
+        ->assertJsonPath('data.mist.command_status', 'pending')
+        ->assertJsonPath('data.mist.requested_state', 'on')
+        ->assertJsonPath('data.mist.command_id', $pending->id)
+        ->assertJsonPath('data.mist.is_pending', true);
+});
+
 test('users can read actuator status only for their own device', function () {
     $user = User::factory()->create();
     $device = createIotDevice($user);

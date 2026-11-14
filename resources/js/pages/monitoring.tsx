@@ -444,7 +444,11 @@ export default function Monitoring() {
                         message.device_id
                     )
                         setNotice(`Perangkat terdeteksi: ${message.device_id}`);
-                    if (message.type === 'actuator_state' && message.state) {
+                    if (
+                        message.type === 'actuator_state' &&
+                        message.state &&
+                        (!message.device_id || message.device_id === deviceId)
+                    ) {
                         setActuators((prev) => ({ ...prev, ...message.state }));
                         setActuatorConfirmed((prev) => ({
                             ...prev,
@@ -881,8 +885,14 @@ export default function Monitoring() {
                         'blower',
                         'lamp',
                     ] as const) {
-                        const state = payload.data[key]?.actual_state;
-                        if (state === 'on' || state === 'off') {
+                        const status = payload.data[key];
+                        const state = status?.actual_state;
+                        if (
+                            !status?.is_pending &&
+                            (status?.command_status === 'acknowledged' ||
+                                status?.command_status === 'failed') &&
+                            (state === 'on' || state === 'off')
+                        ) {
                             next[key] = state === 'on';
                         }
                     }
@@ -896,8 +906,15 @@ export default function Monitoring() {
                         'blower',
                         'lamp',
                     ] as const) {
-                        const state = payload.data[key]?.actual_state;
-                        next[key] = state === 'on' || state === 'off';
+                        const status = payload.data[key];
+                        const state = status?.actual_state;
+                        if (status?.is_pending) {
+                            continue;
+                        }
+                        next[key] =
+                            (status?.command_status === 'acknowledged' ||
+                                status?.command_status === 'failed') &&
+                            (state === 'on' || state === 'off');
                     }
                     return next;
                 });
@@ -909,7 +926,7 @@ export default function Monitoring() {
         void refreshActuatorStatus();
         const timer = window.setInterval(
             () => void refreshActuatorStatus(),
-            5000,
+            2000,
         );
         return () => {
             active = false;

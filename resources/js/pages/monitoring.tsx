@@ -831,7 +831,7 @@ export default function Monitoring() {
             const selected = previous.days.includes(day);
             const days = selected
                 ? previous.days.filter((value) => value !== day)
-                : [...previous.days, day].sort();
+                : [...previous.days, day].sort((a, b) => a - b);
             return { ...previous, days };
         });
     };

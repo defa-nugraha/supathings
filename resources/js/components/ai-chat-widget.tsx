@@ -259,11 +259,11 @@ export function AiChatWidget() {
                 onClick={openChat}
                 aria-label="Buka Tanya SupaThings AI"
                 title="Tanya SupaThings AI"
-                className="fixed right-4 bottom-36 z-[65] inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none md:right-6 md:bottom-20"
+                className="fixed right-4 bottom-36 z-[65] inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-900 bg-slate-900 px-4 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:outline-none md:right-6 md:bottom-20"
             >
                 <MessageCircle
                     aria-hidden="true"
-                    className="size-5 text-slate-700"
+                    className="size-5 text-white"
                 />
                 <span>Tanya AI</span>
             </button>

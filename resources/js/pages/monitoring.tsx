@@ -331,9 +331,7 @@ export default function Monitoring() {
     const [modeSaving, setModeSaving] = useState(false);
     const [thresholdSaving, setThresholdSaving] = useState(false);
     const [schedules, setSchedules] = useState<ActuatorSchedule[]>([]);
-    const [scheduleForm, setScheduleForm] = useState<ScheduleForm | null>(
-        null,
-    );
+    const [scheduleForm, setScheduleForm] = useState<ScheduleForm | null>(null);
     const [scheduleSaving, setScheduleSaving] = useState(false);
     const [scheduleDeleting, setScheduleDeleting] = useState<number | null>(
         null,
@@ -957,9 +955,7 @@ export default function Monitoring() {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
                 if (widgetIds.length > 0) {
                     setWidgets(
-                        widgetIds.some(
-                            (widget) => widget.kind === 'schedules',
-                        )
+                        widgetIds.some((widget) => widget.kind === 'schedules')
                             ? widgetIds
                             : [
                                   ...widgetIds,
@@ -1409,7 +1405,8 @@ export default function Monitoring() {
                                         ) : (
                                             <div className="space-y-2">
                                                 {schedules.map((schedule) => {
-                                                    const days = schedule.days ?? [];
+                                                    const days =
+                                                        schedule.days ?? [];
                                                     const everyDay =
                                                         days.length === 7;
                                                     const dayLabels = [
@@ -1421,16 +1418,20 @@ export default function Monitoring() {
                                                         'Jum',
                                                         'Sab',
                                                     ];
-                                                    const selectedDays = everyDay
-                                                        ? 'Setiap hari'
-                                                        : dayLabels
-                                                              .filter(
-                                                                  (_, index) =>
-                                                                      days.includes(
+                                                    const selectedDays =
+                                                        everyDay
+                                                            ? 'Setiap hari'
+                                                            : dayLabels
+                                                                  .filter(
+                                                                      (
+                                                                          _,
                                                                           index,
-                                                                      ),
-                                                              )
-                                                              .join(', ');
+                                                                      ) =>
+                                                                          days.includes(
+                                                                              index,
+                                                                          ),
+                                                                  )
+                                                                  .join(', ');
                                                     const actuatorLabel =
                                                         actuatorOptions.find(
                                                             (item) =>
@@ -1460,10 +1461,14 @@ export default function Monitoring() {
                                                                         </span>
                                                                     </div>
                                                                     <p className="mt-1 text-xs font-medium text-slate-700">
-                                                                        {actuatorLabel}
+                                                                        {
+                                                                            actuatorLabel
+                                                                        }
                                                                     </p>
                                                                     <p className="mt-0.5 text-[11px] text-slate-400">
-                                                                        {selectedDays}
+                                                                        {
+                                                                            selectedDays
+                                                                        }
                                                                     </p>
                                                                 </div>
                                                                 <div className="flex shrink-0 items-center gap-1">
@@ -1762,7 +1767,9 @@ export default function Monitoring() {
                                         }
                                         className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${scheduleForm.state === state ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}
                                     >
-                                        {state === 'on' ? 'Nyalakan' : 'Matikan'}
+                                        {state === 'on'
+                                            ? 'Nyalakan'
+                                            : 'Matikan'}
                                     </button>
                                 ))}
                             </div>
@@ -1775,7 +1782,7 @@ export default function Monitoring() {
                                     </p>
                                     <p className="mt-0.5 text-xs text-slate-400">
                                         Pilih setiap hari atau hari tertentu.
-                                    Waktu mengikuti Asia/Jakarta.
+                                        Waktu mengikuti Asia/Jakarta.
                                     </p>
                                 </div>
                                 <button
@@ -1789,7 +1796,10 @@ export default function Monitoring() {
                                                           previous.days
                                                               .length === 7
                                                               ? []
-                                                              : [0, 1, 2, 3, 4, 5, 6],
+                                                              : [
+                                                                    0, 1, 2, 3,
+                                                                    4, 5, 6,
+                                                                ],
                                                   }
                                                 : previous,
                                         )
@@ -1809,8 +1819,9 @@ export default function Monitoring() {
                                     ['Jum', 5],
                                     ['Sab', 6],
                                 ].map(([label, day]) => {
-                                    const selected =
-                                        scheduleForm.days.includes(day as number);
+                                    const selected = scheduleForm.days.includes(
+                                        day as number,
+                                    );
                                     return (
                                         <button
                                             key={day}
@@ -1869,7 +1880,9 @@ export default function Monitoring() {
                                 onClick={() => void saveSchedule()}
                                 className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-50"
                             >
-                                {scheduleSaving ? 'Menyimpan…' : 'Simpan jadwal'}
+                                {scheduleSaving
+                                    ? 'Menyimpan…'
+                                    : 'Simpan jadwal'}
                             </button>
                         </div>
                     </section>

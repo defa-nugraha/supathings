@@ -812,20 +812,31 @@ export default function AiIntelligence() {
                                                                             aria-label="SupaThings AI sedang menjawab"
                                                                         >
                                                                             <span className="text-xs text-slate-500">
-                                                                                {'SupaThings AI sedang menjawab'}
+                                                                                {
+                                                                                    'SupaThings AI sedang menjawab'
+                                                                                }
                                                                             </span>
                                                                             <span className="flex items-center gap-1">
                                                                                 <span
                                                                                     className="size-1.5 animate-bounce rounded-full bg-slate-500"
-                                                                                    style={{ animationDelay: '0ms' }}
+                                                                                    style={{
+                                                                                        animationDelay:
+                                                                                            '0ms',
+                                                                                    }}
                                                                                 />
                                                                                 <span
                                                                                     className="size-1.5 animate-bounce rounded-full bg-slate-500"
-                                                                                    style={{ animationDelay: '140ms' }}
+                                                                                    style={{
+                                                                                        animationDelay:
+                                                                                            '140ms',
+                                                                                    }}
                                                                                 />
                                                                                 <span
                                                                                     className="size-1.5 animate-bounce rounded-full bg-slate-500"
-                                                                                    style={{ animationDelay: '280ms' }}
+                                                                                    style={{
+                                                                                        animationDelay:
+                                                                                            '280ms',
+                                                                                    }}
                                                                                 />
                                                                             </span>
                                                                         </div>

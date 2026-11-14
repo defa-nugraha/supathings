@@ -4,6 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { AppSidebarHeader } from '@/components/app-sidebar-header';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { ProductTour } from '@/components/product-tour';
+import { AiChatWidget } from '@/components/ai-chat-widget';
 import type { AppLayoutProps } from '@/types';
 
 export default function AppSidebarLayout({
@@ -21,6 +22,7 @@ export default function AppSidebarLayout({
                 {children}
             </AppContent>
             <MobileBottomNav />
+            <AiChatWidget />
             <ProductTour />
         </AppShell>
     );

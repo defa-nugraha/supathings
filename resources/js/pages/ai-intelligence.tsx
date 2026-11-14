@@ -7,8 +7,13 @@ import {
     Clock3,
     DollarSign,
     MessageCircle,
+    History,
     RefreshCw,
     Send,
+    X,
+    Plus,
+    Bot,
+    UserRound,
     ShieldAlert,
     Sparkles,
     TrendingDown,
@@ -67,6 +72,21 @@ type ChatResponse = {
     limitations: string[];
 };
 
+type ChatMessage = {
+    id: string;
+    role: 'user' | 'assistant';
+    question?: string;
+    response?: ChatResponse;
+    createdAt: string;
+};
+
+type ChatHistory = {
+    id: string;
+    title: string;
+    createdAt: string;
+    messages: ChatMessage[];
+};
+
 const dateTime = (value: string) =>
     new Date(value).toLocaleString('id-ID', {
         dateStyle: 'medium',
@@ -93,6 +113,10 @@ export default function AiIntelligence() {
     const [question, setQuestion] = useState('');
     const [chat, setChat] = useState<ChatResponse | null>(null);
     const [chatting, setChatting] = useState(false);
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+    const [activeChatId, setActiveChatId] = useState<string | null>(null);
+    const [historyOpen, setHistoryOpen] = useState(false);
 
     const loadLatest = async () => {
         try {
@@ -118,7 +142,43 @@ export default function AiIntelligence() {
 
     useEffect(() => {
         void loadLatest();
+
+        try {
+            const saved = localStorage.getItem('supathings-ai-chat-history');
+            if (saved) {
+                setChatHistory(JSON.parse(saved) as ChatHistory[]);
+            }
+        } catch {
+            localStorage.removeItem('supathings-ai-chat-history');
+        }
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem(
+            'supathings-ai-chat-history',
+            JSON.stringify(chatHistory.slice(0, 30)),
+        );
+    }, [chatHistory]);
+
+    const startNewChat = () => {
+        setActiveChatId(null);
+        setChat(null);
+        setQuestion('');
+        setHistoryOpen(false);
+    };
+
+    const openChat = () => {
+        setChatOpen(true);
+        setHistoryOpen(false);
+    };
+
+    const selectChat = (item: ChatHistory) => {
+        setActiveChatId(item.id);
+        const last = [...item.messages].reverse().find((message) => message.role === 'assistant');
+        setChat(last?.response ?? null);
+        setQuestion('');
+        setHistoryOpen(false);
+    };
 
     const analyze = async () => {
         setAnalyzing(true);
@@ -182,7 +242,43 @@ export default function AiIntelligence() {
                 throw new Error(payload.message ?? 'AI tidak dapat menjawab.');
             }
 
-            setChat(payload.data);
+            const responseData = payload.data as ChatResponse;
+            setChat(responseData);
+
+            const messageTime = new Date().toISOString();
+            const userMessage: ChatMessage = {
+                id: `user-${messageTime}`,
+                role: 'user',
+                question: question.trim(),
+                createdAt: messageTime,
+            };
+            const assistantMessage: ChatMessage = {
+                id: `assistant-${messageTime}`,
+                role: 'assistant',
+                response: responseData,
+                createdAt: messageTime,
+            };
+
+            setChatHistory((current) => {
+                const existing = current.find((item) => item.id === activeChatId);
+                if (existing) {
+                    return current.map((item) =>
+                        item.id === activeChatId
+                            ? { ...item, messages: [...item.messages, userMessage, assistantMessage] }
+                            : item,
+                    );
+                }
+
+                const newChat: ChatHistory = {
+                    id: messageTime,
+                    title: question.trim().slice(0, 60),
+                    createdAt: messageTime,
+                    messages: [userMessage, assistantMessage],
+                };
+                setActiveChatId(newChat.id);
+                return [newChat, ...current];
+            });
+            setQuestion('');
         } catch (cause) {
             setError(
                 cause instanceof Error
@@ -507,18 +603,110 @@ export default function AiIntelligence() {
                         </section>
                     )}
 
-                    <section className="rounded-2xl border bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-2">
-                            <MessageCircle className="size-5 text-blue-700" />
-                            <div>
-                                <h2 className="text-lg font-semibold">
-                                    Tanya SupaThings AI
-                                </h2>
-                                <p className="text-sm text-slate-500">
-                                    Jawaban dibatasi pada data SupaThings milik
-                                    akun ini.
-                                </p>
+                    <button
+                        type="button"
+                        onClick={openChat}
+                        aria-label="Buka Tanya SupaThings AI"
+                        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200"
+                    >
+                        <MessageCircle className="size-5" />
+                        Tanya AI
+                    </button>
+
+                    {chatOpen && (
+                        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">
+                            <div className="flex h-[92vh] w-full max-w-5xl overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:h-[min(760px,90vh)] sm:rounded-3xl">
+                                <aside className={`w-72 shrink-0 border-r bg-slate-50 ${historyOpen ? 'block' : 'hidden'} sm:block`}>
+                                    <div className="flex h-full flex-col">
+                                        <div className="flex items-center justify-between border-b px-4 py-4">
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900">Riwayat chat</p>
+                                                <p className="mt-0.5 text-xs text-slate-500">Tersimpan di perangkat ini</p>
+                                            </div>
+                                            <button type="button" onClick={() => setHistoryOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-white sm:hidden">
+                                                <X className="size-4" />
+                                            </button>
+                                        </div>
+                                        <div className="p-3">
+                                            <button type="button" onClick={startNewChat} className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                                                <Plus className="size-4" /> Chat baru
+                                            </button>
+                                        </div>
+                                        <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-3">
+                                            {chatHistory.length === 0 ? (
+                                                <p className="px-3 py-8 text-center text-xs leading-5 text-slate-400">Belum ada riwayat percakapan.</p>
+                                            ) : chatHistory.map((item) => (
+                                                <button key={item.id} type="button" onClick={() => selectChat(item)} className={`w-full rounded-xl px-3 py-3 text-left transition ${item.id === activeChatId ? 'bg-white shadow-sm ring-1 ring-slate-200' : 'hover:bg-white'}`}>
+                                                    <p className="truncate text-sm font-medium text-slate-800">{item.title}</p>
+                                                    <p className="mt-1 text-[11px] text-slate-400">{dateTime(item.createdAt)}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </aside>
+
+                                <section className="flex min-w-0 flex-1 flex-col">
+                                    <header className="flex items-center justify-between border-b px-4 py-3 sm:px-5">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-white">
+                                                <Bot className="size-5" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-semibold text-slate-900">SupaThings AI</p>
+                                                <p className="text-xs text-slate-500">Berbasis data SupaThings akun Anda</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button type="button" onClick={() => setHistoryOpen(true)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 sm:hidden" aria-label="Riwayat chat"><History className="size-5" /></button>
+                                            <button type="button" onClick={startNewChat} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Chat baru"><Plus className="size-5" /></button>
+                                            <button type="button" onClick={() => setChatOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Tutup chat"><X className="size-5" /></button>
+                                        </div>
+                                    </header>
+
+                                    <div className="flex-1 overflow-y-auto bg-white px-4 py-5 sm:px-6">
+                                        {activeChatId && chatHistory.find((item) => item.id === activeChatId)?.messages.length ? (
+                                            <div className="mx-auto max-w-3xl space-y-5">
+                                                {chatHistory.find((item) => item.id === activeChatId)?.messages.map((message) =>
+                                                    message.role === 'user' ? (
+                                                        <div key={message.id} className="flex justify-end gap-2">
+                                                            <div className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-4 py-3 text-sm leading-6 text-white">{message.question}</div>
+                                                            <UserRound className="mt-2 size-4 shrink-0 text-slate-400" />
+                                                        </div>
+                                                    ) : (
+                                                        <div key={message.id} className="flex gap-3">
+                                                            <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-100"><Bot className="size-4 text-slate-600" /></div>
+                                                            <div className="max-w-[88%] rounded-2xl rounded-tl-md bg-slate-100 px-4 py-3 text-sm leading-6 text-slate-800">
+                                                                <p className="whitespace-pre-wrap">{message.response?.answer}</p>
+                                                                {message.response?.evidence.length ? <div className="mt-3 border-t border-slate-200 pt-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Bukti data</p><ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-slate-600">{message.response.evidence.map((item) => <li key={item}>{item}</li>)}</ul></div> : null}
+                                                                {message.response?.limitations.length ? <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">{message.response.limitations.join(' ')}</p> : null}
+                                                            </div>
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="mx-auto flex h-full max-w-2xl items-center justify-center text-center">
+                                                <div>
+                                                    <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-slate-100"><MessageCircle className="size-7 text-slate-700" /></div>
+                                                    <p className="mt-4 text-sm font-semibold text-slate-900">Apa yang ingin Anda ketahui?</p>
+                                                    <p className="mt-1 text-sm text-slate-500">Tanyakan kondisi lingkungan, perangkat, budidaya, atau biaya berdasarkan data SupaThings.</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <form onSubmit={ask} className="border-t bg-white p-3 sm:p-4">
+                                        <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 focus-within:border-slate-400 focus-within:bg-white">
+                                            <textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder="Tanyakan sesuatu tentang SupaThings..." className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-slate-400" maxLength={2000} rows={1} />
+                                            <button type="submit" disabled={chatting || !question.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Kirim pertanyaan"><Send className="size-4" /></button>
+                                        </div>
+                                        <p className="mx-auto mt-2 max-w-3xl px-2 text-[11px] text-slate-400">AI hanya menggunakan data SupaThings akun ini. Enter untuk kirim · Shift+Enter untuk baris baru.</p>
+                                    </form>
+                                </section>
                             </div>
+                        </div>
+                    )}
+                </div>
                         </div>
 
                         <form

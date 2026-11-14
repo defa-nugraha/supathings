@@ -260,9 +260,16 @@ class AiCultivationService
         );
 
         try {
-            $response = Http::timeout(config('gemini.timeout', 45))
+            $response = Http::connectTimeout(config('gemini.connect_timeout', 10))
+                ->timeout(config('gemini.timeout', 60))
+                ->retry(2, 1000, throw: false)
                 ->acceptJson()
-                ->withQueryParameters(['key' => $apiKey])
+                ->withHeaders(['x-goog-api-key' => $apiKey])
+                ->withOptions([
+                    'curl' => [
+                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                    ],
+                ])
                 ->post($url, [
                     'systemInstruction' => ['parts' => [['text' => $system]]],
                     'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],

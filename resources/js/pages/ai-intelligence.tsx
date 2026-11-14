@@ -455,7 +455,6 @@ export default function AiIntelligence() {
                             </p>
                         </section>
                     )}
-
                 </div>
             </main>
         </>

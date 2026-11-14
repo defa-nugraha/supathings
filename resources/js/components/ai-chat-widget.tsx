@@ -415,11 +415,16 @@ export function AiChatWidget() {
                                                                 >
                                                                     <span className="text-xs text-slate-500">
                                                                         SupaThings
-                                                                        AI sedang
+                                                                        AI
+                                                                        sedang
                                                                         menjawab
                                                                     </span>
                                                                     <span className="flex items-center gap-1">
-                                                                        {[0, 140, 280].map(
+                                                                        [
+                                                                            0,
+                                                                            140,
+                                                                            280,
+                                                                        ].map(
                                                                             (
                                                                                 delay,
                                                                             ) => (
@@ -429,8 +434,7 @@ export function AiChatWidget() {
                                                                                     }
                                                                                     className="size-1.5 animate-bounce rounded-full bg-slate-500"
                                                                                     style={{
-                                                                                        animationDelay:
-                                                                                            `${delay}ms`,
+                                                                                        animationDelay: `${delay}ms`,
                                                                                     }}
                                                                                 />
                                                                             ),
@@ -446,7 +450,9 @@ export function AiChatWidget() {
                                                                                 ?.answer
                                                                         }
                                                                     </p>
-                                                                    {message.response?.evidence
+                                                                    {message
+                                                                        .response
+                                                                        ?.evidence
                                                                         .length ? (
                                                                         <div className="mt-3 border-t border-slate-200 pt-3">
                                                                             <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
@@ -472,7 +478,9 @@ export function AiChatWidget() {
                                                                             </ul>
                                                                         </div>
                                                                     ) : null}
-                                                                    {message.response?.limitations
+                                                                    {message
+                                                                        .response
+                                                                        ?.limitations
                                                                         .length ? (
                                                                         <p className="mt-3 rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
                                                                             {message.response.limitations.join(
@@ -545,9 +553,7 @@ export function AiChatWidget() {
                                     />
                                     <button
                                         type="submit"
-                                        disabled={
-                                            chatting || !question.trim()
-                                        }
+                                        disabled={chatting || !question.trim()}
                                         className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                                         aria-label="Kirim pertanyaan"
                                     >
@@ -555,9 +561,9 @@ export function AiChatWidget() {
                                     </button>
                                 </div>
                                 <p className="mx-auto mt-2 max-w-3xl px-2 text-[11px] text-slate-400">
-                                    AI hanya menggunakan data SupaThings akun ini.
-                                    Enter untuk kirim · Shift+Enter untuk baris
-                                    baru.
+                                    AI hanya menggunakan data SupaThings akun
+                                    ini. Enter untuk kirim · Shift+Enter untuk
+                                    baris baru.
                                 </p>
                                 {error ? (
                                     <p

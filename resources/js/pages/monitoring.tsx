@@ -1454,8 +1454,12 @@ export default function Monitoring() {
                         if (e.target === e.currentTarget) setEditing(null);
                     }}
                 >
-                    <div className={`w-full rounded-2xl bg-white shadow-2xl ${editing.kind === 'thresholds' ? 'max-w-6xl max-h-[92vh] overflow-hidden' : 'max-w-md p-6'}`}>
-                        <div className={`flex items-start justify-between border-b border-slate-100 ${editing.kind === 'thresholds' ? 'px-6 py-5' : 'mb-5'}`}>
+                    <div
+                        className={`w-full rounded-2xl bg-white shadow-2xl ${editing.kind === 'thresholds' ? 'max-h-[92vh] max-w-6xl overflow-hidden' : 'max-w-md p-6'}`}
+                    >
+                        <div
+                            className={`flex items-start justify-between border-b border-slate-100 ${editing.kind === 'thresholds' ? 'px-6 py-5' : 'mb-5'}`}
+                        >
                             <div>
                                 <h2 className="text-lg font-semibold text-slate-900">
                                     {editing.id === 'thresholds-editor' ||
@@ -1482,185 +1486,221 @@ export default function Monitoring() {
                                             <Settings2 className="size-4" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-900">Atur kondisi otomatis</p>
-                                            <p className="mt-1 text-xs leading-relaxed text-slate-600">Tentukan rentang aman untuk setiap sensor, kemudian pilih actuator yang akan dijalankan ketika kondisi keluar dari rentang tersebut.</p>
+                                            <p className="text-sm font-semibold text-slate-900">
+                                                Atur kondisi otomatis
+                                            </p>
+                                            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                                                Tentukan rentang aman untuk
+                                                setiap sensor, kemudian pilih
+                                                actuator yang akan dijalankan
+                                                ketika kondisi keluar dari
+                                                rentang tersebut.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="grid gap-5 lg:grid-cols-3">
-                                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs leading-relaxed text-slate-600">
-                                    Atur rentang aman, lalu pilih aktuator yang
-                                    akan dinyalakan ketika kondisi pemicu
-                                    tercapai. Saat kondisi kembali aman,
-                                    aktuator akan dimatikan mengikuti logika
-                                    otomatis yang sudah ada.
-                                </div>
-                                {(
-                                    [
+                                    <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs leading-relaxed text-slate-600">
+                                        Atur rentang aman, lalu pilih aktuator
+                                        yang akan dinyalakan ketika kondisi
+                                        pemicu tercapai. Saat kondisi kembali
+                                        aman, aktuator akan dimatikan mengikuti
+                                        logika otomatis yang sudah ada.
+                                    </div>
+                                    {(
                                         [
-                                            'temperature',
-                                            'Suhu',
-                                            '°C',
-                                            'temperatureMin',
-                                            'temperatureMax',
-                                            'Di atas maksimum',
-                                        ],
-                                        [
-                                            'humidity',
-                                            'Kelembapan',
-                                            '%',
-                                            'humidityMin',
-                                            'humidityMax',
-                                            'Di bawah minimum',
-                                        ],
-                                        [
-                                            'light',
-                                            'Cahaya',
-                                            '%',
-                                            'lightMin',
-                                            'lightMax',
-                                            'Di bawah minimum',
-                                        ],
-                                    ] as const
-                                ).map(
-                                    ([
-                                        key,
-                                        label,
-                                        unit,
-                                        minKey,
-                                        maxKey,
-                                        trigger,
-                                    ]) => (
-                                        <div
-                                            key={key}
-                                            className="rounded-2xl border border-slate-200 p-4"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900">
-                                                        {label}
-                                                    </p>
-                                                    <p className="mt-0.5 text-xs text-slate-500">
-                                                        Pemicu: {trigger}
-                                                    </p>
+                                            [
+                                                'temperature',
+                                                'Suhu',
+                                                '°C',
+                                                'temperatureMin',
+                                                'temperatureMax',
+                                                'Di atas maksimum',
+                                            ],
+                                            [
+                                                'humidity',
+                                                'Kelembapan',
+                                                '%',
+                                                'humidityMin',
+                                                'humidityMax',
+                                                'Di bawah minimum',
+                                            ],
+                                            [
+                                                'light',
+                                                'Cahaya',
+                                                '%',
+                                                'lightMin',
+                                                'lightMax',
+                                                'Di bawah minimum',
+                                            ],
+                                        ] as const
+                                    ).map(
+                                        ([
+                                            key,
+                                            label,
+                                            unit,
+                                            minKey,
+                                            maxKey,
+                                            trigger,
+                                        ]) => (
+                                            <div
+                                                key={key}
+                                                className="rounded-2xl border border-slate-200 p-4"
+                                            >
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-slate-900">
+                                                            {label}
+                                                        </p>
+                                                        <p className="mt-0.5 text-xs text-slate-500">
+                                                            Pemicu: {trigger}
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                                        {thresholds[minKey]}–
+                                                        {thresholds[maxKey]}{' '}
+                                                        {unit}
+                                                    </span>
                                                 </div>
-                                                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                                                    {thresholds[minKey]}–
-                                                    {thresholds[maxKey]} {unit}
-                                                </span>
-                                            </div>
-                                            <div className="mt-3 grid grid-cols-2 gap-3">
-                                                <label className="text-xs font-medium text-slate-600">
-                                                    Minimum
-                                                    <input
-                                                        type="number"
-                                                        value={
-                                                            thresholds[minKey]
-                                                        }
-                                                        onChange={(e) =>
-                                                            setThresholds(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    [minKey]:
-                                                                        e.target
-                                                                            .value,
-                                                                }),
-                                                            )
-                                                        }
-                                                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                                    />
-                                                </label>
-                                                <label className="text-xs font-medium text-slate-600">
-                                                    Maksimum
-                                                    <input
-                                                        type="number"
-                                                        value={
-                                                            thresholds[maxKey]
-                                                        }
-                                                        onChange={(e) =>
-                                                            setThresholds(
-                                                                (prev) => ({
-                                                                    ...prev,
-                                                                    [maxKey]:
-                                                                        e.target
-                                                                            .value,
-                                                                }),
-                                                            )
-                                                        }
-                                                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                                    />
-                                                </label>
-                                            </div>
-                                            <div className="mt-4">
-                                                <p className="mb-2 text-xs font-semibold text-slate-700">
-                                                    Aktuator yang dikendalikan
-                                                </p>
-                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                                                    {actuatorOptions.map(
-                                                        (item) => {
-                                                            const selected =
-                                                                ruleActuators[
-                                                                    key
-                                                                ].includes(
-                                                                    item.key,
-                                                                );
-                                                            return (
-                                                                <button
-                                                                    key={
-                                                                        item.key
-                                                                    }
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        setRuleActuators(
-                                                                            (
-                                                                                prev,
-                                                                            ) => ({
-                                                                                ...prev,
-                                                                                [key]: selected
-                                                                                    ? prev[
-                                                                                          key
-                                                                                      ].filter(
-                                                                                          (
-                                                                                              value,
-                                                                                          ) =>
-                                                                                              value !==
-                                                                                              item.key,
-                                                                                      )
-                                                                                    : [
-                                                                                          ...prev[
-                                                                                              key
-                                                                                          ],
-                                                                                          item.key,
-                                                                                      ],
-                                                                            }),
-                                                                        )
-                                                                    }
-                                                                    className={`rounded-xl border px-3 py-2.5 text-left transition ${selected ? 'border-blue-500 bg-blue-50 text-blue-800 ring-1 ring-blue-200' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
-                                                                >
-                                                                    <span className="flex items-center gap-2 text-xs font-semibold">
-                                                                        <item.Icon className="size-4 shrink-0" />
-                                                                        {
-                                                                            item.title
+                                                <div className="mt-3 grid grid-cols-2 gap-3">
+                                                    <label className="text-xs font-medium text-slate-600">
+                                                        Minimum
+                                                        <input
+                                                            type="number"
+                                                            value={
+                                                                thresholds[
+                                                                    minKey
+                                                                ]
+                                                            }
+                                                            onChange={(e) =>
+                                                                setThresholds(
+                                                                    (prev) => ({
+                                                                        ...prev,
+                                                                        [minKey]:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                    }),
+                                                                )
+                                                            }
+                                                            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                        />
+                                                    </label>
+                                                    <label className="text-xs font-medium text-slate-600">
+                                                        Maksimum
+                                                        <input
+                                                            type="number"
+                                                            value={
+                                                                thresholds[
+                                                                    maxKey
+                                                                ]
+                                                            }
+                                                            onChange={(e) =>
+                                                                setThresholds(
+                                                                    (prev) => ({
+                                                                        ...prev,
+                                                                        [maxKey]:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                    }),
+                                                                )
+                                                            }
+                                                            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <p className="mb-2 text-xs font-semibold text-slate-700">
+                                                        Aktuator yang
+                                                        dikendalikan
+                                                    </p>
+                                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                        {actuatorOptions.map(
+                                                            (item) => {
+                                                                const selected =
+                                                                    ruleActuators[
+                                                                        key
+                                                                    ].includes(
+                                                                        item.key,
+                                                                    );
+                                                                return (
+                                                                    <button
+                                                                        key={
+                                                                            item.key
                                                                         }
-                                                                    </span>
-                                                                </button>
-                                                            );
-                                                        },
-                                                    )}
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            setRuleActuators(
+                                                                                (
+                                                                                    prev,
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    [key]: selected
+                                                                                        ? prev[
+                                                                                              key
+                                                                                          ].filter(
+                                                                                              (
+                                                                                                  value,
+                                                                                              ) =>
+                                                                                                  value !==
+                                                                                                  item.key,
+                                                                                          )
+                                                                                        : [
+                                                                                              ...prev[
+                                                                                                  key
+                                                                                              ],
+                                                                                              item.key,
+                                                                                          ],
+                                                                                }),
+                                                                            )
+                                                                        }
+                                                                        className={`rounded-xl border px-3 py-2.5 text-left transition ${selected ? 'border-blue-500 bg-blue-50 text-blue-800 ring-1 ring-blue-200' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+                                                                    >
+                                                                        <span className="flex items-center gap-2 text-xs font-semibold">
+                                                                            <item.Icon className="size-4 shrink-0" />
+                                                                            {
+                                                                                item.title
+                                                                            }
+                                                                        </span>
+                                                                    </button>
+                                                                );
+                                                            },
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ),
-                                )}
-                            </div>
-                            <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
-                                <p className="text-xs text-slate-500">Perubahan akan diterapkan pada mode otomatis perangkat.</p>
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={() => setEditing(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
-                                    <button type="button" disabled={thresholdSaving} onClick={() => void saveThresholds()} className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">{thresholdSaving ? 'Menyimpan…' : 'Simpan pengaturan'}</button>
+                                        ),
+                                    )}
+                                </div>
+                                <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
+                                    <p className="text-xs text-slate-500">
+                                        Perubahan akan diterapkan pada mode
+                                        otomatis perangkat.
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditing(null)}
+                                            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={thresholdSaving}
+                                            onClick={() =>
+                                                void saveThresholds()
+                                            }
+                                            className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60"
+                                        >
+                                            {thresholdSaving
+                                                ? 'Menyimpan…'
+                                                : 'Simpan pengaturan'}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         ) : (
                             <div className="space-y-4">
                                 <label className="block text-sm font-medium text-slate-700">

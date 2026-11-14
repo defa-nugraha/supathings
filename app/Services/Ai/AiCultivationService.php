@@ -15,7 +15,6 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -23,8 +22,6 @@ use RuntimeException;
 
 class AiCultivationService
 {
-    private const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
-
     /**
      * @return array<string, mixed>
      */
@@ -45,7 +42,7 @@ class AiCultivationService
                 'type' => 'cultivation_analysis',
                 'period_from' => $from,
                 'period_to' => $to,
-                'model' => config('vertex-ai.model'),
+                'model' => config('gemini.model'),
                 'status' => 'completed',
                 'input_fingerprint' => $fingerprint,
                 'response' => $result,
@@ -58,7 +55,7 @@ class AiCultivationService
                 'type' => 'cultivation_analysis',
                 'period_from' => $from,
                 'period_to' => $to,
-                'model' => config('vertex-ai.model'),
+                'model' => config('gemini.model'),
                 'status' => 'failed',
                 'input_fingerprint' => $fingerprint,
                 'error_message' => $exception->getMessage(),
@@ -73,7 +70,7 @@ class AiCultivationService
     public function chat(User $user, string $question): array
     {
         $to = now();
-        $from = $to->copy()->subHours(config('vertex-ai.analysis_window_hours', 24));
+        $from = $to->copy()->subHours(config('gemini.analysis_window_hours', 24));
 
         return $this->generate(
             'Anda adalah SupaThings AI. Jawab hanya berdasarkan konteks SupaThings akun ini. Jangan mengarang data dan jangan memberi perintah langsung untuk aktuator. Jawab ringkas dalam Bahasa Indonesia.',
@@ -246,25 +243,26 @@ class AiCultivationService
      */
     private function generate(string $system, string $prompt, array $schema): array
     {
-        if (config('vertex-ai.enabled') === false) {
-            throw new RuntimeException('Vertex AI belum diaktifkan. Atur VERTEX_AI_ENABLED=true dan kredensial Vertex AI.');
+        if (config('gemini.enabled') === false) {
+            throw new RuntimeException('Google Gemini API belum diaktifkan. Atur GEMINI_ENABLED=true dan GEMINI_API_KEY.');
         }
 
-        $project = config('vertex-ai.project_id');
-        $location = config('vertex-ai.location', 'global');
-        $model = config('vertex-ai.model', 'gemini-3.8-flash');
-        if (blank($project)) {
-            throw new RuntimeException('VERTEX_AI_PROJECT_ID belum dikonfigurasi.');
+        $apiKey = config('gemini.api_key');
+        $model = config('gemini.model', 'gemini-2.5-flash');
+
+        if (blank($apiKey)) {
+            throw new RuntimeException('GEMINI_API_KEY belum dikonfigurasi.');
         }
 
-        $token = $this->accessToken();
-        $host = $location === 'global' ? 'aiplatform.googleapis.com' : $location.'-aiplatform.googleapis.com';
-        $url = sprintf('https://%s/v1/projects/%s/locations/%s/publishers/google/models/%s:generateContent', $host, rawurlencode($project), rawurlencode($location), rawurlencode($model));
+        $url = sprintf(
+            'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent',
+            rawurlencode($model),
+        );
 
         try {
-            $response = Http::timeout(config('vertex-ai.timeout', 45))
+            $response = Http::timeout(config('gemini.timeout', 45))
                 ->acceptJson()
-                ->withToken($token)
+                ->withQueryParameters(['key' => $apiKey])
                 ->post($url, [
                     'systemInstruction' => ['parts' => [['text' => $system]]],
                     'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
@@ -274,11 +272,14 @@ class AiCultivationService
                     ],
                 ]);
         } catch (ConnectionException $exception) {
-            throw new RuntimeException('Tidak dapat terhubung ke Vertex AI: '.$exception->getMessage(), 0, $exception);
+            throw new RuntimeException('Tidak dapat terhubung ke Google Gemini API: '.$exception->getMessage(), 0, $exception);
         }
 
         if ($response->failed()) {
-            throw new RuntimeException('Vertex AI menolak permintaan (HTTP '.$response->status().'): '.$response->json('error.message', 'Unknown error'));
+            throw new RuntimeException(
+                'Google Gemini API menolak permintaan (HTTP '.$response->status().'): '.
+                $response->json('error.message', 'Unknown error'),
+            );
         }
 
         $parts = $response->json('candidates.0.content.parts', []);
@@ -288,75 +289,15 @@ class AiCultivationService
                 $text .= $part['text'];
             }
         }
+
         $decoded = json_decode($text, true);
         if (is_array($decoded) === false) {
-            throw new RuntimeException('Respons Vertex AI bukan JSON yang valid.');
+            throw new RuntimeException('Respons Google Gemini bukan JSON yang valid.');
         }
 
         return $decoded;
     }
 
-    private function accessToken(): string
-    {
-        if ($token = config('vertex-ai.access_token')) {
-            return $token;
-        }
-
-        $encoded = config('vertex-ai.service_account_json_base64');
-        if (blank($encoded)) {
-            throw new RuntimeException('Kredensial Vertex AI belum dikonfigurasi.');
-        }
-
-        $credentials = json_decode(base64_decode($encoded, true) ?: '', true);
-        if (is_array($credentials) === false || empty($credentials['client_email']) || empty($credentials['private_key'])) {
-            throw new RuntimeException('VERTEX_AI_SERVICE_ACCOUNT_JSON_BASE64 tidak valid.');
-        }
-
-        return Cache::remember(
-            'vertex-ai.access-token.'.hash('sha256', (string) $credentials['client_email']),
-            now()->addMinutes(50),
-            fn (): string => $this->exchangeToken($credentials),
-        );
-    }
-
-    /**
-     * @param array<string, string> $credentials
-     */
-    private function exchangeToken(array $credentials): string
-    {
-        $now = time();
-        $header = $this->b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
-        $claim = $this->b64(json_encode([
-            'iss' => $credentials['client_email'],
-            'scope' => self::GOOGLE_SCOPE,
-            'aud' => 'https://oauth2.googleapis.com/token',
-            'iat' => $now,
-            'exp' => $now + 3600,
-        ], JSON_THROW_ON_ERROR));
-        $unsigned = $header.'.'.$claim;
-        if (openssl_sign($unsigned, $signature, $credentials['private_key'], OPENSSL_ALGO_SHA256) === false) {
-            throw new RuntimeException('Gagal menandatangani service account.');
-        }
-
-        $response = Http::asForm()->timeout(config('vertex-ai.timeout', 45))->post('https://oauth2.googleapis.com/token', [
-            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion' => $unsigned.'.'.$this->b64($signature),
-        ]);
-        if ($response->failed() || empty($response->json('access_token'))) {
-            throw new RuntimeException('Gagal memperoleh access token Google Cloud.');
-        }
-
-        return (string) $response->json('access_token');
-    }
-
-    private function b64(string $value): string
-    {
-        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
     private function analysisSchema(): array
     {
         return [

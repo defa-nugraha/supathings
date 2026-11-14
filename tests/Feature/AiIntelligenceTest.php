@@ -19,10 +19,10 @@ function createAiDevice(User $user): IotDevice
     ]);
 }
 
-function fakeVertex(): void
+function fakeGemini(): void
 {
     Http::fake([
-        '*aiplatform.googleapis.com/*' => Http::response([
+        '*generativelanguage.googleapis.com/*' => Http::response([
             'candidates' => [[
                 'content' => ['parts' => [[
                     'text' => json_encode([
@@ -39,10 +39,10 @@ function fakeVertex(): void
     ]);
 }
 
-function fakeVertexChat(): void
+function fakeGeminiChat(): void
 {
     Http::fake([
-        '*aiplatform.googleapis.com/*' => Http::response([
+        '*generativelanguage.googleapis.com/*' => Http::response([
             'candidates' => [[
                 'content' => ['parts' => [[
                     'text' => json_encode([
@@ -58,11 +58,9 @@ function fakeVertexChat(): void
 
 beforeEach(function () {
     config([
-        'vertex-ai.enabled' => true,
-        'vertex-ai.project_id' => 'test-project',
-        'vertex-ai.location' => 'global',
-        'vertex-ai.model' => 'gemini-3.8-flash',
-        'vertex-ai.access_token' => 'test-access-token',
+        'gemini.enabled' => true,
+        'gemini.api_key' => 'test-api-key',
+        'gemini.model' => 'gemini-2.5-flash',
     ]);
 });
 
@@ -73,7 +71,7 @@ test('latest AI analysis is scoped to the authenticated user', function () {
         'type' => 'cultivation_analysis',
         'period_from' => now()->subDay(),
         'period_to' => now(),
-        'model' => 'gemini-3.8-flash',
+        'model' => 'gemini-2.5-flash',
         'status' => 'completed',
         'response' => ['summary' => 'Owned'],
     ]);
@@ -99,12 +97,12 @@ test('AI analysis is sent only for the authenticated account', function () {
         'light_percent' => 40,
         'measured_at' => now()->subMinutes(10),
     ]);
-    fakeVertex();
+    fakeGemini();
 
     $this->actingAs($user)->postJson('/api/ai/analysis')
         ->assertOk()->assertJsonPath('data.analysis.status', 'warning');
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'aiplatform.googleapis.com') && str_contains(json_encode($request->data()), (string) $device->id));
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'generativelanguage.googleapis.com') && str_contains(json_encode($request->data()), (string) $device->id));
     expect(AiAnalysis::query()->where('user_id', $user->id)->where('status', 'completed')->count())->toBe(1);
 });
 
@@ -117,7 +115,7 @@ test('AI analysis rejects periods longer than seven days', function () {
 test('AI chat returns structured data', function () {
     $user = User::factory()->create();
     createAiDevice($user);
-    fakeVertexChat();
+    fakeGeminiChat();
 
     $this->actingAs($user)->postJson('/api/ai/chat', ['question' => 'Bagaimana kondisi kelembapan?'])
         ->assertOk()->assertJsonStructure(['data' => ['answer', 'evidence', 'limitations']]);

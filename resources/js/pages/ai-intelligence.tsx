@@ -828,6 +828,7 @@ export default function AiIntelligence() {
                                                                                     style={{ animationDelay: '280ms' }}
                                                                                 />
                                                                             </span>
+                                                                        </div>
                                                                     ) : (
                                                                         <>
                                                                             <p className="whitespace-pre-wrap">

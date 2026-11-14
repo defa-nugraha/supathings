@@ -27,7 +27,7 @@ class RunActuatorSchedules extends Command
             ->each(function (ActuatorSchedule $schedule) use ($now, $day, &$executed): void {
                 $rawDays = $schedule->getRawOriginal('days');
                 $days = json_decode((string) $rawDays, true);
-                if (! is_array($days)) {
+                if (is_array($days) === false) {
                     return;
                 }
                 $days = array_map('intval', $days);

@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import {
     Activity,
+    CalendarClock,
     AlertTriangle,
     ArrowDownToLine,
     ArrowUpRight,
@@ -33,6 +34,7 @@ type WidgetKind =
     | 'history'
     | 'actuators'
     | 'thresholds'
+    | 'schedules'
     | 'table';
 type Widget = {
     id: string;
@@ -49,6 +51,24 @@ type Reading = {
     at: string;
 };
 type ActuatorKey = 'mist' | 'water' | 'blower' | 'lamp';
+type ActuatorSchedule = {
+    id: number;
+    iot_device_id: number;
+    actuator: ActuatorKey;
+    state: 'on' | 'off';
+    time: string;
+    days: number[];
+    enabled: boolean;
+    last_run_at: string | null;
+};
+type ScheduleForm = {
+    id?: number;
+    actuator: ActuatorKey;
+    state: 'on' | 'off';
+    time: string;
+    days: number[];
+    enabled: boolean;
+};
 type RuleActuators = Record<
     'temperature' | 'humidity' | 'light',
     ActuatorKey[]
@@ -110,6 +130,7 @@ const initialWidgets: Widget[] = [
     { id: 'history', kind: 'history', title: 'Riwayat lingkungan' },
     { id: 'actuators', kind: 'actuators', title: 'Kontrol aktuator' },
     { id: 'thresholds', kind: 'thresholds', title: 'Ambang batas' },
+    { id: 'schedules', kind: 'schedules', title: 'Jadwal aktuator' },
 ];
 const defaultThresholds = {
     temperatureMin: '24',
@@ -309,6 +330,14 @@ export default function Monitoring() {
     const [manualMode, setManualMode] = useState(true);
     const [modeSaving, setModeSaving] = useState(false);
     const [thresholdSaving, setThresholdSaving] = useState(false);
+    const [schedules, setSchedules] = useState<ActuatorSchedule[]>([]);
+    const [scheduleForm, setScheduleForm] = useState<ScheduleForm | null>(
+        null,
+    );
+    const [scheduleSaving, setScheduleSaving] = useState(false);
+    const [scheduleDeleting, setScheduleDeleting] = useState<number | null>(
+        null,
+    );
     const [notice, setNotice] = useState('');
     const socket = useRef<WebSocket | null>(null);
 
@@ -674,6 +703,144 @@ export default function Monitoring() {
         setNotice('Pengaturan card berhasil disimpan.');
     };
 
+    const defaultScheduleForm = (): ScheduleForm => ({
+        actuator: 'mist',
+        state: 'on',
+        time: '07:00',
+        days: [0, 1, 2, 3, 4, 5, 6],
+        enabled: true,
+    });
+
+    const loadSchedules = async () => {
+        if (!deviceId) {
+            setSchedules([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                '/api/actuator-schedules?device_id=' +
+                    encodeURIComponent(deviceId),
+                { headers: { Accept: 'application/json' } },
+            );
+            if (!response.ok) return;
+            const payload = await response.json();
+            if (Array.isArray(payload?.data)) setSchedules(payload.data);
+        } catch {
+            // Keep the last schedule state when refresh fails.
+        }
+    };
+
+    const saveSchedule = async () => {
+        if (!scheduleForm || !deviceId || scheduleSaving) return;
+        if (scheduleForm.days.length === 0) {
+            setNotice('Pilih minimal satu hari untuk jadwal.');
+            return;
+        }
+
+        setScheduleSaving(true);
+        try {
+            const response = await fetch(
+                scheduleForm.id
+                    ? `/api/actuator-schedules/${scheduleForm.id}`
+                    : '/api/actuator-schedules',
+                {
+                    method: scheduleForm.id ? 'PATCH' : 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                    body: JSON.stringify({
+                        device_id: deviceId,
+                        actuator: scheduleForm.actuator,
+                        state: scheduleForm.state,
+                        time: scheduleForm.time,
+                        days: scheduleForm.days,
+                        enabled: scheduleForm.enabled,
+                    }),
+                },
+            );
+            if (!response.ok) {
+                const payload = await response.json().catch(() => null);
+                throw new Error(
+                    payload?.message ?? 'Jadwal aktuator gagal disimpan.',
+                );
+            }
+
+            setScheduleForm(null);
+            await loadSchedules();
+            setNotice(
+                scheduleForm.id
+                    ? 'Jadwal aktuator berhasil diperbarui.'
+                    : 'Jadwal aktuator berhasil ditambahkan.',
+            );
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Jadwal aktuator gagal disimpan.',
+            );
+        } finally {
+            setScheduleSaving(false);
+        }
+    };
+
+    const deleteSchedule = async (schedule: ActuatorSchedule) => {
+        if (scheduleDeleting !== null) return;
+        setScheduleDeleting(schedule.id);
+        try {
+            const response = await fetch(
+                `/api/actuator-schedules/${schedule.id}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector<HTMLMetaElement>(
+                                'meta[name="csrf-token"]',
+                            )?.content ?? '',
+                    },
+                },
+            );
+            if (!response.ok) {
+                const payload = await response.json().catch(() => null);
+                throw new Error(
+                    payload?.message ?? 'Jadwal aktuator gagal dihapus.',
+                );
+            }
+            await loadSchedules();
+            setNotice('Jadwal aktuator berhasil dihapus.');
+        } catch (error) {
+            setNotice(
+                error instanceof Error
+                    ? error.message
+                    : 'Jadwal aktuator gagal dihapus.',
+            );
+        } finally {
+            setScheduleDeleting(null);
+        }
+    };
+
+    const toggleScheduleDay = (day: number) => {
+        setScheduleForm((previous) => {
+            if (!previous) return previous;
+            const selected = previous.days.includes(day);
+            const days = selected
+                ? previous.days.filter((value) => value !== day)
+                : [...previous.days, day].sort();
+            return { ...previous, days };
+        });
+    };
+
+
+    useEffect(() => {
+        void loadSchedules();
+    }, [deviceId]);
+
     useEffect(() => {
         if (!deviceId) {
             setActuators({
@@ -788,8 +955,22 @@ export default function Monitoring() {
             setManualMode(savedMode !== 'automatic');
             if (savedWidgets) {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
-                if (widgetIds.length > 0) setWidgets(widgetIds);
-                else setWidgets(initialWidgets);
+                if (widgetIds.length > 0) {
+                    setWidgets(
+                        widgetIds.some(
+                            (widget) => widget.kind === 'schedules',
+                        )
+                            ? widgetIds
+                            : [
+                                  ...widgetIds,
+                                  {
+                                      id: 'schedules',
+                                      kind: 'schedules' as const,
+                                      title: 'Jadwal aktuator',
+                                  },
+                              ],
+                    );
+                } else setWidgets(initialWidgets);
             } else {
                 setWidgets(initialWidgets);
             }
@@ -1192,6 +1373,156 @@ export default function Monitoring() {
                                         })}
                                     </div>
                                 )}
+                                {widget.kind === 'schedules' && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <p className="text-xs leading-relaxed text-slate-500">
+                                                Atur kapan aktuator dinyalakan
+                                                atau dimatikan. Satu perangkat
+                                                dapat memiliki banyak jadwal.
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setScheduleForm(
+                                                        defaultScheduleForm(),
+                                                    )
+                                                }
+                                                disabled={!deviceId}
+                                                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <Plus className="size-3.5" />
+                                                Tambah
+                                            </button>
+                                        </div>
+                                        {schedules.length === 0 ? (
+                                            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center">
+                                                <CalendarClock className="mx-auto size-7 text-slate-300" />
+                                                <p className="mt-2 text-sm font-medium text-slate-700">
+                                                    Belum ada jadwal
+                                                </p>
+                                                <p className="mt-1 text-xs text-slate-400">
+                                                    Tambahkan jadwal pertama
+                                                    untuk perangkat ini.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {schedules.map((schedule) => {
+                                                    const days = schedule.days ?? [];
+                                                    const everyDay =
+                                                        days.length === 7;
+                                                    const dayLabels = [
+                                                        'Min',
+                                                        'Sen',
+                                                        'Sel',
+                                                        'Rab',
+                                                        'Kam',
+                                                        'Jum',
+                                                        'Sab',
+                                                    ];
+                                                    const selectedDays = everyDay
+                                                        ? 'Setiap hari'
+                                                        : dayLabels
+                                                              .filter(
+                                                                  (_, index) =>
+                                                                      days.includes(
+                                                                          index,
+                                                                      ),
+                                                              )
+                                                              .join(', ');
+                                                    const actuatorLabel =
+                                                        actuatorOptions.find(
+                                                            (item) =>
+                                                                item.key ===
+                                                                schedule.actuator,
+                                                        )?.title ??
+                                                        schedule.actuator;
+                                                    return (
+                                                        <div
+                                                            key={schedule.id}
+                                                            className="rounded-xl border border-slate-100 px-3 py-3"
+                                                        >
+                                                            <div className="flex items-start justify-between gap-3">
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span
+                                                                            className={\`size-2 rounded-full \${schedule.enabled ? 'bg-emerald-500' : 'bg-slate-300'}\`}
+                                                                        />
+                                                                        <span className="text-lg font-semibold tracking-tight text-slate-900">
+                                                                            {schedule.time.slice(
+                                                                                0,
+                                                                                5,
+                                                                            )}
+                                                                        </span>
+                                                                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                                                            {schedule.state.toUpperCase()}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="mt-1 text-xs font-medium text-slate-700">
+                                                                        {actuatorLabel}
+                                                                    </p>
+                                                                    <p className="mt-0.5 text-[11px] text-slate-400">
+                                                                        {selectedDays}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex shrink-0 items-center gap-1">
+                                                                    <button
+                                                                        type="button"
+                                                                        title="Edit jadwal"
+                                                                        onClick={() =>
+                                                                            setScheduleForm(
+                                                                                {
+                                                                                    id: schedule.id,
+                                                                                    actuator:
+                                                                                        schedule.actuator,
+                                                                                    state: schedule.state,
+                                                                                    time: schedule.time.slice(
+                                                                                        0,
+                                                                                        5,
+                                                                                    ),
+                                                                                    days: [
+                                                                                        ...days,
+                                                                                    ],
+                                                                                    enabled:
+                                                                                        schedule.enabled,
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                                                                    >
+                                                                        <Settings2 className="size-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        title="Hapus jadwal"
+                                                                        onClick={() =>
+                                                                            void deleteSchedule(
+                                                                                schedule,
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            scheduleDeleting ===
+                                                                            schedule.id
+                                                                        }
+                                                                        className="rounded-lg p-2 text-slate-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                                                                    >
+                                                                        {scheduleDeleting ===
+                                                                        schedule.id ? (
+                                                                            <RefreshCw className="size-4 animate-spin" />
+                                                                        ) : (
+                                                                            <Trash2 className="size-4" />
+                                                                        )}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 {widget.kind === 'thresholds' && (
                                     <div className="space-y-3">
                                         {(
@@ -1333,6 +1664,217 @@ export default function Monitoring() {
                     </div>
                 </div>
             </div>
+            {scheduleForm && (
+                <div
+                    className="fixed inset-0 z-[65] grid place-items-center bg-slate-950/40 p-4"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setScheduleForm(null);
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="schedule-title"
+                        className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2
+                                    id="schedule-title"
+                                    className="text-lg font-semibold text-slate-900"
+                                >
+                                    {scheduleForm.id
+                                        ? 'Edit jadwal aktuator'
+                                        : 'Tambah jadwal aktuator'}
+                                </h2>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Jadwal berjalan otomatis sesuai waktu dan
+                                    hari yang dipilih.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setScheduleForm(null)}
+                                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+                        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                            <label className="text-sm font-medium text-slate-700">
+                                Aktuator
+                                <select
+                                    value={scheduleForm.actuator}
+                                    onChange={(e) =>
+                                        setScheduleForm((previous) =>
+                                            previous
+                                                ? {
+                                                      ...previous,
+                                                      actuator: e.target
+                                                          .value as ActuatorKey,
+                                                  }
+                                                : previous,
+                                        )
+                                    }
+                                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+                                >
+                                    {actuatorOptions.map((item) => (
+                                        <option key={item.key} value={item.key}>
+                                            {item.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="text-sm font-medium text-slate-700">
+                                Waktu
+                                <input
+                                    type="time"
+                                    value={scheduleForm.time}
+                                    onChange={(e) =>
+                                        setScheduleForm((previous) =>
+                                            previous
+                                                ? {
+                                                      ...previous,
+                                                      time: e.target.value,
+                                                  }
+                                                : previous,
+                                        )
+                                    }
+                                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+                                />
+                            </label>
+                        </div>
+                        <div className="mt-4">
+                            <p className="text-sm font-medium text-slate-700">
+                                Aksi
+                            </p>
+                            <div className="mt-1.5 grid grid-cols-2 gap-2">
+                                {(['on', 'off'] as const).map((state) => (
+                                    <button
+                                        key={state}
+                                        type="button"
+                                        onClick={() =>
+                                            setScheduleForm((previous) =>
+                                                previous
+                                                    ? { ...previous, state }
+                                                    : previous,
+                                            )
+                                        }
+                                        className={\`rounded-xl border px-4 py-2.5 text-sm font-semibold transition \${scheduleForm.state === state ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}\`}
+                                    >
+                                        {state === 'on' ? 'Nyalakan' : 'Matikan'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="mt-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-700">
+                                        Hari
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-400">
+                                        Pilih setiap hari atau hari tertentu.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setScheduleForm((previous) =>
+                                            previous
+                                                ? {
+                                                      ...previous,
+                                                      days:
+                                                          previous.days
+                                                              .length === 7
+                                                              ? []
+                                                              : [0, 1, 2, 3, 4, 5, 6],
+                                                  }
+                                                : previous,
+                                        )
+                                    }
+                                    className={\`rounded-lg px-3 py-2 text-xs font-semibold \${scheduleForm.days.length === 7 ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'}\`}
+                                >
+                                    Setiap hari
+                                </button>
+                            </div>
+                            <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
+                                {[
+                                    ['Min', 0],
+                                    ['Sen', 1],
+                                    ['Sel', 2],
+                                    ['Rab', 3],
+                                    ['Kam', 4],
+                                    ['Jum', 5],
+                                    ['Sab', 6],
+                                ].map(([label, day]) => {
+                                    const selected =
+                                        scheduleForm.days.includes(day as number);
+                                    return (
+                                        <button
+                                            key={day}
+                                            type="button"
+                                            onClick={() =>
+                                                toggleScheduleDay(day as number)
+                                            }
+                                            className={\`rounded-xl border px-2 py-2.5 text-xs font-semibold transition \${selected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}\`}
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <label className="mt-5 flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-3">
+                            <span>
+                                <span className="block text-sm font-medium text-slate-700">
+                                    Jadwal aktif
+                                </span>
+                                <span className="mt-0.5 block text-xs text-slate-400">
+                                    Nonaktifkan sementara tanpa menghapus.
+                                </span>
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={scheduleForm.enabled}
+                                onChange={(e) =>
+                                    setScheduleForm((previous) =>
+                                        previous
+                                            ? {
+                                                  ...previous,
+                                                  enabled: e.target.checked,
+                                              }
+                                            : previous,
+                                    )
+                                }
+                                className="size-4 accent-slate-900"
+                            />
+                        </label>
+                        <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-5">
+                            <button
+                                type="button"
+                                onClick={() => setScheduleForm(null)}
+                                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                disabled={
+                                    scheduleSaving ||
+                                    !scheduleForm.time ||
+                                    scheduleForm.days.length === 0
+                                }
+                                onClick={() => void saveSchedule()}
+                                className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-50"
+                            >
+                                {scheduleSaving ? 'Menyimpan…' : 'Simpan jadwal'}
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
+
             {pendingDelete && (
                 <div
                     className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4"
@@ -1427,6 +1969,8 @@ export default function Monitoring() {
                                             <Power className="size-4" />
                                         ) : item.kind === 'light' ? (
                                             <Lightbulb className="size-4" />
+                                        ) : item.kind === 'schedules' ? (
+                                            <CalendarClock className="size-4" />
                                         ) : item.kind === 'table' ? (
                                             <ArrowDownToLine className="size-4" />
                                         ) : (

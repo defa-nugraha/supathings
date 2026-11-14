@@ -16,7 +16,8 @@ class RunActuatorSchedules extends Command
 
     public function handle(): int
     {
-        $now = now();
+        $timezone = config('app.schedule_timezone', 'Asia/Jakarta');
+        $now = now()->setTimezone($timezone);
         $day = $now->dayOfWeek;
         $executed = 0;
 

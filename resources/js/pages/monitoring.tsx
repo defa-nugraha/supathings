@@ -1775,6 +1775,7 @@ export default function Monitoring() {
                                     </p>
                                     <p className="mt-0.5 text-xs text-slate-400">
                                         Pilih setiap hari atau hari tertentu.
+                                    Waktu mengikuti Asia/Jakarta.
                                     </p>
                                 </div>
                                 <button

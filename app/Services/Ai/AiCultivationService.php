@@ -305,7 +305,7 @@ class AiCultivationService
         return $decoded;
     }
 
-    private function analysisSchema(): array<string, mixed>
+    private function analysisSchema(): array
     {
         return [
             'type' => 'OBJECT',

@@ -964,7 +964,9 @@ export default function AiIntelligence() {
                                         {showScrollToBottom ? (
                                             <button
                                                 type="button"
-                                                onClick={() => scrollChatToBottom()}
+                                                onClick={() =>
+                                                    scrollChatToBottom()
+                                                }
                                                 className="sticky bottom-2 left-1/2 z-10 mx-auto mt-3 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg transition hover:bg-slate-50"
                                                 aria-label="Kembali ke pesan terbaru"
                                             >

@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\ActuatorScheduleController;
 use App\Http\Controllers\Api\AiIntelligenceController;
 use App\Http\Controllers\Api\CultivationController;
 use App\Http\Controllers\Api\IotDeviceController;
 use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\ActuatorScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', 'account.active', 'verified'])->group(function (): void {

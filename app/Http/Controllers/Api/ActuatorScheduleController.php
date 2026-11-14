@@ -8,7 +8,6 @@ use App\Models\IotDevice;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class ActuatorScheduleController extends Controller
@@ -53,7 +52,7 @@ class ActuatorScheduleController extends Controller
     public function update(Request $request, string $schedule): JsonResponse
     {
         $record = $this->scheduleQuery($request)->findOrFail($schedule);
-        $data = $this->validated($request, false);
+        $data = $this->validated($request);
 
         $record->update([
             'actuator' => $data['actuator'],
@@ -76,7 +75,7 @@ class ActuatorScheduleController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function validated(Request $request, bool $withDevice = true): array
+    private function validated(Request $request): array
     {
         $rules = [
             'device_id' => ['required'],
@@ -117,7 +116,7 @@ class ActuatorScheduleController extends Controller
     {
         $query = IotDevice::query();
 
-        if (! $request->user()->isAdmin()) {
+        if ($request->user()->isAdmin() === false) {
             $query->where('user_id', $request->user()->id);
         }
 

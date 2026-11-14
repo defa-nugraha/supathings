@@ -816,9 +816,13 @@ export default function AiIntelligence() {
                                                                             </span>
                                                                             <span className="flex items-center gap-1">
                                                                                 {[0, 1, 2].map(
-                                                                                    (dot) => (
+                                                                                    (
+                                                                                        dot,
+                                                                                    ) => (
                                                                                         <span
-                                                                                            key={dot}
+                                                                                            key={
+                                                                                                dot
+                                                                                            }
                                                                                             className="size-1.5 animate-bounce rounded-full bg-slate-500"
                                                                                             style={{
                                                                                                 animationDelay: `${dot * 140}ms`,
@@ -878,7 +882,8 @@ export default function AiIntelligence() {
                                                                         </>
                                                                     )}
                                                                 </div>
-                                                            </div>                                                        ),
+                                                            </div>
+                                                        ),
                                                     )}
                                             </div>
                                         ) : (

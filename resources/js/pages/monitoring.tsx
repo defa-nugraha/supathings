@@ -1454,8 +1454,8 @@ export default function Monitoring() {
                         if (e.target === e.currentTarget) setEditing(null);
                     }}
                 >
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-                        <div className="mb-5 flex items-start justify-between">
+                    <div className={`w-full rounded-2xl bg-white shadow-2xl ${editing.kind === 'thresholds' ? 'max-w-6xl max-h-[92vh] overflow-hidden' : 'max-w-md p-6'}`}>
+                        <div className={`flex items-start justify-between border-b border-slate-100 ${editing.kind === 'thresholds' ? 'px-6 py-5' : 'mb-5'}`}>
                             <div>
                                 <h2 className="text-lg font-semibold text-slate-900">
                                     {editing.id === 'thresholds-editor' ||
@@ -1475,7 +1475,19 @@ export default function Monitoring() {
                             </button>
                         </div>
                         {editing.kind === 'thresholds' ? (
-                            <div className="space-y-5">
+                            <div className="max-h-[calc(92vh-88px)] overflow-y-auto px-6 py-6">
+                                <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+                                    <div className="flex items-start gap-3">
+                                        <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-100 text-blue-700">
+                                            <Settings2 className="size-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-slate-900">Atur kondisi otomatis</p>
+                                            <p className="mt-1 text-xs leading-relaxed text-slate-600">Tentukan rentang aman untuk setiap sensor, kemudian pilih actuator yang akan dijalankan ketika kondisi keluar dari rentang tersebut.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid gap-5 lg:grid-cols-3">
                                 <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs leading-relaxed text-slate-600">
                                     Atur rentang aman, lalu pilih aktuator yang
                                     akan dinyalakan ketika kondisi pemicu
@@ -1640,6 +1652,15 @@ export default function Monitoring() {
                                         </div>
                                     ),
                                 )}
+                            </div>
+                        </div>
+                                <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
+                                    <p className="text-xs text-slate-500">Perubahan akan diterapkan pada mode otomatis perangkat.</p>
+                                    <div className="flex gap-2">
+                                        <button type="button" onClick={() => setEditing(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
+                                        <button type="button" disabled={thresholdSaving} onClick={() => void saveThresholds()} className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">{thresholdSaving ? 'Menyimpan…' : 'Simpan pengaturan'}</button>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="space-y-4">

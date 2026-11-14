@@ -82,6 +82,33 @@ export default function AiIntelligence() {
     const [loading, setLoading] = useState(true);
     const [analyzing, setAnalyzing] = useState(false);
     const [error, setError] = useState('');
+
+    const loadLatest = async () => {
+        try {
+            const response = await fetch('/api/ai/analysis/latest', {
+                headers: { Accept: 'application/json' },
+            });
+
+            if (!response.ok) {
+                throw new Error('Analisis AI belum dapat dimuat.');
+            }
+
+            setLatest((await response.json()).data ?? null);
+        } catch (cause) {
+            setError(
+                cause instanceof Error
+                    ? cause.message
+                    : 'Gagal memuat analisis AI.',
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        void loadLatest();
+    }, []);
+
     const analyze = async () => {
         setAnalyzing(true);
         setError('');
@@ -112,128 +139,6 @@ export default function AiIntelligence() {
             );
         } finally {
             setAnalyzing(false);
-        }
-    };
-
-    const ask = async (event: FormEvent) => {
-        event.preventDefault();
-
-        const trimmedQuestion = question.trim();
-        if (!trimmedQuestion || chatting) {
-            return;
-        }
-
-        const messageTime = new Date().toISOString();
-        const userMessage: ChatMessage = {
-            id: `user-${messageTime}`,
-            role: 'user',
-            question: trimmedQuestion,
-            createdAt: messageTime,
-        };
-        const pendingMessage: ChatMessage = {
-            id: `assistant-${messageTime}`,
-            role: 'assistant',
-            pending: true,
-            createdAt: messageTime,
-        };
-
-        let targetChatId = activeChatId;
-        setChatting(true);
-        setError('');
-        setQuestion('');
-
-        setChatHistory((current) => {
-            const existing = current.find((item) => item.id === activeChatId);
-
-            if (existing) {
-                return current.map((item) =>
-                    item.id === activeChatId
-                        ? {
-                              ...item,
-                              messages: [
-                                  ...item.messages,
-                                  userMessage,
-                                  pendingMessage,
-                              ],
-                          }
-                        : item,
-                );
-            }
-
-            const newChat: ChatHistory = {
-                id: messageTime,
-                title: trimmedQuestion.slice(0, 60),
-                createdAt: messageTime,
-                messages: [userMessage, pendingMessage],
-            };
-
-            targetChatId = newChat.id;
-            setActiveChatId(newChat.id);
-            return [newChat, ...current];
-        });
-
-        try {
-            const response = await fetch('/api/ai/chat', {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN':
-                        document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') ?? '',
-                },
-                body: JSON.stringify({ question: trimmedQuestion }),
-            });
-            const payload = await response.json();
-
-            if (!response.ok) {
-                throw new Error(payload.message ?? 'AI tidak dapat menjawab.');
-            }
-
-            const responseData = payload.data as ChatResponse;
-
-            setChatHistory((current) =>
-                current.map((item) =>
-                    item.id === targetChatId
-                        ? {
-                              ...item,
-                              messages: item.messages.map((message) =>
-                                  message.id === pendingMessage.id
-                                      ? {
-                                            ...message,
-                                            pending: false,
-                                            response: responseData,
-                                        }
-                                      : message,
-                              ),
-                          }
-                        : item,
-                ),
-            );
-        } catch (cause) {
-            setChatHistory((current) =>
-                current
-                    .map((item) =>
-                        item.id === targetChatId
-                            ? {
-                                  ...item,
-                                  messages: item.messages.filter(
-                                      (message) =>
-                                          message.id !== pendingMessage.id,
-                                  ),
-                              }
-                            : item,
-                    )
-                    .filter((item) => item.messages.length > 0),
-            );
-            setError(
-                cause instanceof Error
-                    ? cause.message
-                    : 'AI tidak dapat menjawab.',
-            );
-        } finally {
-            setChatting(false);
         }
     };
 

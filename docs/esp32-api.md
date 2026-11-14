@@ -20,12 +20,30 @@ Content-Type: application/json
 
 ## Mengambil perintah aktuator
 
-Polling `GET /api/device/commands` setiap beberapa detik. Endpoint mengembalikan perintah pending dan konfigurasi mode/ambang aktif. Perintah berstatus `sent` akan dicoba ulang jika belum diperbarui selama 30 detik; firmware harus menangani command ID secara idempoten.
+Polling `GET /api/device/commands` setiap beberapa detik. Endpoint mengembalikan perintah pending dan konfigurasi mode/ambang aktif. Perintah berstatus `sent` akan dicoba ulang jika belum diperbarui selama 30 detik; firmware harus menangani command ID secara idempoten. Aktuator yang didukung saat ini: `mist`, `water`, `blower`, dan `lamp`.
 
 ```http
 GET /api/device/commands
 Authorization: Bearer <DEVICE_TOKEN>
 ```
+
+## Konfigurasi ambang batas dan target aktuator
+
+Pengaturan otomatis disimpan pada `control_rules.settings.actuators`. Web hanya memilih target; server tetap menjadi pengambil keputusan. Contoh aturan suhu 24–28°C dengan blower dan lampu sebagai target:
+
+```json
+{
+    "temperatureMin": 24,
+    "temperatureMax": 28,
+    "actuators": {
+        "temperature": ["blower", "lamp"],
+        "humidity": ["mist"],
+        "light": ["lamp"]
+    }
+}
+```
+
+Semantik kontrol yang ada dipertahankan: suhu tinggi memicu target suhu, kelembapan rendah memicu target kelembapan, dan cahaya rendah memicu target cahaya. Saat kondisi kembali aman, target dimatikan mengikuti logika/histeresis yang sudah digunakan server.
 
 ## Mengonfirmasi eksekusi
 

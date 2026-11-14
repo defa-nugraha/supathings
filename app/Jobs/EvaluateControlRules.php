@@ -30,26 +30,56 @@ class EvaluateControlRules implements ShouldQueue
         $rules = $device->controlRules->keyBy('parameter');
 
         $desired = [];
+        $targets = static function ($rule, array $fallback): array {
+            if (! $rule?->enabled) {
+                return [];
+            }
+
+            $settings = $rule->settings;
+            $configured = is_array($settings) && isset($settings['actuators']) && is_array($settings['actuators'])
+                ? $settings['actuators']
+                : $fallback;
+
+            return array_values(array_intersect($configured, ['mist', 'water', 'blower', 'lamp']));
+        };
+
+        $setTargets = static function (array &$desired, array $actuators, string $state): void {
+            foreach ($actuators as $actuator) {
+                $desired[$actuator] = $state;
+            }
+        };
+
         $temperatureRule = $rules->get('temperature');
         if ($temperature !== null && $temperatureRule?->enabled) {
+            $temperatureTargets = $targets($temperatureRule, ['blower']);
             if ($temperature > (float) $temperatureRule->maximum) {
-                $desired['blower'] = 'on';
+                $setTargets($desired, $temperatureTargets, 'on');
             } elseif ($temperature < (float) $temperatureRule->minimum || $temperature <= (float) $temperatureRule->maximum - 1.0) {
-                $desired['blower'] = 'off';
+                $setTargets($desired, $temperatureTargets, 'off');
             }
         }
 
         $humidityRule = $rules->get('humidity');
         if ($humidity !== null && $humidityRule?->enabled) {
+            $humidityTargets = $targets($humidityRule, ['mist']);
             if ($humidity < (float) $humidityRule->minimum) {
-                $desired['mist'] = 'on';
+                $setTargets($desired, $humidityTargets, 'on');
             } elseif ($humidity > (float) $humidityRule->maximum || $humidity >= (float) $humidityRule->minimum + 2.0) {
-                $desired['mist'] = 'off';
+                $setTargets($desired, $humidityTargets, 'off');
             }
         }
 
-        // Light rules produce alerts only; no light actuator is configured.
-        // Watering is deliberately manual until a watering schedule is explicitly configured.
+        $light = isset($this->reading['light_percent']) ? (float) $this->reading['light_percent'] : null;
+        $lightRule = $rules->get('light');
+        if ($light !== null && $lightRule?->enabled) {
+            $lightTargets = $targets($lightRule, []);
+            if ($light < (float) $lightRule->minimum) {
+                $setTargets($desired, $lightTargets, 'on');
+            } elseif ($light > (float) $lightRule->maximum) {
+                $setTargets($desired, $lightTargets, 'off');
+            }
+        }
+
         foreach ($desired as $actuator => $state) {
             $latest = ActuatorCommand::query()
                 ->where('iot_device_id', $device->id)

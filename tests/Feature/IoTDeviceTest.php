@@ -337,6 +337,11 @@ test('users can save threshold rules for temperature humidity and light', functi
             'humidityMax' => 95,
             'lightMin' => 25,
             'lightMax' => 75,
+            'actuators' => [
+                'temperature' => ['blower', 'lamp'],
+                'humidity' => ['mist'],
+                'light' => ['lamp'],
+            ],
         ],
     ])->assertOk()->assertJsonCount(3, 'data');
 
@@ -347,6 +352,12 @@ test('users can save threshold rules for temperature humidity and light', functi
         'maximum' => 30,
         'enabled' => true,
     ]);
+
+    expect(ControlRule::query()
+        ->where('iot_device_id', $device->id)
+        ->where('parameter', 'temperature')
+        ->firstOrFail()
+        ->settings)->toBe(['actuators' => ['blower', 'lamp']]);
 });
 
 test('threshold rules reject minimum values greater than or equal to maximum', function () {
@@ -396,7 +407,7 @@ test('users can queue valid manual commands for each actuator', function (string
         'mode' => 'manual',
         'status' => 'pending',
     ]);
-})->with(['mist', 'water', 'blower']);
+})->with(['mist', 'water', 'blower', 'lamp']);
 
 test('manual actuator commands reject unknown actuator names and states', function () {
     $user = User::factory()->create();
@@ -491,6 +502,54 @@ test('automatic control creates blower and mist commands when thresholds are cro
     $this->assertDatabaseHas('actuator_commands', [
         'iot_device_id' => $device->id,
         'actuator' => 'mist',
+        'state' => 'on',
+        'mode' => 'automatic',
+    ]);
+});
+
+test('automatic control uses configured actuator targets', function () {
+    $device = createIotDevice(User::factory()->create(), ['control_mode' => 'automatic']);
+    ControlRule::query()->create([
+        'iot_device_id' => $device->id,
+        'parameter' => 'temperature',
+        'minimum' => 24,
+        'maximum' => 28,
+        'enabled' => true,
+        'settings' => ['actuators' => ['blower', 'lamp']],
+    ]);
+
+    (new EvaluateControlRules($device->id, ['temperature' => 31]))->handle();
+
+    $this->assertDatabaseHas('actuator_commands', [
+        'iot_device_id' => $device->id,
+        'actuator' => 'blower',
+        'state' => 'on',
+        'mode' => 'automatic',
+    ]);
+    $this->assertDatabaseHas('actuator_commands', [
+        'iot_device_id' => $device->id,
+        'actuator' => 'lamp',
+        'state' => 'on',
+        'mode' => 'automatic',
+    ]);
+});
+
+test('automatic light rule can control the configured lamp actuator', function () {
+    $device = createIotDevice(User::factory()->create(), ['control_mode' => 'automatic']);
+    ControlRule::query()->create([
+        'iot_device_id' => $device->id,
+        'parameter' => 'light',
+        'minimum' => 30,
+        'maximum' => 70,
+        'enabled' => true,
+        'settings' => ['actuators' => ['lamp']],
+    ]);
+
+    (new EvaluateControlRules($device->id, ['light_percent' => 20]))->handle();
+
+    $this->assertDatabaseHas('actuator_commands', [
+        'iot_device_id' => $device->id,
+        'actuator' => 'lamp',
         'state' => 'on',
         'mode' => 'automatic',
     ]);

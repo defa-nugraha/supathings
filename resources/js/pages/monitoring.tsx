@@ -48,6 +48,42 @@ type Reading = {
     light: number;
     at: string;
 };
+type ActuatorKey = 'mist' | 'water' | 'blower' | 'lamp';
+type RuleActuators = Record<
+    'temperature' | 'humidity' | 'light',
+    ActuatorKey[]
+>;
+const actuatorOptions: {
+    key: ActuatorKey;
+    title: string;
+    desc: string;
+    Icon: typeof Droplets;
+}[] = [
+    {
+        key: 'mist',
+        title: 'Pompa mist',
+        desc: 'Menjaga kelembapan',
+        Icon: Droplets,
+    },
+    {
+        key: 'water',
+        title: 'Pompa water',
+        desc: 'Penyiraman kumbung',
+        Icon: Droplets,
+    },
+    {
+        key: 'blower',
+        title: 'Blower / Exhaust',
+        desc: 'Sirkulasi udara',
+        Icon: Wind,
+    },
+    {
+        key: 'lamp',
+        title: 'Lampu',
+        desc: 'Pencahayaan kumbung',
+        Icon: Lightbulb,
+    },
+];
 
 const initialWidgets: Widget[] = [
     {
@@ -75,6 +111,19 @@ const initialWidgets: Widget[] = [
     { id: 'actuators', kind: 'actuators', title: 'Kontrol aktuator' },
     { id: 'thresholds', kind: 'thresholds', title: 'Ambang batas' },
 ];
+const defaultThresholds = {
+    temperatureMin: '24',
+    temperatureMax: '30',
+    humidityMin: '80',
+    humidityMax: '95',
+    lightMin: '20',
+    lightMax: '70',
+};
+const defaultRuleActuators: RuleActuators = {
+    temperature: ['blower'],
+    humidity: ['mist'],
+    light: [],
+};
 const initialReading: Reading = {
     temperature: Number.NaN,
     humidity: Number.NaN,
@@ -232,25 +281,34 @@ export default function Monitoring() {
     const [editingLayout, setEditingLayout] = useState(false);
     const [pendingDelete, setPendingDelete] = useState<Widget | null>(null);
     const [editing, setEditing] = useState<Widget | null>(null);
-    const [thresholds, setThresholds] = useState({
-        temperatureMin: '24',
-        temperatureMax: '30',
-        humidityMin: '80',
-        humidityMax: '95',
-        lightMin: '20',
-        lightMax: '70',
-    });
-    const [actuators, setActuators] = useState({
+    const [thresholds, setThresholds] = useState(defaultThresholds);
+    const [ruleActuators, setRuleActuators] =
+        useState<RuleActuators>(defaultRuleActuators);
+    const [actuators, setActuators] = useState<Record<ActuatorKey, boolean>>({
         mist: false,
         water: false,
         blower: false,
+        lamp: false,
     });
-    const [actuatorConfirmed, setActuatorConfirmed] = useState({
+    const [actuatorConfirmed, setActuatorConfirmed] = useState<
+        Record<ActuatorKey, boolean>
+    >({
         mist: false,
         water: false,
         blower: false,
+        lamp: false,
+    });
+    const [actuatorPending, setActuatorPending] = useState<
+        Record<ActuatorKey, 'on' | 'off' | null>
+    >({
+        mist: null,
+        water: null,
+        blower: null,
+        lamp: null,
     });
     const [manualMode, setManualMode] = useState(true);
+    const [modeSaving, setModeSaving] = useState(false);
+    const [thresholdSaving, setThresholdSaving] = useState(false);
     const [notice, setNotice] = useState('');
     const socket = useRef<WebSocket | null>(null);
 
@@ -370,6 +428,15 @@ export default function Monitoring() {
                                 ]),
                             ),
                         }));
+                        setActuatorPending((prev) => ({
+                            ...prev,
+                            ...Object.fromEntries(
+                                Object.keys(message.state).map((key) => [
+                                    key,
+                                    null,
+                                ]),
+                            ),
+                        }));
                     }
                 } catch {
                     /* Ignore malformed messages without interrupting the live dashboard. */
@@ -433,10 +500,15 @@ export default function Monitoring() {
         setDragId(null);
         setNotice('Urutan card berhasil diperbarui.');
     };
-    const sendActuator = async (
-        key: keyof typeof actuators,
-        enabled: boolean,
-    ) => {
+    const sendActuator = async (key: ActuatorKey, enabled: boolean) => {
+        if (actuatorPending[key] !== null) return;
+        const previousState = actuators[key];
+        setActuators((previous) => ({ ...previous, [key]: enabled }));
+        setActuatorConfirmed((previous) => ({ ...previous, [key]: false }));
+        setActuatorPending((previous) => ({
+            ...previous,
+            [key]: enabled ? 'on' : 'off',
+        }));
         try {
             const response = await fetch('/api/actuator-commands', {
                 method: 'POST',
@@ -455,20 +527,17 @@ export default function Monitoring() {
                     mode: 'manual',
                 }),
             });
-            if (!response.ok) {
+            if (!response.ok)
                 throw new Error('Server gagal menerima perintah aktuator.');
-            }
-            // Do not optimistically display a relay state before the ESP32 acknowledges it.
             const actuatorLabel =
-                key === 'mist'
-                    ? 'pompa mist'
-                    : key === 'water'
-                      ? 'pompa water'
-                      : 'blower';
+                actuatorOptions.find((item) => item.key === key)?.title ?? key;
             setNotice(
-                `Perintah ${actuatorLabel} ${enabled ? 'ON' : 'OFF'} masuk antrean. Status aktual berubah setelah ESP32 mengonfirmasi.`,
+                `${actuatorLabel} ${enabled ? 'dinyalakan' : 'dimatikan'}. Menunggu konfirmasi ESP32.`,
             );
         } catch (error) {
+            setActuators((previous) => ({ ...previous, [key]: previousState }));
+            setActuatorConfirmed((previous) => ({ ...previous, [key]: true }));
+            setActuatorPending((previous) => ({ ...previous, [key]: null }));
             setNotice(
                 error instanceof Error
                     ? error.message
@@ -477,6 +546,8 @@ export default function Monitoring() {
         }
     };
     const saveMode = async (mode: 'manual' | 'automatic') => {
+        if (modeSaving) return;
+        setModeSaving(true);
         try {
             const response = await fetch('/api/control-mode', {
                 method: 'POST',
@@ -512,9 +583,30 @@ export default function Monitoring() {
                     ? error.message
                     : 'Mode kontrol belum tersimpan di server.',
             );
+        } finally {
+            setModeSaving(false);
         }
     };
     const saveThresholds = async () => {
+        if (thresholdSaving) return;
+        const ranges = [
+            ['Suhu', thresholds.temperatureMin, thresholds.temperatureMax],
+            ['Kelembapan', thresholds.humidityMin, thresholds.humidityMax],
+            ['Cahaya', thresholds.lightMin, thresholds.lightMax],
+        ] as const;
+        const invalidRange = ranges.find(
+            ([, minimum, maximum]) =>
+                minimum === '' ||
+                maximum === '' ||
+                Number(minimum) >= Number(maximum),
+        );
+        if (invalidRange) {
+            setNotice(
+                `${invalidRange[0]}: nilai minimum harus lebih kecil dari maksimum.`,
+            );
+            return;
+        }
+        setThresholdSaving(true);
         try {
             const response = await fetch('/api/control-rules', {
                 method: 'POST',
@@ -528,7 +620,7 @@ export default function Monitoring() {
                 },
                 body: JSON.stringify({
                     device_id: deviceId || null,
-                    rules: thresholds,
+                    rules: { ...thresholds, actuators: ruleActuators },
                 }),
             });
             if (!response.ok) {
@@ -544,16 +636,26 @@ export default function Monitoring() {
                         type: 'thresholds_update',
                         device_id: deviceId || null,
                         thresholds,
+                        actuators: ruleActuators,
                     }),
                 );
             }
-            setNotice('Pengaturan ambang batas berhasil disimpan.');
+            window.localStorage.setItem(
+                `supathings:${deviceId}:rule-actuators`,
+                JSON.stringify(ruleActuators),
+            );
+            setNotice(
+                'Pengaturan ambang batas dan aktuator berhasil disimpan.',
+            );
+            setEditing(null);
         } catch (error) {
             setNotice(
                 error instanceof Error
                     ? error.message
                     : 'Pengaturan ambang batas gagal disimpan.',
             );
+        } finally {
+            setThresholdSaving(false);
         }
     };
     const saveWidget = () => {
@@ -574,8 +676,24 @@ export default function Monitoring() {
 
     useEffect(() => {
         if (!deviceId) {
-            setActuators({ mist: false, water: false, blower: false });
-            setActuatorConfirmed({ mist: false, water: false, blower: false });
+            setActuators({
+                mist: false,
+                water: false,
+                blower: false,
+                lamp: false,
+            });
+            setActuatorConfirmed({
+                mist: false,
+                water: false,
+                blower: false,
+                lamp: false,
+            });
+            setActuatorPending({
+                mist: null,
+                water: null,
+                blower: null,
+                lamp: null,
+            });
             return;
         }
 
@@ -593,7 +711,12 @@ export default function Monitoring() {
 
                 setActuators((previous) => {
                     const next = { ...previous };
-                    for (const key of ['mist', 'water', 'blower'] as const) {
+                    for (const key of [
+                        'mist',
+                        'water',
+                        'blower',
+                        'lamp',
+                    ] as const) {
                         const state = payload.data[key]?.actual_state;
                         if (state === 'on' || state === 'off') {
                             next[key] = state === 'on';
@@ -603,7 +726,12 @@ export default function Monitoring() {
                 });
                 setActuatorConfirmed((previous) => {
                     const next = { ...previous };
-                    for (const key of ['mist', 'water', 'blower'] as const) {
+                    for (const key of [
+                        'mist',
+                        'water',
+                        'blower',
+                        'lamp',
+                    ] as const) {
                         const state = payload.data[key]?.actual_state;
                         next[key] = state === 'on' || state === 'off';
                     }
@@ -639,15 +767,24 @@ export default function Monitoring() {
             setThresholds(
                 savedThresholds
                     ? (JSON.parse(savedThresholds) as typeof thresholds)
-                    : {
-                          temperatureMin: '24',
-                          temperatureMax: '30',
-                          humidityMin: '80',
-                          humidityMax: '95',
-                          lightMin: '20',
-                          lightMax: '70',
-                      },
+                    : defaultThresholds,
             );
+            const savedRuleActuators = window.localStorage.getItem(
+                `supathings:${deviceId}:rule-actuators`,
+            );
+            if (savedRuleActuators) {
+                const parsed = JSON.parse(
+                    savedRuleActuators,
+                ) as Partial<RuleActuators>;
+                setRuleActuators({
+                    temperature:
+                        parsed.temperature ?? defaultRuleActuators.temperature,
+                    humidity: parsed.humidity ?? defaultRuleActuators.humidity,
+                    light: parsed.light ?? defaultRuleActuators.light,
+                });
+            } else {
+                setRuleActuators(defaultRuleActuators);
+            }
             setManualMode(savedMode !== 'automatic');
             if (savedWidgets) {
                 const widgetIds = JSON.parse(savedWidgets) as Widget[];
@@ -853,16 +990,22 @@ export default function Monitoring() {
                             className="flex items-center gap-2 rounded-xl border border-amber-200 bg-white p-1"
                         >
                             <button
+                                disabled={modeSaving}
                                 onClick={() => void saveMode('manual')}
-                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'} disabled:cursor-wait disabled:opacity-60`}
                             >
-                                Manual
+                                {modeSaving && manualMode
+                                    ? 'Menyimpan…'
+                                    : 'Manual'}
                             </button>
                             <button
+                                disabled={modeSaving}
                                 onClick={() => void saveMode('automatic')}
-                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${!manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${!manualMode ? 'bg-blue-700 text-white' : 'text-slate-500 hover:bg-slate-50'} disabled:cursor-wait disabled:opacity-60`}
                             >
-                                Otomatis
+                                {modeSaving && !manualMode
+                                    ? 'Menyimpan…'
+                                    : 'Otomatis'}
                             </button>
                         </div>
                     </div>
@@ -976,115 +1119,122 @@ export default function Monitoring() {
                                 )}
                                 {widget.kind === 'actuators' && (
                                     <div className="space-y-3">
-                                        {(
-                                            [
-                                                {
-                                                    key: 'mist',
-                                                    title: 'Pompa mist',
-                                                    desc: 'Menjaga kelembapan',
-                                                    Icon: Droplets,
-                                                },
-                                                {
-                                                    key: 'water',
-                                                    title: 'Pompa water',
-                                                    desc: 'Penyiraman kumbung',
-                                                    Icon: Droplets,
-                                                },
-                                                {
-                                                    key: 'blower',
-                                                    title: 'Blower',
-                                                    desc: 'Sirkulasi udara',
-                                                    Icon: Wind,
-                                                },
-                                            ] as const
-                                        ).map((item) => (
-                                            <div
-                                                key={item.key}
-                                                className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-3"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className={`grid size-9 place-items-center rounded-lg ${actuators[item.key] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
-                                                    >
-                                                        <item.Icon className="size-4" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-slate-800">
-                                                            {item.title}
-                                                        </p>
-                                                        <p className="text-xs text-slate-500">
-                                                            {item.desc}
-                                                        </p>
-                                                        <p className="mt-1 text-[11px] text-slate-500">
-                                                            {actuatorConfirmed[
-                                                                item.key
-                                                            ]
-                                                                ? actuators[
-                                                                      item.key
-                                                                  ]
-                                                                    ? 'Status terkonfirmasi: aktif'
-                                                                    : 'Status terkonfirmasi: mati'
-                                                                : 'Belum ada konfirmasi dari ESP32'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    role="switch"
-                                                    aria-checked={
-                                                        actuators[item.key]
-                                                    }
-                                                    onClick={() =>
-                                                        void sendActuator(
-                                                            item.key,
-                                                            actuatorConfirmed[
-                                                                item.key
-                                                            ]
-                                                                ? !actuators[
-                                                                      item.key
-                                                                  ]
-                                                                : true,
-                                                        )
-                                                    }
-                                                    className={`relative h-6 w-11 rounded-full transition ${actuators[item.key] ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                        <p className="text-xs leading-relaxed text-slate-500">
+                                            Tombol langsung menampilkan perintah
+                                            yang sedang dikirim. Status menjadi
+                                            terkonfirmasi setelah ESP32 mengirim
+                                            ACK.
+                                        </p>
+                                        {actuatorOptions.map((item) => {
+                                            const pending =
+                                                actuatorPending[item.key];
+                                            return (
+                                                <div
+                                                    key={item.key}
+                                                    className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-3"
                                                 >
-                                                    <span
-                                                        className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all ${actuators[item.key] ? 'left-[22px]' : 'left-0.5'}`}
-                                                    />
-                                                </button>
-                                            </div>
-                                        ))}
+                                                    <div className="flex min-w-0 items-center gap-3">
+                                                        <div
+                                                            className={`grid size-9 shrink-0 place-items-center rounded-lg ${actuators[item.key] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                                                        >
+                                                            <item.Icon className="size-4" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-medium text-slate-800">
+                                                                {item.title}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500">
+                                                                {item.desc}
+                                                            </p>
+                                                            <p className="mt-1 text-[11px] font-medium text-slate-500">
+                                                                {pending
+                                                                    ? `Mengirim: ${pending === 'on' ? 'ON' : 'OFF'}…`
+                                                                    : actuatorConfirmed[
+                                                                            item
+                                                                                .key
+                                                                        ]
+                                                                      ? `Terkonfirmasi: ${actuators[item.key] ? 'aktif' : 'mati'}`
+                                                                      : 'Belum ada konfirmasi dari ESP32'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        role="switch"
+                                                        aria-label={`${item.title}: ${actuators[item.key] ? 'matikan' : 'nyalakan'}`}
+                                                        aria-checked={
+                                                            actuators[item.key]
+                                                        }
+                                                        disabled={
+                                                            pending !== null
+                                                        }
+                                                        onClick={() =>
+                                                            void sendActuator(
+                                                                item.key,
+                                                                !actuators[
+                                                                    item.key
+                                                                ],
+                                                            )
+                                                        }
+                                                        className={`relative h-7 w-12 shrink-0 rounded-full transition ${actuators[item.key] ? 'bg-emerald-500' : 'bg-slate-200'} disabled:cursor-wait disabled:opacity-70`}
+                                                    >
+                                                        <span
+                                                            className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${actuators[item.key] ? 'left-6' : 'left-1'}`}
+                                                        />
+                                                        {pending && (
+                                                            <span className="absolute inset-0 grid place-items-center">
+                                                                <RefreshCw className="size-3 animate-spin text-slate-600" />
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                                 {widget.kind === 'thresholds' && (
                                     <div className="space-y-3">
-                                        {[
-                                            {
-                                                label: 'Suhu',
-                                                range: `${thresholds.temperatureMin}–${thresholds.temperatureMax} °C`,
-                                                Icon: Thermometer,
-                                            },
-                                            {
-                                                label: 'Kelembapan',
-                                                range: `${thresholds.humidityMin}–${thresholds.humidityMax}%`,
-                                                Icon: Droplets,
-                                            },
-                                            {
-                                                label: 'Cahaya',
-                                                range: `${thresholds.lightMin}–${thresholds.lightMax}%`,
-                                                Icon: Lightbulb,
-                                            },
-                                        ].map((item) => (
+                                        {(
+                                            [
+                                                [
+                                                    'temperature',
+                                                    'Suhu',
+                                                    `${thresholds.temperatureMin}–${thresholds.temperatureMax} °C`,
+                                                    Thermometer,
+                                                ],
+                                                [
+                                                    'humidity',
+                                                    'Kelembapan',
+                                                    `${thresholds.humidityMin}–${thresholds.humidityMax}%`,
+                                                    Droplets,
+                                                ],
+                                                [
+                                                    'light',
+                                                    'Cahaya',
+                                                    `${thresholds.lightMin}–${thresholds.lightMax}%`,
+                                                    Lightbulb,
+                                                ],
+                                            ] as const
+                                        ).map(([key, label, range, Icon]) => (
                                             <div
-                                                key={item.label}
-                                                className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-3"
+                                                key={key}
+                                                className="rounded-xl bg-slate-50 px-3 py-3"
                                             >
-                                                <span className="flex items-center gap-2 text-sm text-slate-600">
-                                                    <item.Icon className="size-4 text-slate-400" />
-                                                    {item.label}
-                                                </span>
-                                                <span className="text-sm font-semibold text-slate-800">
-                                                    {item.range}
-                                                </span>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span className="flex items-center gap-2 text-sm text-slate-600">
+                                                        <Icon className="size-4 text-slate-400" />
+                                                        {label}
+                                                    </span>
+                                                    <span className="text-sm font-semibold text-slate-800">
+                                                        {range}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-2 text-[11px] text-slate-500">
+                                                    {ruleActuators[key].length >
+                                                    0
+                                                        ? `Aktuator: ${ruleActuators[key].map((item) => actuatorOptions.find((option) => option.key === item)?.title ?? item).join(', ')}`
+                                                        : 'Belum ada aktuator otomatis'}
+                                                </p>
                                             </div>
                                         ))}
                                         <button
@@ -1097,7 +1247,7 @@ export default function Monitoring() {
                                             }
                                             className="w-full rounded-xl border border-blue-100 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                                         >
-                                            Atur ambang batas
+                                            Atur ambang batas & aktuator
                                         </button>
                                     </div>
                                 )}
@@ -1325,53 +1475,171 @@ export default function Monitoring() {
                             </button>
                         </div>
                         {editing.kind === 'thresholds' ? (
-                            <div className="space-y-4">
+                            <div className="space-y-5">
+                                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs leading-relaxed text-slate-600">
+                                    Atur rentang aman, lalu pilih aktuator yang
+                                    akan dinyalakan ketika kondisi pemicu
+                                    tercapai. Saat kondisi kembali aman,
+                                    aktuator akan dimatikan mengikuti logika
+                                    otomatis yang sudah ada.
+                                </div>
                                 {(
                                     [
-                                        {
-                                            key: 'temperatureMin',
-                                            label: 'Suhu minimum (°C)',
-                                        },
-                                        {
-                                            key: 'temperatureMax',
-                                            label: 'Suhu maksimum (°C)',
-                                        },
-                                        {
-                                            key: 'humidityMin',
-                                            label: 'Kelembapan minimum (%)',
-                                        },
-                                        {
-                                            key: 'humidityMax',
-                                            label: 'Kelembapan maksimum (%)',
-                                        },
-                                        {
-                                            key: 'lightMin',
-                                            label: 'Cahaya minimum (%)',
-                                        },
-                                        {
-                                            key: 'lightMax',
-                                            label: 'Cahaya maksimum (%)',
-                                        },
+                                        [
+                                            'temperature',
+                                            'Suhu',
+                                            '°C',
+                                            'temperatureMin',
+                                            'temperatureMax',
+                                            'Di atas maksimum',
+                                        ],
+                                        [
+                                            'humidity',
+                                            'Kelembapan',
+                                            '%',
+                                            'humidityMin',
+                                            'humidityMax',
+                                            'Di bawah minimum',
+                                        ],
+                                        [
+                                            'light',
+                                            'Cahaya',
+                                            '%',
+                                            'lightMin',
+                                            'lightMax',
+                                            'Di bawah minimum',
+                                        ],
                                     ] as const
-                                ).map((field) => (
-                                    <label
-                                        key={field.key}
-                                        className="block text-sm font-medium text-slate-700"
-                                    >
-                                        {field.label}
-                                        <input
-                                            type="number"
-                                            value={thresholds[field.key]}
-                                            onChange={(e) =>
-                                                setThresholds((prev) => ({
-                                                    ...prev,
-                                                    [field.key]: e.target.value,
-                                                }))
-                                            }
-                                            className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                                        />
-                                    </label>
-                                ))}
+                                ).map(
+                                    ([
+                                        key,
+                                        label,
+                                        unit,
+                                        minKey,
+                                        maxKey,
+                                        trigger,
+                                    ]) => (
+                                        <div
+                                            key={key}
+                                            className="rounded-2xl border border-slate-200 p-4"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-900">
+                                                        {label}
+                                                    </p>
+                                                    <p className="mt-0.5 text-xs text-slate-500">
+                                                        Pemicu: {trigger}
+                                                    </p>
+                                                </div>
+                                                <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                                    {thresholds[minKey]}–
+                                                    {thresholds[maxKey]} {unit}
+                                                </span>
+                                            </div>
+                                            <div className="mt-3 grid grid-cols-2 gap-3">
+                                                <label className="text-xs font-medium text-slate-600">
+                                                    Minimum
+                                                    <input
+                                                        type="number"
+                                                        value={
+                                                            thresholds[minKey]
+                                                        }
+                                                        onChange={(e) =>
+                                                            setThresholds(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    [minKey]:
+                                                                        e.target
+                                                                            .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    />
+                                                </label>
+                                                <label className="text-xs font-medium text-slate-600">
+                                                    Maksimum
+                                                    <input
+                                                        type="number"
+                                                        value={
+                                                            thresholds[maxKey]
+                                                        }
+                                                        onChange={(e) =>
+                                                            setThresholds(
+                                                                (prev) => ({
+                                                                    ...prev,
+                                                                    [maxKey]:
+                                                                        e.target
+                                                                            .value,
+                                                                }),
+                                                            )
+                                                        }
+                                                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <div className="mt-4">
+                                                <p className="mb-2 text-xs font-semibold text-slate-700">
+                                                    Aktuator yang dikendalikan
+                                                </p>
+                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                    {actuatorOptions.map(
+                                                        (item) => {
+                                                            const selected =
+                                                                ruleActuators[
+                                                                    key
+                                                                ].includes(
+                                                                    item.key,
+                                                                );
+                                                            return (
+                                                                <button
+                                                                    key={
+                                                                        item.key
+                                                                    }
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setRuleActuators(
+                                                                            (
+                                                                                prev,
+                                                                            ) => ({
+                                                                                ...prev,
+                                                                                [key]: selected
+                                                                                    ? prev[
+                                                                                          key
+                                                                                      ].filter(
+                                                                                          (
+                                                                                              value,
+                                                                                          ) =>
+                                                                                              value !==
+                                                                                              item.key,
+                                                                                      )
+                                                                                    : [
+                                                                                          ...prev[
+                                                                                              key
+                                                                                          ],
+                                                                                          item.key,
+                                                                                      ],
+                                                                            }),
+                                                                        )
+                                                                    }
+                                                                    className={`rounded-xl border px-3 py-2.5 text-left transition ${selected ? 'border-blue-500 bg-blue-50 text-blue-800 ring-1 ring-blue-200' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+                                                                >
+                                                                    <span className="flex items-center gap-2 text-xs font-semibold">
+                                                                        <item.Icon className="size-4 shrink-0" />
+                                                                        {
+                                                                            item.title
+                                                                        }
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-4">

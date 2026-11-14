@@ -253,6 +253,19 @@ class IotDeviceController extends Controller
         $data = $request->validate([
             'device_id' => ['required'],
             'rules' => ['required', 'array'],
+            'rules.temperatureMin' => ['sometimes', 'numeric'],
+            'rules.temperatureMax' => ['sometimes', 'numeric'],
+            'rules.humidityMin' => ['sometimes', 'numeric'],
+            'rules.humidityMax' => ['sometimes', 'numeric'],
+            'rules.lightMin' => ['sometimes', 'numeric'],
+            'rules.lightMax' => ['sometimes', 'numeric'],
+            'rules.actuators' => ['sometimes', 'array'],
+            'rules.actuators.temperature' => ['sometimes', 'array'],
+            'rules.actuators.temperature.*' => [Rule::in(['mist', 'water', 'blower', 'lamp'])],
+            'rules.actuators.humidity' => ['sometimes', 'array'],
+            'rules.actuators.humidity.*' => [Rule::in(['mist', 'water', 'blower', 'lamp'])],
+            'rules.actuators.light' => ['sometimes', 'array'],
+            'rules.actuators.light.*' => [Rule::in(['mist', 'water', 'blower', 'lamp'])],
         ]);
         $device = $this->deviceQuery($request)->where(function ($query) use ($data): void {
             $query->where('id', $data['device_id']);
@@ -275,9 +288,23 @@ class IotDeviceController extends Controller
             if ($minimum === false || $maximum === false || $minimum >= $maximum) {
                 return response()->json(['message' => "Ambang batas {$parameter} tidak valid."], 422);
             }
+            $configuredActuators = $data['rules']['actuators'][$parameter] ?? null;
+            if (! is_array($configuredActuators)) {
+                $configuredActuators = match ($parameter) {
+                    'temperature' => ['blower'],
+                    'humidity' => ['mist'],
+                    default => [],
+                };
+            }
+
             ControlRule::query()->updateOrCreate(
                 ['iot_device_id' => $device->id, 'parameter' => $parameter],
-                ['minimum' => $minimum, 'maximum' => $maximum, 'enabled' => true],
+                [
+                    'minimum' => $minimum,
+                    'maximum' => $maximum,
+                    'enabled' => true,
+                    'settings' => ['actuators' => array_values($configuredActuators)],
+                ],
             );
         }
 
@@ -315,7 +342,7 @@ class IotDeviceController extends Controller
 
         $commands = $device->actuatorCommands()->latest('id')->limit(100)->get();
         $status = [];
-        foreach (['mist', 'water', 'blower'] as $actuator) {
+        foreach (['mist', 'water', 'blower', 'lamp'] as $actuator) {
             $latest = $commands->first(fn ($command) => $command->actuator === $actuator);
             $acknowledged = $commands->first(
                 fn ($command) => $command->actuator === $actuator && $command->status === 'acknowledged',
@@ -340,7 +367,7 @@ class IotDeviceController extends Controller
     {
         $data = $request->validate([
             'device_id' => ['required'],
-            'actuator' => ['required', Rule::in(['mist', 'water', 'blower'])],
+            'actuator' => ['required', Rule::in(['mist', 'water', 'blower', 'lamp'])],
             'state' => ['required', Rule::in(['on', 'off'])],
             'mode' => ['sometimes', Rule::in(['manual', 'automatic'])],
         ]);

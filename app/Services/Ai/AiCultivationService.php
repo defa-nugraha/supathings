@@ -266,9 +266,7 @@ class AiCultivationService
                 ->acceptJson()
                 ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->withOptions([
-                    'curl' => [
-                        CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
-                    ],
+                    'force_ip_resolve' => 'v4',
                 ])
                 ->post($url, [
                     'systemInstruction' => ['parts' => [['text' => $system]]],

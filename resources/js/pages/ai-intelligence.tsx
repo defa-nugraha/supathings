@@ -172,7 +172,6 @@ export default function AiIntelligence() {
 
     const selectChat = (item: ChatHistory) => {
         setActiveChatId(item.id);
-        const last = [...item.messages].reverse().find((message) => message.role === 'assistant');
         setQuestion('');
         setHistoryOpen(false);
     };

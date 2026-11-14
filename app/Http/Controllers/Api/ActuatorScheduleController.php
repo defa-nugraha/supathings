@@ -129,7 +129,7 @@ class ActuatorScheduleController extends Controller
     private function scheduleQuery(Request $request): Builder
     {
         return ActuatorSchedule::query()->whereHas('device', function ($query) use ($request): void {
-            if (! $request->user()->isAdmin()) {
+            if ($request->user()->isAdmin() === false) {
                 $query->where('user_id', $request->user()->id);
             }
         });

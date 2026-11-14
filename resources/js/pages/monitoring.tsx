@@ -1653,15 +1653,14 @@ export default function Monitoring() {
                                     ),
                                 )}
                             </div>
-                        </div>
-                                <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
-                                    <p className="text-xs text-slate-500">Perubahan akan diterapkan pada mode otomatis perangkat.</p>
-                                    <div className="flex gap-2">
-                                        <button type="button" onClick={() => setEditing(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
-                                        <button type="button" disabled={thresholdSaving} onClick={() => void saveThresholds()} className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">{thresholdSaving ? 'Menyimpan…' : 'Simpan pengaturan'}</button>
-                                    </div>
+                            <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
+                                <p className="text-xs text-slate-500">Perubahan akan diterapkan pada mode otomatis perangkat.</p>
+                                <div className="flex gap-2">
+                                    <button type="button" onClick={() => setEditing(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
+                                    <button type="button" disabled={thresholdSaving} onClick={() => void saveThresholds()} className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">{thresholdSaving ? 'Menyimpan…' : 'Simpan pengaturan'}</button>
                                 </div>
                             </div>
+                        </div>
                         ) : (
                             <div className="space-y-4">
                                 <label className="block text-sm font-medium text-slate-700">

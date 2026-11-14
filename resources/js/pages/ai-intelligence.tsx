@@ -20,7 +20,7 @@ import {
     TrendingUp,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Finding = {
     title: string;
@@ -117,6 +117,8 @@ export default function AiIntelligence() {
     const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [historyOpen, setHistoryOpen] = useState(false);
+    const chatScrollRef = useRef<HTMLDivElement | null>(null);
+    const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
     const loadLatest = async () => {
         try {
@@ -159,6 +161,47 @@ export default function AiIntelligence() {
             JSON.stringify(chatHistory.slice(0, 30)),
         );
     }, [chatHistory]);
+
+    const scrollChatToBottom = (behavior: ScrollBehavior = 'smooth') => {
+        chatScrollRef.current?.scrollTo({
+            top: chatScrollRef.current.scrollHeight,
+            behavior,
+        });
+    };
+
+    const handleChatScroll = () => {
+        const element = chatScrollRef.current;
+        if (!element) {
+            return;
+        }
+
+        const distanceFromBottom =
+            element.scrollHeight - element.scrollTop - element.clientHeight;
+
+        setShowScrollToBottom(distanceFromBottom > 120);
+    };
+
+    useEffect(() => {
+        if (!chatOpen) {
+            setShowScrollToBottom(false);
+            return;
+        }
+
+        const frame = requestAnimationFrame(() => {
+            scrollChatToBottom('auto');
+            handleChatScroll();
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [chatOpen, activeChatId]);
+
+    useEffect(() => {
+        if (!chatOpen || !chatting) {
+            return;
+        }
+
+        scrollChatToBottom();
+    }, [chatHistory, chatOpen, chatting]);
 
     const startNewChat = () => {
         setActiveChatId(null);
@@ -770,7 +813,11 @@ export default function AiIntelligence() {
                                         </div>
                                     </header>
 
-                                    <div className="flex-1 overflow-y-auto bg-white px-4 py-5 sm:px-6">
+                                    <div
+                                        ref={chatScrollRef}
+                                        onScroll={handleChatScroll}
+                                        className="relative flex-1 overflow-y-auto bg-white px-4 py-5 sm:px-6"
+                                    >
                                         {activeChatId &&
                                         chatHistory.find(
                                             (item) => item.id === activeChatId,
@@ -914,6 +961,19 @@ export default function AiIntelligence() {
                                                 </div>
                                             </div>
                                         )}
+                                        {showScrollToBottom ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => scrollChatToBottom()}
+                                                className="sticky bottom-2 left-1/2 z-10 mx-auto mt-3 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg transition hover:bg-slate-50"
+                                                aria-label="Kembali ke pesan terbaru"
+                                            >
+                                                <span className="flex size-5 items-center justify-center rounded-full bg-slate-900 text-white">
+                                                    ↓
+                                                </span>
+                                                Pesan terbaru
+                                            </button>
+                                        ) : null}
                                     </div>
 
                                     <form

@@ -834,7 +834,6 @@ export default function Monitoring() {
         });
     };
 
-
     useEffect(() => {
         void loadSchedules();
     }, [deviceId]);
